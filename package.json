@@ -34,13 +34,16 @@
   ],
   "scripts": {
     "tsc": "tsc",
-    "watch": "tsc -w",
+    "tsc-watch": "tsc -w",
+    "clean": "shx rm -rf lib",
+    "build": "npm run clean && cross-env NODE_ENV=production rollup -c ",
+    "watch": "npm run clean && cross-env NODE_ENV=development rollup -c -w",
     "lint": "tslint 'src/**/*.ts'",
     "install": "prebuild-install || node scripts/install.js",
     "postinstall": "node scripts/post-install.js",
     "test": "cross-env NODE_ENV=test mocha -R spec --exit lib/*.test.js",
-    "prepare": "npm run tsc",
-    "prepublishOnly": "npm run tsc"
+    "prepare": "npm run build",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "nan": "^2.14.0",
