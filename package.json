@@ -54,6 +54,9 @@
     "ps-list": "^6.0.0",
     "tslint": "^5.18.0",
     "tslint-consistent-codestyle": "^1.15.0",
-    "typescript": "3.4"
+    "typescript": "^3.8.3",
+    "rollup": "2.22.2",
+    "rollup-plugin-atomic": "^1.1.2",
+    "shx": "0.3.2"
   }
 }
