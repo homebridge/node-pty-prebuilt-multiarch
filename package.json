@@ -65,5 +65,8 @@
     "prebuildify": "^5.0.1",
     "ps-list": "^6.0.0",
     "typescript": "^3.8.3"
+  },
+  "resolutions": {
+    "node-gyp": "^9.3.0"
   }
 }
