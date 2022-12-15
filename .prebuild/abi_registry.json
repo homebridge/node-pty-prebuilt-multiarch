@@ -165,5 +165,12 @@
     "lts": false,
     "future": true,
     "abi": "108"
+  },
+  {
+    "runtime": "node",
+    "target": "19.0.0",
+    "lts": false,
+    "future": true,
+    "abi": "111"
   }
 ]

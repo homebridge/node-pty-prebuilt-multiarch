@@ -4,7 +4,7 @@
 
 This project is a parallel fork of [`node-pty`](https://github.com/Microsoft/node-pty) providing prebuilt packages for certain Node.js and Electron versions.
 
-Inspired by [daviwil/node-pty-prebuilt](https://github.com/daviwil/node-pty-prebuilt).
+Based on [oznu/node-pty-prebuilt-multiarch](https://github.com/oznu/node-pty-prebuilt-multiarch) which was inspired by [daviwil/node-pty-prebuilt](https://github.com/daviwil/node-pty-prebuilt).
 
 ## Usage
 

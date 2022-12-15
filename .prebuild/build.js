@@ -41,6 +41,8 @@ const nodeBuildTargets = [
   '17.0.1',
   '-t',
   '18.0.0',
+  '-t',
+  '19.0.0',
 ]
 
 const nodeBuildCmd = [
@@ -93,7 +95,9 @@ const electronBuildTargets = [
   '-t',
   '17.0.0',
   '-t',
-  '18.0.0'
+  '18.0.0',
+  '-t',
+  '19.0.0'
 ]
 
 const electronBuildCmd = [

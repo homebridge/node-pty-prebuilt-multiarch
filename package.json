@@ -1,16 +1,16 @@
 {
-  "name": "node-pty-prebuilt-multiarch",
+  "name": "@cdktf/node-pty-prebuilt-multiarch",
   "description": "Fork pseudoterminals in Node.JS",
   "author": {
     "name": "Microsoft Corporation"
   },
-  "version": "0.10.1-pre.5",
+  "version": "0.10.1-pre.6",
   "license": "MIT",
   "main": "./lib/index.js",
   "types": "./typings/node-pty.d.ts",
   "repository": {
     "type": "git",
-    "url": "git://github.com/oznu/node-pty-prebuilt-multiarch.git"
+    "url": "git://github.com/cdktf/node-pty-prebuilt-multiarch.git"
   },
   "files": [
     "binding.gyp",
@@ -26,9 +26,9 @@
     "prebuilds/linux-arm",
     "prebuilds/linux-arm64"
   ],
-  "homepage": "https://github.com/oznu/node-pty-prebuilt-multiarch",
+  "homepage": "https://github.com/cdktf/node-pty-prebuilt-multiarch",
   "bugs": {
-    "url": "https://github.com/oznu/node-pty-prebuilt-multiarch/issues"
+    "url": "https://github.com/cdktf/node-pty-prebuilt-multiarch/issues"
   },
   "keywords": [
     "pty",
