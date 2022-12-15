@@ -676,11 +676,6 @@ delegates@^1.0.0:
   resolved "https://registry.yarnpkg.com/delegates/-/delegates-1.0.0.tgz#84c6e159b81904fdca59a0ef44cd870d31250f9a"
   integrity sha512-bd2L678uiWATM6m5Z1VzNCErI3jiGzt6HGY8OVICs40JQq/HALfbyNJmp0UDakEY4pMMaN0Ly5om/B1VI/+xfQ==
 
-detect-libc@^1.0.3:
-  version "1.0.3"
-  resolved "https://registry.yarnpkg.com/detect-libc/-/detect-libc-1.0.3.tgz#fa137c4bd698edf55cd5cd02ac559f91a4c4ba9b"
-  integrity sha512-pGjwhsmsp4kL2RTz08wcOlGN83otlqHeD/Z5T8GXZB+/YcpQ/dgo+lbU8ZsGxV0HIvqqxo9l7mqYwyYMD9bKDg==
-
 detect-libc@^2.0.0:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/detect-libc/-/detect-libc-2.0.1.tgz#e1897aa88fa6ad197862937fbc0441ef352ee0cd"
@@ -1790,14 +1785,7 @@ nice-try@^1.0.4:
   resolved "https://registry.yarnpkg.com/nice-try/-/nice-try-1.0.5.tgz#a3378a7696ce7d223e88fc9b764bd7ef1089e366"
   integrity sha512-1nh45deeb5olNY7eX82BkPO7SSxR5SSYJiPTrTdFUVYwAl8CKMA5N9PjTYkHiRjisVcxcQ1HXdLhx2qxxJzLNQ==
 
-node-abi@^2.2.0:
-  version "2.30.1"
-  resolved "https://registry.yarnpkg.com/node-abi/-/node-abi-2.30.1.tgz#c437d4b1fe0e285aaf290d45b45d4d7afedac4cf"
-  integrity sha512-/2D0wOQPgaUWzVSVgRMx+trKJRC2UG4SUc4oCJoXx9Uxjtp0Vy3/kt7zcbxHF8+Z/pK3UloLWzBISg72brfy1w==
-  dependencies:
-    semver "^5.4.1"
-
-node-abi@^3.3.0:
+node-abi@^3.0.0, node-abi@^3.3.0:
   version "3.30.0"
   resolved "https://registry.yarnpkg.com/node-abi/-/node-abi-3.30.0.tgz#d84687ad5d24ca81cdfa912a36f2c5c19b137359"
   integrity sha512-qWO5l3SCqbwQavymOmtTVuCWZE23++S+rxyoHjXqUmPyzRcaoI4lA2gO55/drddGnedAyjA7sk76SfQ5lfUMnw==
@@ -2119,13 +2107,13 @@ prebuild-install@^7.1.1:
     tar-fs "^2.0.0"
     tunnel-agent "^0.6.0"
 
-prebuild@^10.0.1:
-  version "10.0.1"
-  resolved "https://registry.yarnpkg.com/prebuild/-/prebuild-10.0.1.tgz#9d46a00f42b60ad1718479cc5e3d1ef4882b7f33"
-  integrity sha512-x0CkKDmHFwX49rTGEYJwB9jBQwJWxRzwUtP5PA9dP8khFGMm3oSFgYortxdlp0PkxB29EhWGp/KQE5g+adehYg==
+prebuild@^11.0.4:
+  version "11.0.4"
+  resolved "https://registry.yarnpkg.com/prebuild/-/prebuild-11.0.4.tgz#5e4a0659e2b98219ad58808b356c7938b0f9e326"
+  integrity sha512-n23Rzql2m8ldFpwcFyouGUrg9VByEF2IroEZlNvPLiQwTJWucTNxIaZEoyVe2AxPRzQb6Eph2ytObxVWm4FA7Q==
   dependencies:
     cmake-js "~5.2.0"
-    detect-libc "^1.0.3"
+    detect-libc "^2.0.0"
     each-series-async "^1.0.1"
     execspawn "^1.0.1"
     ghreleases "^3.0.2"
@@ -2134,7 +2122,7 @@ prebuild@^10.0.1:
     minimist "^1.1.2"
     mkdirp "^0.5.1"
     napi-build-utils "^1.0.1"
-    node-abi "^2.2.0"
+    node-abi "^3.0.0"
     node-gyp "^6.0.1"
     node-ninja "^1.0.1"
     noop-logger "^0.1.0"
@@ -2145,7 +2133,7 @@ prebuild@^10.0.1:
     run-waterfall "^1.1.6"
     tar-stream "^2.1.0"
 
-prebuildify@^5.0.0:
+prebuildify@^5.0.1:
   version "5.0.1"
   resolved "https://registry.yarnpkg.com/prebuildify/-/prebuildify-5.0.1.tgz#e10bb6e4986c18909185704c806cc06976c30478"
   integrity sha512-vXpKLfIEsDCqMJWVIoSrUUBJQIuAk9uHAkLiGJuTdXdqKSJ10sHmWeuNCDkIoRFTV1BDGYMghHVmDFP8NfkA2Q==
@@ -2390,7 +2378,7 @@ safe-buffer@~5.1.0, safe-buffer@~5.1.1:
   resolved "https://registry.yarnpkg.com/safer-buffer/-/safer-buffer-2.1.2.tgz#44fa161b0187b9549dd84bb91802f9bd8385cd6a"
   integrity sha512-YZo3K82SD7Riyi0E1EQPojLz7kpepnSQI9IyPbHHg1XXXevb5dJI7tpyN2ADxGcQbHG7vcyRHk0cbwqcQriUtg==
 
-"semver@2.x || 3.x || 4 || 5", semver@^5.0.3, semver@^5.4.1, semver@^5.7.0, semver@^5.7.1:
+"semver@2.x || 3.x || 4 || 5", semver@^5.0.3, semver@^5.7.0, semver@^5.7.1:
   version "5.7.1"
   resolved "https://registry.yarnpkg.com/semver/-/semver-5.7.1.tgz#a954f931aeba508d307bbf069eff0c01c96116f7"
   integrity sha512-sauaDf/PZdVgrLTNYHRtpXa1iRiKcaebiKQ1BJdpQlWH2lCvexQdX55snPFyK7QzpudqbCI0qXFfOasHdyNDGQ==
