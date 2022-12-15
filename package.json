@@ -51,7 +51,7 @@
   },
   "dependencies": {
     "nan": "^2.14.2",
-    "prebuild-install": "^6.0.0"
+    "prebuild-install": "^7.1.1"
   },
   "devDependencies": {
     "@types/mocha": "^7.0.2",
@@ -61,8 +61,8 @@
     "cross-env": "^5.1.4",
     "eslint": "^6.8.0",
     "mocha": "^7.1.1",
-    "prebuild": "^10.0.1",
-    "prebuildify": "^5.0.0",
+    "prebuild": "^11.0.4",
+    "prebuildify": "^5.0.1",
     "ps-list": "^6.0.0",
     "typescript": "^3.8.3"
   }
