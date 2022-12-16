@@ -25,6 +25,7 @@ jobs:
           regex: true
           token: ${{ secrets.GITHUB_TOKEN }}
           target: prebuilds/
+      - run: ls
       - name: Publish to NPM
         run: node ./scripts/publish.js
         env:
