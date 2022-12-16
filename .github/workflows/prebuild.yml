@@ -25,6 +25,7 @@ jobs:
           debian-arm32v6,
           debian-arm64v8,
           darwin-x86_64,
+          darwin-arm64,
           windows-x86_64,
         ]
         include:
@@ -72,6 +73,9 @@ jobs:
 
           - name: darwin-x86_64
             os: macOS-latest
+          
+          - name: darwin-arm64
+            os: ['self-hosted', 'ondemand', 'os=macos-arm', 'arm64']
 
           - name: windows-x86_64
             os: windows-2019
