@@ -17,7 +17,7 @@ jobs:
       - run: yarn build
       - run: yarn test
       - id: version
-        run: 'echo "current:$(cat package.json | jq -r .version)" >> $GITHUB_OUTPUT'
+        run: 'echo "current=$(cat package.json | jq -r .version)" >> $GITHUB_OUTPUT'
       - uses: dsaltares/fetch-gh-release-asset@master
         with:
           version: 'tags/v${{ steps.version.outputs.current }}'
