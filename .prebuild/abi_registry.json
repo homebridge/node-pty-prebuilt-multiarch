@@ -167,6 +167,13 @@
     "abi": "108"
   },
   {
+    "runtime": "electron",
+    "target": "19.0.0",
+    "lts": false,
+    "future": true,
+    "abi": "106"
+  },
+  {
     "runtime": "node",
     "target": "19.0.0",
     "lts": false,
