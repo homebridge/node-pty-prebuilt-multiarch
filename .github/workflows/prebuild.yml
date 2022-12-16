@@ -111,8 +111,6 @@ jobs:
         npm install --ignore-scripts 
         node .prebuild/buildify.js
 
-    - run: tree prebuilds
-
     - uses: actions/upload-artifact@v3
       with:
         name: prebuilds
