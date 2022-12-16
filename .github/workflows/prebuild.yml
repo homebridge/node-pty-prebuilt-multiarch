@@ -112,9 +112,6 @@ jobs:
         node .prebuild/buildify.js
 
     - run: tree prebuilds
-      if: runner.os == 'Windows'
-    - run: tree prebuilds
-      if: runner.os != 'Windows'
     
     # - uses: AButler/upload-release-assets@v2.0
     #   with:
