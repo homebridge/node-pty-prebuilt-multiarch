@@ -14,9 +14,16 @@ jobs:
           node-version: 19.x
       - run: yarn
       - run: yarn lint
-      - run: yarn test
       - run: yarn build
-      - run: yarn # ensure we run postinstall hooks that depend on ts->js compilation from build
+      - run: yarn test
+      - id: version
+        run: 'echo "current:${cat package.json | jq -r .version}" >> $GITHUB_OUTPUT'
+      - uses: dsaltares/fetch-gh-release-asset@master
+        with:
+          version: 'tags/v${{ steps.version.outputs.current }}'
+          file: '*.tar.gz'
+          token: ${{ secrets.GITHUB_TOKEN }}
+          target: prebuilds/
       - name: Publish to NPM
         run: node ./scripts/publish.js
         env:
