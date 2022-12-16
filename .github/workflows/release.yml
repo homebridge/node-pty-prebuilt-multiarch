@@ -31,3 +31,4 @@ jobs:
       - run: ls prebuilds/
       - name: Publish to NPM
         run: npm publish --dry-run
+      - run: ls prebuilds/ # debug
