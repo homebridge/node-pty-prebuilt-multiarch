@@ -1,7 +1,14 @@
 name: "Prebuild Binaries"
 
 on:
-  pull_request: {}
+  pull_request:
+    types:
+      - opened
+      - edited
+      - synchronize
+      - labeled
+      - unlabeled
+      - reopened
 
 jobs:
   build:
