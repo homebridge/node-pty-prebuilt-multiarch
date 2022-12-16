@@ -9,4 +9,4 @@ echo "Building for $(uname -m)..."
 
 npm install --ignore-scripts
 
-node .prebuild/build.js
+node .prebuild/buildify.js

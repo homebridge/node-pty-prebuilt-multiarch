@@ -1,11 +1,7 @@
 name: "Prebuild Binaries"
 
 on:
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: 'Tag'     
-        required: true
+  pull_request: {}
 
 jobs:
   build:
@@ -106,21 +102,19 @@ jobs:
       if: runner.os == 'macOS'
       run: |
         npm install --ignore-scripts
-        node .prebuild/build.js
+        node .prebuild/buildify.js
 
     - name: Windows - Prebuild Binaries
       if: runner.os == 'Windows'
       shell: bash
       run: |
         npm install --ignore-scripts 
-        node .prebuild/build.js 
-        node_modules/.bin/prebuild -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.1 -t 18.0.0 -t 19.0.0 --include-regex "\.(node|exe|dll|pdb)"
-        node_modules/.bin/prebuild -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.1 --include-regex "\.(node|exe|dll|pdb)" -a ia32 
-        node_modules/.bin/prebuild -t 5.0.0 -t 6.0.0 -t 7.0.0 -t 8.0.0 -t 9.0.0 -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.0 --include-regex "\.(node|exe|dll|pdb)" -r electron 
-        node_modules/.bin/prebuild -t 5.0.0 -t 6.0.0 -t 7.0.0 -t 8.0.0 -t 9.0.0 -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.0 --include-regex "\.(node|exe|dll|pdb)" -r electron -a ia32 
+        node .prebuild/buildify.js
 
-    - uses: AButler/upload-release-assets@v2.0
-      with:
-        files: 'prebuilds/**/*.tar.gz'
-        repo-token: ${{ secrets.GITHUB_TOKEN }}
-        release-tag: ${{ github.event.inputs.tag }}
+    - run: ls prebuilds/
+    
+    # - uses: AButler/upload-release-assets@v2.0
+    #   with:
+    #     files: 'prebuilds/**/*.tar.gz'
+    #     repo-token: ${{ secrets.GITHUB_TOKEN }}
+    #     release-tag: ${{ github.event.inputs.tag }}

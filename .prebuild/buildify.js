@@ -3,22 +3,8 @@ const os = require('os');
 const path = require('path');
 const child_process = require('child_process');
 
-// node-abi is still shipping the wrong data
-// correct this issue manually for now
 const prebuildPkgPath = path.dirname(require.resolve('prebuildify'));
-const nodeAbiPkgPath = path.dirname(require.resolve('node-abi'));
 const prebuildPath = path.resolve(prebuildPkgPath, 'bin.js');
-const abiRegistryJsonPath = path.resolve(nodeAbiPkgPath, 'abi_registry.json');
-fs.copyFileSync(path.resolve(__dirname, 'abi_registry.json'), abiRegistryJsonPath);
-
-const altAbiRegistryJsonPath = path.resolve(prebuildPkgPath, 'node_modules/node-abi/abi_registry.json');
-if (fs.existsSync(altAbiRegistryJsonPath)) {
-  fs.copyFileSync(path.resolve(__dirname, 'abi_registry.json'), altAbiRegistryJsonPath);
-}
-
-if (os.platform() === 'win32') {
-  process.exit(0);
-}
 
 const cwd = path.resolve(__dirname, '../');
 
@@ -28,14 +14,6 @@ const cwd = path.resolve(__dirname, '../');
 
 // define build targets
 const nodeBuildTargets = [
-  '-t',
-  '10.0.0',
-  '-t',
-  '11.0.0',
-  '-t',
-  ' 12.0.0',
-  '-t',
-  '13.0.0',
   '-t',
   '14.0.0',
   '-t',
