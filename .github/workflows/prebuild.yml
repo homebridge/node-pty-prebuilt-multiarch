@@ -112,9 +112,29 @@ jobs:
         node .prebuild/buildify.js
 
     - run: tree prebuilds
+
+    - uses: actions/upload-artifact@v3
+      with:
+        name: prebuilds
+        path: prebuilds
     
     # - uses: AButler/upload-release-assets@v2.0
     #   with:
     #     files: 'prebuilds/**/*.tar.gz'
     #     repo-token: ${{ secrets.GITHUB_TOKEN }}
     #     release-tag: ${{ github.event.inputs.tag }}
+
+  post-build:
+    runs-on: ubuntu-latest
+    needs:
+      - build
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 16.x
+      - uses: actions/download-artifact@v3
+        with:
+          name: prebuilds
+          path: prebuilds
+      - run: tree prebuilds
