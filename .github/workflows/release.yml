@@ -15,6 +15,8 @@ jobs:
       - run: yarn
       - run: yarn lint
       - run: yarn test
+      - run: yarn build
+      - run: yarn # ensure we run postinstall hooks that depend on ts->js compilation from build
       - name: Publish to NPM
         run: node ./scripts/publish.js
         env:
