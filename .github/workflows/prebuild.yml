@@ -96,6 +96,12 @@ jobs:
       run: |
         docker run --rm -v $(pwd):/node-pty multiarch-build
 
+    - name: macOS - Setup Python
+      if: runner.os == 'macOS'
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
     - name: macOS - Prebuild Binaries
       if: runner.os == 'macOS'
       run: |
