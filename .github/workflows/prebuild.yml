@@ -149,3 +149,9 @@ jobs:
           name: prebuilds
           path: prebuilds
       - run: tree prebuilds
+      - run: yarn
+      - run: yarn lint
+      - run: yarn build
+      - run: yarn test
+      - name: Publish to NPM
+        run: npm publish --dry-run
