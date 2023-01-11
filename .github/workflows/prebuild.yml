@@ -75,7 +75,7 @@ jobs:
             os: macOS-latest
           
           - name: darwin-arm64
-            os: ['self-hosted', 'ondemand', 'os=macos-arm', 'arm64']
+            os: ['self-hosted', 'macOS', 'ARM64']
 
           - name: windows-x86_64
             os: windows-2019
