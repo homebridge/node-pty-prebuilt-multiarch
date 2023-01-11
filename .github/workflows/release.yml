@@ -131,6 +131,7 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node-version: 19.x
+          scope: '@cdktf'
           registry-url: "https://registry.npmjs.org" # required to use auth
         env:
           NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
