@@ -113,14 +113,14 @@ jobs:
     - name: macOS - Prebuild Binaries
       if: runner.os == 'macOS'
       run: |
-        npm install --ignore-scripts
+        yarn install --ignore-scripts
         node .prebuild/buildify.js
 
     - name: Windows - Prebuild Binaries
       if: runner.os == 'Windows'
       shell: bash
       run: |
-        npm install --ignore-scripts 
+        yarn install --ignore-scripts
         node .prebuild/buildify.js
 
     - uses: actions/upload-artifact@v3
