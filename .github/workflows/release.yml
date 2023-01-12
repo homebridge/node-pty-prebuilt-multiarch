@@ -1,7 +1,12 @@
 name: "Release"
 
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      dryrun:
+        description: 'Add --dry-run flag to npm publish'
+        default: true
+        type: boolean
 
 jobs:
   prebuild:
@@ -71,7 +76,7 @@ jobs:
             os: ['self-hosted', 'macOS', 'ARM64']
 
           - name: windows-x86_64
-            os: windows-2019
+            os: windows-2022
 
     steps: 
     - uses: actions/checkout@v1
@@ -143,5 +148,9 @@ jobs:
       - run: yarn lint
       - run: yarn build
       - run: yarn test
+      - name: Simulate Publishing to NPM
+        if:  ${{ inputs.dryrun }}
+        run: npm publish --access public --dry-run
       - name: Publish to NPM
+        if:  ${{ !inputs.dryrun }}
         run: npm publish --access public
