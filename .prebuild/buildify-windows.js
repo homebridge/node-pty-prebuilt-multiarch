@@ -36,7 +36,12 @@ const nodeBuildTargets = [
   "19.0.0",
 ];
 
-const nodeBuildCmd = [prebuildPath, ...nodeBuildTargets];
+const nodeBuildCmd = [
+  prebuildPath,
+  "--include-regex",
+  '.(node|exe|dll|pdb)',
+  ...nodeBuildTargets,
+];
 
 console.log("Building for Node.js for Windows:");
 console.log(nodeBuildCmd.join(" "));
@@ -44,7 +49,7 @@ console.log(nodeBuildCmd.join(" "));
 try {
   child_process.spawnSync(process.execPath, nodeBuildCmd, {
     cwd: cwd,
-    stdio: ['inherit', 'inherit', 'inherit']
+    stdio: ["inherit", "inherit", "inherit"],
   });
 } catch (e) {
   console.error(e);
