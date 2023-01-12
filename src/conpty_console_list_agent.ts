@@ -6,9 +6,11 @@
  * single console attached to a process.
  */
 
+import { winConPtyConsoleListPath } from './prebuild-file-path';
+
 let getConsoleProcessList: any;
 try {
-  getConsoleProcessList = require('../build/Release/conpty_console_list.node').getConsoleProcessList;
+  getConsoleProcessList = require(winConPtyConsoleListPath || '../build/Release/conpty_console_list.node').getConsoleProcessList;
 } catch (err) {
   getConsoleProcessList = require('../build/Debug/conpty_console_list.node').getConsoleProcessList;
 }

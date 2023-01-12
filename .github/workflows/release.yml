@@ -120,7 +120,7 @@ jobs:
       shell: bash
       run: |
         yarn install --ignore-scripts
-        node .prebuild/buildify.js
+        node .prebuild/buildify-windows.js
 
     - uses: actions/upload-artifact@v3
       with:

@@ -9,7 +9,7 @@ import * as path from 'path';
 import { Socket } from 'net';
 import { ArgvOrCommandLine } from './types';
 import { fork } from 'child_process';
-import { ptyPath } from './prebuild-file-path';
+import { winPtyPath, winConPtyPath } from './prebuild-file-path';
 
 let conptyNative: IConptyNative;
 let winptyNative: IWinptyNative;
@@ -61,7 +61,7 @@ export class WindowsPtyAgent {
     if (this._useConpty) {
       if (!conptyNative) {
         try {
-          conptyNative = require(ptyPath || '../build/Release/conpty.node');
+          conptyNative = require(winConPtyPath || '../build/Release/conpty.node');
         } catch (outerError) {
           try {
             conptyNative = require('../build/Debug/conpty.node');
@@ -75,7 +75,7 @@ export class WindowsPtyAgent {
     } else {
       if (!winptyNative) {
         try {
-          winptyNative = require('../build/Release/pty.node');
+          winptyNative = require(winPtyPath || '../build/Release/pty.node');
         } catch (outerError) {
           try {
             winptyNative = require('../build/Debug/pty.node');
