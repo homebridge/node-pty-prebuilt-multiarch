@@ -47,25 +47,25 @@ jobs:
 
           - name: debian-x86_64
             os: ubuntu-latest
-            BASE_IMAGE: library/debian:9.6-slim
+            BASE_IMAGE: library/debian:11.7-slim
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: x86_64
 
           - name: debian-i386
             os: ubuntu-latest
-            BASE_IMAGE: i386/debian:9.6-slim
+            BASE_IMAGE: i386/debian:11.7-slim
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: i386
 
           - name: debian-arm32v6
             os: ubuntu-latest
-            BASE_IMAGE: balenalib/raspberry-pi-debian:stretch
+            BASE_IMAGE: balenalib/raspberry-pi-debian:bullseye
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: arm
 
           - name: debian-arm64v8
             os: ubuntu-latest
-            BASE_IMAGE: arm64v8/debian:9.6-slim
+            BASE_IMAGE: arm64v8/debian:11.7-slim
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: aarch64
 
