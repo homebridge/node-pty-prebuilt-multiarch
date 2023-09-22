@@ -10,6 +10,14 @@ on:
 
 jobs:
   prebuild:
+    # There are currently no Github managed Apple Silicon runners available:
+    # https://github.com/actions/runner-images/issues/2187
+    #
+    # HashiCorp manages their own Apple Silicon runners for Github but they
+    # are only available to non-public repositories, hence we maintain a
+    # private mirror of this repository to build for Apple Silicon. To keep
+    # things simple, we run the entire CI from that mirror.
+    if: github.repository == 'cdktf/node-pty-prebuilt-multiarch-private'
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
