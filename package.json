@@ -10,7 +10,7 @@
   "types": "./typings/node-pty.d.ts",
   "repository": {
     "type": "git",
-    "url": "git://github.com/oznu/node-pty-prebuilt-multiarch.git"
+    "url": "git://github.com/homebridge/node-pty-prebuilt-multiarch.git"
   },
   "files": [
     "binding.gyp",
@@ -26,9 +26,9 @@
     "prebuilds/linux-arm",
     "prebuilds/linux-arm64"
   ],
-  "homepage": "https://github.com/oznu/node-pty-prebuilt-multiarch",
+  "homepage": "https://github.com/homebridge/node-pty-prebuilt-multiarch",
   "bugs": {
-    "url": "https://github.com/oznu/node-pty-prebuilt-multiarch/issues"
+    "url": "https://github.com/homebridge/node-pty-prebuilt-multiarch/issues"
   },
   "keywords": [
     "pty",
@@ -50,20 +50,20 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "nan": "^2.14.2",
-    "prebuild-install": "^6.0.0"
+    "nan": "^2.18.0",
+    "prebuild-install": "^6.1.4"
   },
   "devDependencies": {
     "@types/mocha": "^7.0.2",
-    "@types/node": "8",
-    "@typescript-eslint/eslint-plugin": "^2.27.0",
-    "@typescript-eslint/parser": "^2.27.0",
-    "cross-env": "^5.1.4",
+    "@types/node": "^8.10.66",
+    "@typescript-eslint/eslint-plugin": "^2.34.0",
+    "@typescript-eslint/parser": "^2.34.0",
+    "cross-env": "^6.0.3",
     "eslint": "^6.8.0",
-    "mocha": "^7.1.1",
+    "mocha": "^7.2.0",
     "prebuild": "^10.0.1",
-    "prebuildify": "^5.0.0",
-    "ps-list": "^6.0.0",
-    "typescript": "^3.8.3"
+    "prebuildify": "^5.0.1",
+    "ps-list": "^6.3.0",
+    "typescript": "^3.9.10"
   }
 }
