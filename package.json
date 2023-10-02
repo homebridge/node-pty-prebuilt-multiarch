@@ -4,7 +4,7 @@
   "author": {
     "name": "Microsoft Corporation"
   },
-  "version": "0.10.1-pre.6",
+  "version": "0.11.0",
   "license": "MIT",
   "main": "./lib/index.js",
   "types": "./typings/node-pty.d.ts",
@@ -51,19 +51,20 @@
   },
   "dependencies": {
     "nan": "^2.18.0",
-    "prebuild-install": "^6.1.4"
+    "prebuild-install": "^7.1.1"
   },
   "devDependencies": {
     "@types/mocha": "^7.0.2",
-    "@types/node": "^8.10.66",
-    "@typescript-eslint/eslint-plugin": "^2.34.0",
-    "@typescript-eslint/parser": "^2.34.0",
-    "cross-env": "^6.0.3",
+    "@types/node": "12",
+    "@typescript-eslint/eslint-plugin": "^2.27.0",
+    "@typescript-eslint/parser": "^2.27.0",
+    "cross-env": "^5.1.4",
     "eslint": "^6.8.0",
-    "mocha": "^7.2.0",
-    "prebuild": "^10.0.1",
+    "mocha": "^10.2.0  ",
+    "ps-list": "^8.1.1",
+    "typescript": "^3.8.3",
+    "prebuild": "^12.1.0",
     "prebuildify": "^5.0.1",
-    "ps-list": "^6.3.0",
-    "typescript": "^3.9.10"
+    "node-abi": "^3.47.0"
   }
 }

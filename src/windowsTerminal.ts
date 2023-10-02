@@ -147,21 +147,27 @@ export class WindowsTerminal extends Terminal {
     if (cols <= 0 || rows <= 0 || isNaN(cols) || isNaN(rows) || cols === Infinity || rows === Infinity) {
       throw new Error('resizing must be done using positive cols and rows');
     }
-    this._defer(() => {
+    this._deferNoArgs(() => {
       this._agent.resize(cols, rows);
       this._cols = cols;
       this._rows = rows;
     });
   }
 
+  public clear(): void {
+    this._deferNoArgs(() => {
+      this._agent.clear();
+    });
+  }
+
   public destroy(): void {
-    this._defer(() => {
+    this._deferNoArgs(() => {
       this.kill();
     });
   }
 
   public kill(signal?: string): void {
-    this._defer(() => {
+    this._deferNoArgs(() => {
       if (signal) {
         throw new Error('Signals not supported on windows.');
       }
@@ -170,7 +176,20 @@ export class WindowsTerminal extends Terminal {
     });
   }
 
-  private _defer<A extends any>(deferredFn: (arg?: A) => void, arg?: A): void {
+  private _deferNoArgs<A>(deferredFn: () => void): void {
+    // If the terminal is ready, execute.
+    if (this._isReady) {
+      deferredFn.call(this);
+      return;
+    }
+
+    // Queue until terminal is ready.
+    this._deferreds.push({
+      run: () => deferredFn.call(this)
+    });
+  }
+
+  private _defer<A>(deferredFn: (arg: A) => void, arg: A): void {
     // If the terminal is ready, execute.
     if (this._isReady) {
       deferredFn.call(this, arg);

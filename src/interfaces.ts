@@ -3,10 +3,8 @@
  * Copyright (c) 2018, Microsoft Corporation (MIT License).
  */
 
-import * as net from 'net';
-
 export interface IProcessEnv {
-  [key: string]: string;
+  [key: string]: string | undefined;
 }
 
 export interface ITerminal {
@@ -32,6 +30,12 @@ export interface ITerminal {
    * @param rows The number of rows.
    */
   resize(cols: number, rows: number): void;
+
+  /**
+   * Clears the pty's internal representation of its buffer. This is a no-op
+   * unless on Windows/ConPTY.
+   */
+  clear(): void;
 
   /**
    * Close, kill and destroy the socket.
@@ -101,8 +105,8 @@ interface IBasePtyForkOptions {
   cols?: number;
   rows?: number;
   cwd?: string;
-  env?: { [key: string]: string };
-  encoding?: string;
+  env?: IProcessEnv;
+  encoding?: string | null;
   handleFlowControl?: boolean;
   flowControlPause?: string;
   flowControlResume?: string;
@@ -121,5 +125,5 @@ export interface IWindowsPtyForkOptions extends IBasePtyForkOptions {
 export interface IPtyOpenOptions {
   cols?: number;
   rows?: number;
-  encoding?: string;
+  encoding?: string | null;
 }

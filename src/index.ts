@@ -6,7 +6,6 @@
 
 import { ITerminal, IPtyOpenOptions, IPtyForkOptions, IWindowsPtyForkOptions } from './interfaces';
 import { ArgvOrCommandLine } from './types';
-import { ptyPath } from './prebuild-file-path';
 
 let terminalCtor: any;
 if (process.platform === 'win32') {
@@ -49,4 +48,4 @@ export function open(options: IPtyOpenOptions): ITerminal {
  * Expose the native API when not Windows, note that this is not public API and
  * could be removed at any time.
  */
-export const native = (process.platform !== 'win32' ? require('./prebuild-loader').default : null);
+export const native = (process.platform !== 'win32' ? require('../build/Release/pty.node') : null);

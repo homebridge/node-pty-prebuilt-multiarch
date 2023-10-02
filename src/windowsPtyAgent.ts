@@ -4,11 +4,13 @@
  * Copyright (c) 2018, Microsoft Corporation (MIT License).
  */
 
+import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { Socket } from 'net';
 import { ArgvOrCommandLine } from './types';
 import { fork } from 'child_process';
+import { ConoutConnection } from './windowsConoutConnection';
 
 let conptyNative: IConptyNative;
 let winptyNative: IWinptyNative;
@@ -18,7 +20,7 @@ let winptyNative: IWinptyNative;
  * shutting down the socket. The timer will be reset if a new data event comes in after the timer
  * has started.
  */
-const FLUSH_DATA_INTERVAL = 20;
+const FLUSH_DATA_INTERVAL = 1000;
 
 /**
  * This agent sits between the WindowsTerminal class and provides a common interface for both conpty
@@ -27,11 +29,11 @@ const FLUSH_DATA_INTERVAL = 20;
 export class WindowsPtyAgent {
   private _inSocket: Socket;
   private _outSocket: Socket;
-  private _pid: number;
-  private _innerPid: number;
-  private _innerPidHandle: number;
-  private _closeTimeout: NodeJS.Timer;
+  private _pid: number = 0;
+  private _innerPid: number = 0;
+  private _closeTimeout: NodeJS.Timer | undefined;
   private _exitCode: number | undefined;
+  private _conoutSocketWorker: ConoutConnection;
 
   private _fd: any;
   private _pty: number;
@@ -102,7 +104,6 @@ export class WindowsPtyAgent {
       term = (this._ptyNative as IWinptyNative).startProcess(file, commandLine, env, cwd, cols, rows, debug);
       this._pid = (term as IWinptyProcess).pid;
       this._innerPid = (term as IWinptyProcess).innerPid;
-      this._innerPidHandle = (term as IWinptyProcess).innerPidHandle;
     }
 
     // Not available on windows.
@@ -115,17 +116,22 @@ export class WindowsPtyAgent {
     // Create terminal pipe IPC channel and forward to a local unix socket.
     this._outSocket = new Socket();
     this._outSocket.setEncoding('utf8');
-    this._outSocket.connect(term.conout, () => {
-      // TODO: Emit event on agent instead of socket?
-
-      // Emit ready event.
+    // The conout socket must be ready out on another thread to avoid deadlocks
+    this._conoutSocketWorker = new ConoutConnection(term.conout);
+    this._conoutSocketWorker.onReady(() => {
+      this._conoutSocketWorker.connectSocket(this._outSocket);
+    });
+    this._outSocket.on('connect', () => {
       this._outSocket.emit('ready_datapipe');
     });
 
-    this._inSocket = new Socket();
+    const inSocketFD = fs.openSync(term.conin, 'w');
+    this._inSocket = new Socket({
+      fd: inSocketFD,
+      readable: false,
+      writable: true
+    });
     this._inSocket.setEncoding('utf8');
-    this._inSocket.connect(term.conin);
-    // TODO: Wait for ready event?
 
     if (this._useConpty) {
       const connect = (this._ptyNative as IConptyNative).connect(this._pty, commandLine, cwd, env, c => this._$onProcessExit(c));
@@ -144,11 +150,15 @@ export class WindowsPtyAgent {
     this._ptyNative.resize(this._pid, cols, rows);
   }
 
+  public clear(): void {
+    if (this._useConpty) {
+      (this._ptyNative as IConptyNative).clear(this._pty);
+    }
+  }
+
   public kill(): void {
     this._inSocket.readable = false;
-    this._inSocket.writable = false;
     this._outSocket.readable = false;
-    this._outSocket.writable = false;
     // Tell the agent to kill the pty, this releases handles to the process
     if (this._useConpty) {
       this._getConsoleProcessList().then(consoleProcessList => {
@@ -162,14 +172,14 @@ export class WindowsPtyAgent {
         (this._ptyNative as IConptyNative).kill(this._pty);
       });
     } else {
-      (this._ptyNative as IWinptyNative).kill(this._pid, this._innerPidHandle);
-      // Since pty.kill closes the handle it will kill most processes by itself
-      // and process IDs can be reused as soon as all handles to them are
-      // dropped, we want to immediately kill the entire console process list.
+      // Because pty.kill closes the handle, it will kill most processes by itself.
+      // Process IDs can be reused as soon as all handles to them are
+      // dropped, so we want to immediately kill the entire console process list.
       // If we do not force kill all processes here, node servers in particular
       // seem to become detached and remain running (see
       // Microsoft/vscode#26807).
       const processList: number[] = (this._ptyNative as IWinptyNative).getProcessList(this._pid);
+      (this._ptyNative as IWinptyNative).kill(this._pid, this._innerPid);
       processList.forEach(pid => {
         try {
           process.kill(pid);
@@ -178,6 +188,7 @@ export class WindowsPtyAgent {
         }
       });
     }
+    this._conoutSocketWorker.dispose();
   }
 
   private _getConsoleProcessList(): Promise<number[]> {
@@ -195,11 +206,12 @@ export class WindowsPtyAgent {
     });
   }
 
-  public get exitCode(): number {
+  public get exitCode(): number | undefined {
     if (this._useConpty) {
       return this._exitCode;
     }
-    return (this._ptyNative as IWinptyNative).getExitCode(this._innerPidHandle);
+    const winptyExitCode = (this._ptyNative as IWinptyNative).getExitCode(this._innerPid);
+    return winptyExitCode === -1 ? undefined : winptyExitCode;
   }
 
   private _getWindowsBuildNumber(): number {
@@ -233,9 +245,7 @@ export class WindowsPtyAgent {
 
   private _cleanUpProcess(): void {
     this._inSocket.readable = false;
-    this._inSocket.writable = false;
     this._outSocket.readable = false;
-    this._outSocket.writable = false;
     this._outSocket.destroy();
   }
 }

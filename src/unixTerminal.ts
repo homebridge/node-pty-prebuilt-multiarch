@@ -4,11 +4,31 @@
  * Copyright (c) 2018, Microsoft Corporation (MIT License).
  */
 import * as net from 'net';
+import * as path from 'path';
 import { Terminal, DEFAULT_COLS, DEFAULT_ROWS } from './terminal';
 import { IProcessEnv, IPtyForkOptions, IPtyOpenOptions } from './interfaces';
 import { ArgvOrCommandLine } from './types';
 import { assign } from './utils';
-import pty from './prebuild-loader';
+
+let pty: IUnixNative;
+let helperPath: string;
+try {
+  pty = require('../build/Release/pty.node');
+  helperPath = '../build/Release/spawn-helper';
+} catch (outerError) {
+  try {
+    pty = require('../build/Debug/pty.node');
+    helperPath = '../build/Debug/spawn-helper';
+  } catch (innerError) {
+    console.error('innerError', innerError);
+    // Re-throw the exception from the Release require if the Debug require fails as well
+    throw outerError;
+  }
+}
+
+helperPath = path.resolve(__dirname, helperPath);
+helperPath = helperPath.replace('app.asar', 'app.asar.unpacked');
+helperPath = helperPath.replace('node_modules.asar', 'node_modules.asar.unpacked');
 
 const DEFAULT_FILE = 'sh';
 const DEFAULT_NAME = 'xterm';
@@ -24,13 +44,13 @@ export class UnixTerminal extends Terminal {
   protected _readable: boolean;
   protected _writable: boolean;
 
-  private _boundClose: boolean;
-  private _emittedClose: boolean;
-  private _master: net.Socket;
-  private _slave: net.Socket;
+  private _boundClose: boolean = false;
+  private _emittedClose: boolean = false;
+  private _master: net.Socket | undefined;
+  private _slave: net.Socket | undefined;
 
-  public get master(): net.Socket { return this._master; }
-  public get slave(): net.Socket { return this._slave; }
+  public get master(): net.Socket | undefined { return this._master; }
+  public get slave(): net.Socket | undefined { return this._slave; }
 
   constructor(file?: string, args?: ArgvOrCommandLine, opt?: IPtyForkOptions) {
     super(opt);
@@ -47,9 +67,9 @@ export class UnixTerminal extends Terminal {
 
     this._cols = opt.cols || DEFAULT_COLS;
     this._rows = opt.rows || DEFAULT_ROWS;
-    const uid = opt.uid || -1;
-    const gid = opt.gid || -1;
-    const env = assign({}, opt.env);
+    const uid = opt.uid ?? -1;
+    const gid = opt.gid ?? -1;
+    const env: IProcessEnv = assign({}, opt.env);
 
     if (opt.env === process.env) {
       this._sanitizeEnv(env);
@@ -74,7 +94,7 @@ export class UnixTerminal extends Terminal {
         // From macOS High Sierra 10.13.2 sometimes the socket never gets
         // closed. A timeout is applied here to avoid the terminal never being
         // destroyed when this occurs.
-        let timeout = setTimeout(() => {
+        let timeout: NodeJS.Timeout | null = setTimeout(() => {
           timeout = null;
           // Destroying the socket now will cause the close event to fire
           this._socket.destroy();
@@ -91,7 +111,7 @@ export class UnixTerminal extends Terminal {
     };
 
     // fork
-    const term = pty.fork(file, args, parsedEnv, cwd, this._cols, this._rows, uid, gid, (encoding === 'utf8'), onexit);
+    const term = pty.fork(file, args, parsedEnv, cwd, this._cols, this._rows, uid, gid, (encoding === 'utf8'), helperPath, onexit);
 
     this._socket = new PipeSocket(term.fd);
     if (encoding !== null) {
@@ -157,6 +177,10 @@ export class UnixTerminal extends Terminal {
     this._socket.write(data);
   }
 
+  /* Accessors */
+  get fd(): number { return this._fd; }
+  get ptsName(): string { return this._pty; }
+
   /**
    * openpty
    */
@@ -192,7 +216,7 @@ export class UnixTerminal extends Terminal {
     self._slave.resume();
 
     self._socket = self._master;
-    self._pid = null;
+    self._pid = -1;
     self._fd = term.master;
     self._pty = term.pty;
 
@@ -238,6 +262,11 @@ export class UnixTerminal extends Terminal {
    * Gets the name of the process.
    */
   public get process(): string {
+    if (process.platform === 'darwin') {
+      const title = pty.process(this._fd);
+      return (title !== 'kernel_task' ) ? title : this._file;
+    }
+
     return pty.process(this._fd, this._pty) || this._file;
   }
 
@@ -252,6 +281,10 @@ export class UnixTerminal extends Terminal {
     pty.resize(this._fd, cols, rows);
     this._cols = cols;
     this._rows = rows;
+  }
+
+  public clear(): void {
+
   }
 
   private _sanitizeEnv(env: IProcessEnv): void {

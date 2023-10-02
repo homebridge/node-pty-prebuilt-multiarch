@@ -32,19 +32,13 @@
 
 /* forkpty */
 /* http://www.gnu.org/software/gnulib/manual/html_node/forkpty.html */
-#if defined(__GLIBC__) || defined(__CYGWIN__)
+#if defined(__linux__)
 #include <pty.h>
-#elif defined(__APPLE__) || defined(__OpenBSD__) || defined(__NetBSD__)
+#elif defined(__APPLE__)
 #include <util.h>
 #elif defined(__FreeBSD__)
 #include <libutil.h>
-#elif defined(__sun)
-#include <stropts.h> /* for I_PUSH */
-#else
-#include <pty.h>
 #endif
-
-#include <termios.h> /* tcgetattr, tty_ioctl */
 
 /* Some platforms name VWERASE and VDISCARD differently */
 #if !defined(VWERASE) && defined(VWERSE)
@@ -54,27 +48,55 @@
 #define VDISCARD	VDISCRD
 #endif
 
-/* environ for execvpe */
-/* node/src/node_child_process.cc */
-#if defined(__APPLE__) && !TARGET_OS_IPHONE
-#include <crt_externs.h>
-#define environ (*_NSGetEnviron())
-#else
-extern char **environ;
-#endif
-
 /* for pty_getproc */
 #if defined(__linux__)
 #include <stdio.h>
 #include <stdint.h>
 #elif defined(__APPLE__)
-#include <sys/sysctl.h>
 #include <libproc.h>
+#include <os/availability.h>
+#include <paths.h>
+#include <spawn.h>
+#include <sys/event.h>
+#include <sys/sysctl.h>
+#include <termios.h>
 #endif
 
 /* NSIG - macro for highest signal + 1, should be defined */
 #ifndef NSIG
 #define NSIG 32
+#endif
+
+/* macOS 10.14 back does not define this constant */
+#ifndef POSIX_SPAWN_SETSID
+  #define POSIX_SPAWN_SETSID 1024
+#endif
+
+/* environ for execvpe */
+/* node/src/node_child_process.cc */
+#if !defined(__APPLE__)
+extern char **environ;
+#endif
+
+#if defined(__APPLE__)
+extern "C" {
+// Changes the current thread's directory to a path or directory file
+// descriptor. libpthread only exposes a syscall wrapper starting in
+// macOS 10.12, but the system call dates back to macOS 10.5. On older OSes,
+// the syscall is issued directly.
+int pthread_chdir_np(const char* dir) API_AVAILABLE(macosx(10.12));
+int pthread_fchdir_np(int fd) API_AVAILABLE(macosx(10.12));
+}
+
+#define HANDLE_EINTR(x) ({ \
+  int eintr_wrapper_counter = 0; \
+  decltype(x) eintr_wrapper_result; \
+  do { \
+    eintr_wrapper_result = (x); \
+  } while (eintr_wrapper_result == -1 && errno == EINTR && \
+           eintr_wrapper_counter++ < 100); \
+  eintr_wrapper_result; \
+})
 #endif
 
 /**
@@ -104,23 +126,15 @@ NAN_METHOD(PtyGetProc);
  */
 
 static int
-pty_execvpe(const char *, char **, char **);
-
-static int
 pty_nonblock(int);
 
+#if defined(__APPLE__)
+static char *
+pty_getproc(int);
+#else
 static char *
 pty_getproc(int, char *);
-
-static int
-pty_openpty(int *, int *, char *,
-            const struct termios *,
-            const struct winsize *);
-
-static pid_t
-pty_forkpty(int *, char *,
-            const struct termios *,
-            const struct winsize *);
+#endif
 
 static void
 pty_waitpid(void *);
@@ -131,10 +145,20 @@ pty_after_waitpid(uv_async_t *);
 static void
 pty_after_close(uv_handle_t *);
 
+#if defined(__APPLE__) || defined(__OpenBSD__)
+static void
+pty_posix_spawn(char** argv, char** env,
+                const struct termios *termp,
+                const struct winsize *winp,
+                int* master,
+                pid_t* pid,
+                int* err);
+#endif
+
 NAN_METHOD(PtyFork) {
   Nan::HandleScope scope;
 
-  if (info.Length() != 10 ||
+  if (info.Length() != 11 ||
       !info[0]->IsString() ||
       !info[1]->IsArray() ||
       !info[2]->IsArray() ||
@@ -144,41 +168,30 @@ NAN_METHOD(PtyFork) {
       !info[6]->IsNumber() ||
       !info[7]->IsNumber() ||
       !info[8]->IsBoolean() ||
-      !info[9]->IsFunction()) {
+      !info[9]->IsString() ||
+      !info[10]->IsFunction()) {
     return Nan::ThrowError(
-        "Usage: pty.fork(file, args, env, cwd, cols, rows, uid, gid, utf8, onexit)");
+        "Usage: pty.fork(file, args, env, cwd, cols, rows, uid, gid, utf8, helperPath, onexit)");
   }
 
   // file
   Nan::Utf8String file(info[0]);
 
   // args
-  int i = 0;
   v8::Local<v8::Array> argv_ = v8::Local<v8::Array>::Cast(info[1]);
-  int argc = argv_->Length();
-  int argl = argc + 1 + 1;
-  char **argv = new char*[argl];
-  argv[0] = strdup(*file);
-  argv[argl-1] = NULL;
-  for (; i < argc; i++) {
-    Nan::Utf8String arg(Nan::Get(argv_, i).ToLocalChecked());
-    argv[i+1] = strdup(*arg);
-  }
 
   // env
-  i = 0;
   v8::Local<v8::Array> env_ = v8::Local<v8::Array>::Cast(info[2]);
   int envc = env_->Length();
   char **env = new char*[envc+1];
   env[envc] = NULL;
-  for (; i < envc; i++) {
+  for (int i = 0; i < envc; i++) {
     Nan::Utf8String pair(Nan::Get(env_, i).ToLocalChecked());
     env[i] = strdup(*pair);
   }
 
   // cwd
   Nan::Utf8String cwd_(info[3]);
-  char *cwd = strdup(*cwd_);
 
   // size
   struct winsize winp;
@@ -186,6 +199,12 @@ NAN_METHOD(PtyFork) {
   winp.ws_row = info[5]->IntegerValue(Nan::GetCurrentContext()).FromJust();
   winp.ws_xpixel = 0;
   winp.ws_ypixel = 0;
+
+#if !defined(__APPLE__)
+  // uid / gid
+  int uid = info[6]->IntegerValue(Nan::GetCurrentContext()).FromJust();
+  int gid = info[7]->IntegerValue(Nan::GetCurrentContext()).FromJust();
+#endif
 
   // termios
   struct termios t = termios();
@@ -225,16 +244,48 @@ NAN_METHOD(PtyFork) {
   cfsetispeed(term, B38400);
   cfsetospeed(term, B38400);
 
-  // uid / gid
-  int uid = info[6]->IntegerValue(Nan::GetCurrentContext()).FromJust();
-  int gid = info[7]->IntegerValue(Nan::GetCurrentContext()).FromJust();
+  // helperPath
+  Nan::Utf8String helper_path(info[9]);
 
-  // fork the pty
-  int master = -1;
+  pid_t pid;
+  int master;
+#if defined(__APPLE__)
+  int argc = argv_->Length();
+  int argl = argc + 4;
+  char **argv = new char*[argl];
+  argv[0] = strdup(*helper_path);
+  argv[1] = strdup(*cwd_);
+  argv[2] = strdup(*file);
+  argv[argl - 1] = NULL;
+  for (int i = 0; i < argc; i++) {
+    Nan::Utf8String arg(Nan::Get(argv_, i).ToLocalChecked());
+    argv[i + 3] = strdup(*arg);
+  }
 
+  int err = -1;
+  pty_posix_spawn(argv, env, term, &winp, &master, &pid, &err);
+  if (err != 0) {
+    Nan::ThrowError("posix_spawnp failed.");
+    goto done;
+  }
+  if (pty_nonblock(master) == -1) {
+    Nan::ThrowError("Could not set master fd to nonblocking.");
+    goto done;
+  }
+#else
+  int argc = argv_->Length();
+  int argl = argc + 2;
+  char **argv = new char*[argl];
+  argv[0] = strdup(*file);
+  argv[argl - 1] = NULL;
+  for (int i = 0; i < argc; i++) {
+    Nan::Utf8String arg(Nan::Get(argv_, i).ToLocalChecked());
+    argv[i + 1] = strdup(*arg);
+  }
+
+  char* cwd = strdup(*cwd_);
   sigset_t newmask, oldmask;
   struct sigaction sig_action;
-
   // temporarily block all signals
   // this is needed due to a race condition in openpty
   // and to avoid running signal handlers in the child
@@ -242,7 +293,7 @@ NAN_METHOD(PtyFork) {
   sigfillset(&newmask);
   pthread_sigmask(SIG_SETMASK, &newmask, &oldmask);
 
-  pid_t pid = pty_forkpty(&master, nullptr, term, &winp);
+  pid = forkpty(&master, nullptr, static_cast<termios*>(term), static_cast<winsize*>(&winp));
 
   if (!pid) {
     // remove all signal handler from child
@@ -252,21 +303,23 @@ NAN_METHOD(PtyFork) {
     for (int i = 0 ; i < NSIG ; i++) {    // NSIG is a macro for all signals + 1
       sigaction(i, &sig_action, NULL);
     }
-  }
-  // reenable signals
-  pthread_sigmask(SIG_SETMASK, &oldmask, NULL);
-
-  if (pid) {
-    for (i = 0; i < argl; i++) free(argv[i]);
+  } else {
+    for (int i = 0; i < argl; i++) free(argv[i]);
     delete[] argv;
-    for (i = 0; i < envc; i++) free(env[i]);
+
+    for (int i = 0; i < envc; i++) free(env[i]);
     delete[] env;
+
     free(cwd);
   }
 
+  // reenable signals
+  pthread_sigmask(SIG_SETMASK, &oldmask, NULL);
+
   switch (pid) {
     case -1:
-      return Nan::ThrowError("forkpty(3) failed.");
+      Nan::ThrowError("forkpty(3) failed.");
+      goto done;
     case 0:
       if (strlen(cwd)) {
         if (chdir(cwd) == -1) {
@@ -286,40 +339,56 @@ NAN_METHOD(PtyFork) {
         }
       }
 
-      pty_execvpe(argv[0], argv, env);
-
-      perror("execvp(3) failed.");
-      _exit(1);
+      {
+        char **old = environ;
+        environ = env;
+        execvp(argv[0], argv);
+        environ = old;
+        perror("execvp(3) failed.");
+        _exit(1);
+      }
     default:
       if (pty_nonblock(master) == -1) {
-        return Nan::ThrowError("Could not set master fd to nonblocking.");
+        Nan::ThrowError("Could not set master fd to nonblocking.");
+        goto done;
       }
+  }
+#endif
 
-      v8::Local<v8::Object> obj = Nan::New<v8::Object>();
-      Nan::Set(obj,
-        Nan::New<v8::String>("fd").ToLocalChecked(),
-        Nan::New<v8::Number>(master));
-      Nan::Set(obj,
-        Nan::New<v8::String>("pid").ToLocalChecked(),
-        Nan::New<v8::Number>(pid));
-      Nan::Set(obj,
-        Nan::New<v8::String>("pty").ToLocalChecked(),
-        Nan::New<v8::String>(ptsname(master)).ToLocalChecked());
+  {
+    v8::Local<v8::Object> obj = Nan::New<v8::Object>();
+    Nan::Set(obj,
+      Nan::New<v8::String>("fd").ToLocalChecked(),
+      Nan::New<v8::Number>(master));
+    Nan::Set(obj,
+      Nan::New<v8::String>("pid").ToLocalChecked(),
+      Nan::New<v8::Number>(pid));
+    Nan::Set(obj,
+      Nan::New<v8::String>("pty").ToLocalChecked(),
+      Nan::New<v8::String>(ptsname(master)).ToLocalChecked());
 
-      pty_baton *baton = new pty_baton();
-      baton->exit_code = 0;
-      baton->signal_code = 0;
-      baton->cb.Reset(v8::Local<v8::Function>::Cast(info[9]));
-      baton->pid = pid;
-      baton->async.data = baton;
+    pty_baton *baton = new pty_baton();
+    baton->exit_code = 0;
+    baton->signal_code = 0;
+    baton->cb.Reset(v8::Local<v8::Function>::Cast(info[10]));
+    baton->pid = pid;
+    baton->async.data = baton;
 
-      uv_async_init(uv_default_loop(), &baton->async, pty_after_waitpid);
+    uv_async_init(uv_default_loop(), &baton->async, pty_after_waitpid);
 
-      uv_thread_create(&baton->tid, pty_waitpid, static_cast<void*>(baton));
+    uv_thread_create(&baton->tid, pty_waitpid, static_cast<void*>(baton));
 
-      return info.GetReturnValue().Set(obj);
+    return info.GetReturnValue().Set(obj);
   }
 
+done:
+#if defined(__APPLE__)
+  for (int i = 0; i < argl; i++) free(argv[i]);
+  delete[] argv;
+
+  for (int i = 0; i < envc; i++) free(env[i]);
+  delete[] env;
+#endif
   return info.GetReturnValue().SetUndefined();
 }
 
@@ -341,7 +410,7 @@ NAN_METHOD(PtyOpen) {
 
   // pty
   int master, slave;
-  int ret = pty_openpty(&master, &slave, nullptr, NULL, &winp);
+  int ret = openpty(&master, &slave, nullptr, NULL, static_cast<winsize*>(&winp));
 
   if (ret == -1) {
     return Nan::ThrowError("openpty(3) failed.");
@@ -406,6 +475,15 @@ NAN_METHOD(PtyResize) {
 NAN_METHOD(PtyGetProc) {
   Nan::HandleScope scope;
 
+#if defined(__APPLE__)
+  if (info.Length() != 1 ||
+      !info[0]->IsNumber()) {
+    return Nan::ThrowError("Usage: pty.process(pid)");
+  }
+
+  int fd = info[0]->IntegerValue(Nan::GetCurrentContext()).FromJust();
+  char *name = pty_getproc(fd);
+#else
   if (info.Length() != 2 ||
       !info[0]->IsNumber() ||
       !info[1]->IsString()) {
@@ -418,6 +496,7 @@ NAN_METHOD(PtyGetProc) {
   char *tty = strdup(*tty_);
   char *name = pty_getproc(fd, tty);
   free(tty);
+#endif
 
   if (name == NULL) {
     return info.GetReturnValue().SetUndefined();
@@ -426,21 +505,6 @@ NAN_METHOD(PtyGetProc) {
   v8::Local<v8::String> name_ = Nan::New<v8::String>(name).ToLocalChecked();
   free(name);
   return info.GetReturnValue().Set(name_);
-}
-
-/**
- * execvpe
- */
-
-// execvpe(3) is not portable.
-// http://www.gnu.org/software/gnulib/manual/html_node/execvpe.html
-static int
-pty_execvpe(const char *file, char **argv, char **envp) {
-  char **old = environ;
-  environ = envp;
-  int ret = execvp(file, argv);
-  environ = old;
-  return ret;
 }
 
 /**
@@ -463,11 +527,44 @@ static void
 pty_waitpid(void *data) {
   int ret;
   int stat_loc;
-
   pty_baton *baton = static_cast<pty_baton*>(data);
-
   errno = 0;
-
+#if defined(__APPLE__)
+  // Based on
+  // https://source.chromium.org/chromium/chromium/src/+/main:base/process/kill_mac.cc;l=35-69?
+  int kq = HANDLE_EINTR(kqueue());
+  struct kevent change = {0};
+  EV_SET(&change, baton->pid, EVFILT_PROC, EV_ADD, NOTE_EXIT, 0, NULL);
+  ret = HANDLE_EINTR(kevent(kq, &change, 1, NULL, 0, NULL));
+  if (ret == -1) {
+    if (errno == ESRCH) {
+      // At this point, one of the following has occurred:
+      // 1. The process has died but has not yet been reaped.
+      // 2. The process has died and has already been reaped.
+      // 3. The process is in the process of dying. It's no longer
+      //    kqueueable, but it may not be waitable yet either. Mark calls
+      //    this case the "zombie death race".
+      ret = HANDLE_EINTR(waitpid(baton->pid, &stat_loc, WNOHANG));
+      if (ret == 0) {
+        ret = kill(baton->pid, SIGKILL);
+        if (ret != -1) {
+          HANDLE_EINTR(waitpid(baton->pid, &stat_loc, 0));
+        }
+      }
+    }
+  } else {
+    struct kevent event = {0};
+    ret = HANDLE_EINTR(kevent(kq, NULL, 0, &event, 1, NULL));
+    if (ret == 1) {
+      if ((event.fflags & NOTE_EXIT) &&
+          (event.ident == static_cast<uintptr_t>(baton->pid))) {
+        // The process is dead or dying. This won't block for long, if at
+        // all.
+        HANDLE_EINTR(waitpid(baton->pid, &stat_loc, 0));
+      }
+    }
+  }
+#else
   if ((ret = waitpid(baton->pid, &stat_loc, 0)) != baton->pid) {
     if (ret == -1 && errno == EINTR) {
       return pty_waitpid(baton);
@@ -480,6 +577,7 @@ pty_waitpid(void *data) {
       assert(false);
     }
   }
+#endif
 
   if (WIFEXITED(stat_loc)) {
     baton->exit_code = WEXITSTATUS(stat_loc); // errno?
@@ -595,7 +693,7 @@ pty_getproc(int fd, char *tty) {
 #elif defined(__APPLE__)
 
 static char *
-pty_getproc(int fd, char *tty) {
+pty_getproc(int fd) {
   int mib[4] = { CTL_KERN, KERN_PROC, KERN_PROC_PID, 0 };
   size_t size;
   struct kinfo_proc kp;
@@ -625,99 +723,106 @@ pty_getproc(int fd, char *tty) {
 
 #endif
 
-/**
- * openpty(3) / forkpty(3)
- */
+#if defined(__APPLE__)
+static void
+pty_posix_spawn(char** argv, char** env,
+                const struct termios *termp,
+                const struct winsize *winp,
+                int* master,
+                pid_t* pid,
+                int* err) {
+  int low_fds[3];
+  size_t count = 0;
 
-static int
-pty_openpty(int *amaster,
-            int *aslave,
-            char *name,
-            const struct termios *termp,
-            const struct winsize *winp) {
-#if defined(__sun)
-  char *slave_name;
-  int slave;
-  int master = open("/dev/ptmx", O_RDWR | O_NOCTTY);
-  if (master == -1) return -1;
-  if (amaster) *amaster = master;
-
-  if (grantpt(master) == -1) goto err;
-  if (unlockpt(master) == -1) goto err;
-
-  slave_name = ptsname(master);
-  if (slave_name == NULL) goto err;
-  if (name) strcpy(name, slave_name);
-
-  slave = open(slave_name, O_RDWR | O_NOCTTY);
-  if (slave == -1) goto err;
-  if (aslave) *aslave = slave;
-
-  ioctl(slave, I_PUSH, "ptem");
-  ioctl(slave, I_PUSH, "ldterm");
-  ioctl(slave, I_PUSH, "ttcompat");
-
-  if (termp) tcsetattr(slave, TCSAFLUSH, termp);
-  if (winp) ioctl(slave, TIOCSWINSZ, winp);
-
-  return 0;
-
-err:
-  close(master);
-  return -1;
-#else
-  return openpty(amaster, aslave, name, (termios *)termp, (winsize *)winp);
-#endif
-}
-
-static pid_t
-pty_forkpty(int *amaster,
-            char *name,
-            const struct termios *termp,
-            const struct winsize *winp) {
-#if defined(__sun)
-  int master, slave;
-
-  int ret = pty_openpty(&master, &slave, name, termp, winp);
-  if (ret == -1) return -1;
-  if (amaster) *amaster = master;
-
-  pid_t pid = fork();
-
-  switch (pid) {
-    case -1:  // error in fork, we are still in parent
-      close(master);
-      close(slave);
-      return -1;
-    case 0:  // we are in the child process
-      close(master);
-      setsid();
-
-#if defined(TIOCSCTTY)
-      // glibc does this
-      if (ioctl(slave, TIOCSCTTY, NULL) == -1) {
-        _exit(1);
-      }
-#endif
-
-      dup2(slave, 0);
-      dup2(slave, 1);
-      dup2(slave, 2);
-
-      if (slave > 2) close(slave);
-
-      return 0;
-    default:  // we are in the parent process
-      close(slave);
-      return pid;
+  for (; count < 3; count++) {
+    low_fds[count] = posix_openpt(O_RDWR);
+    if (low_fds[count] >= STDERR_FILENO)
+      break;
   }
 
-  return -1;
-#else
-  return forkpty(amaster, name, (termios *)termp, (winsize *)winp);
-#endif
-}
+  int flags = POSIX_SPAWN_CLOEXEC_DEFAULT |
+              POSIX_SPAWN_SETSIGDEF |
+              POSIX_SPAWN_SETSIGMASK |
+              POSIX_SPAWN_SETSID;
+  *master = posix_openpt(O_RDWR);
+  if (*master == -1) {
+    return;
+  }
 
+  int res = grantpt(*master) || unlockpt(*master);
+  if (res == -1) {
+    return;
+  }
+
+  // Use TIOCPTYGNAME instead of ptsname() to avoid threading problems.
+  int slave;
+  char slave_pty_name[128];
+  res = ioctl(*master, TIOCPTYGNAME, slave_pty_name);
+  if (res == -1) {
+    return;
+  }
+
+  slave = open(slave_pty_name, O_RDWR | O_NOCTTY);
+  if (slave == -1) {
+    return;
+  }
+
+  if (termp) {
+    res = tcsetattr(slave, TCSANOW, termp);
+    if (res == -1) {
+      return;
+    };
+  }
+
+  if (winp) {
+    res = ioctl(slave, TIOCSWINSZ, winp);
+    if (res == -1) {
+      return;
+    }
+  }
+
+  posix_spawn_file_actions_t acts;
+  posix_spawn_file_actions_init(&acts);
+  posix_spawn_file_actions_adddup2(&acts, slave, STDIN_FILENO);
+  posix_spawn_file_actions_adddup2(&acts, slave, STDOUT_FILENO);
+  posix_spawn_file_actions_adddup2(&acts, slave, STDERR_FILENO);
+  posix_spawn_file_actions_addclose(&acts, slave);
+  posix_spawn_file_actions_addclose(&acts, *master);
+
+  posix_spawnattr_t attrs;
+  posix_spawnattr_init(&attrs);
+  *err = posix_spawnattr_setflags(&attrs, flags);
+  if (*err != 0) {
+    goto done;
+  }
+
+  sigset_t signal_set;
+  /* Reset all signal the child to their default behavior */
+  sigfillset(&signal_set);
+  *err = posix_spawnattr_setsigdefault(&attrs, &signal_set);
+  if (*err != 0) {
+    goto done;
+  }
+
+  /* Reset the signal mask for all signals */
+  sigemptyset(&signal_set);
+  *err = posix_spawnattr_setsigmask(&attrs, &signal_set);
+  if (*err != 0) {
+    goto done;
+  }
+
+  do
+    *err = posix_spawn(pid, argv[0], &acts, &attrs, argv, env);
+  while (*err == EINTR);
+done:
+  posix_spawn_file_actions_destroy(&acts);
+  posix_spawnattr_destroy(&attrs);
+
+  for (; count > 0; count--) {
+    close(low_fds[count]);
+  }
+}
+#endif
 
 /**
  * Init

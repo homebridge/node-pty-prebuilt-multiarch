@@ -165,5 +165,26 @@
     "lts": false,
     "future": true,
     "abi": "108"
+  },
+  {
+    "runtime": "node",
+    "target": "19.0.0",
+    "lts": false,
+    "future": true,
+    "abi": "111"
+  },
+  {
+    "abi": "107",
+    "future": false,
+    "lts": false,
+    "runtime": "electron",
+    "target": "20.0.0"
+  },
+  {
+    "runtime": "node",
+    "target": "20.0.0",
+    "lts": false,
+    "future": true,
+    "abi": "115"
   }
 ]

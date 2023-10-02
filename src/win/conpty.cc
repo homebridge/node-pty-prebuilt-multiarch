@@ -34,6 +34,7 @@ extern "C" void init(v8::Local<v8::Object>);
 typedef VOID* HPCON;
 typedef HRESULT (__stdcall *PFNCREATEPSEUDOCONSOLE)(COORD c, HANDLE hIn, HANDLE hOut, DWORD dwFlags, HPCON* phpcon);
 typedef HRESULT (__stdcall *PFNRESIZEPSEUDOCONSOLE)(HPCON hpc, COORD newSize);
+typedef HRESULT (__stdcall *PFNCLEARPSEUDOCONSOLE)(HPCON hpc);
 typedef void (__stdcall *PFNCLOSEPSEUDOCONSOLE)(HPCON hpc);
 
 #endif
@@ -178,8 +179,8 @@ static NAN_METHOD(PtyStartProcess) {
   }
 
   const std::wstring filename(path_util::to_wstring(Nan::Utf8String(info[0])));
-  const SHORT cols = info[1]->Uint32Value(Nan::GetCurrentContext()).FromJust();
-  const SHORT rows = info[2]->Uint32Value(Nan::GetCurrentContext()).FromJust();
+  const SHORT cols = static_cast<SHORT>(info[1]->Uint32Value(Nan::GetCurrentContext()).FromJust());
+  const SHORT rows = static_cast<SHORT>(info[2]->Uint32Value(Nan::GetCurrentContext()).FromJust());
   const bool debug = Nan::To<bool>(info[3]).FromJust();
   const std::wstring pipeName(path_util::to_wstring(Nan::Utf8String(info[4])));
   const bool inheritCursor = Nan::To<bool>(info[5]).FromJust();
@@ -193,12 +194,10 @@ static NAN_METHOD(PtyStartProcess) {
     shellpath = filename;
   }
 
-  std::string shellpath_(shellpath.begin(), shellpath.end());
-
   if (shellpath.empty() || !path_util::file_exists(shellpath)) {
-    std::stringstream why;
-    why << "File not found: " << shellpath_;
-    Nan::ThrowError(why.str().c_str());
+    std::wstringstream why;
+    why << "File not found: " << shellpath;
+    Nan::ThrowError(path_util::from_wstring(why.str().c_str()));
     return;
   }
 
@@ -222,14 +221,20 @@ static NAN_METHOD(PtyStartProcess) {
     return;
   }
 
-  Nan::Set(marshal, Nan::New<v8::String>("fd").ToLocalChecked(), Nan::New<v8::Number>(-1));
-  {
-    std::string coninPipeNameStr(inName.begin(), inName.end());
-    Nan::Set(marshal, Nan::New<v8::String>("conin").ToLocalChecked(), Nan::New<v8::String>(coninPipeNameStr).ToLocalChecked());
-
-    std::string conoutPipeNameStr(outName.begin(), outName.end());
-    Nan::Set(marshal, Nan::New<v8::String>("conout").ToLocalChecked(), Nan::New<v8::String>(conoutPipeNameStr).ToLocalChecked());
+  std::string inNameStr(path_util::from_wstring(inName.c_str()));
+  if (inNameStr.empty()) {
+    Nan::ThrowError("Failed to initialize conpty conin");
+    return;
   }
+  std::string outNameStr(path_util::from_wstring(outName.c_str()));
+  if (outNameStr.empty()) {
+    Nan::ThrowError("Failed to initialize conpty conout");
+    return;
+  }
+
+  Nan::Set(marshal, Nan::New<v8::String>("fd").ToLocalChecked(), Nan::New<v8::Number>(-1));
+  Nan::Set(marshal, Nan::New<v8::String>("conin").ToLocalChecked(), Nan::New<v8::String>(inNameStr).ToLocalChecked());
+  Nan::Set(marshal, Nan::New<v8::String>("conout").ToLocalChecked(), Nan::New<v8::String>(outNameStr).ToLocalChecked());
   info.GetReturnValue().Set(marshal);
 }
 
@@ -289,6 +294,13 @@ static NAN_METHOD(PtyConnect) {
   const v8::Local<v8::Array> envValues = info[3].As<v8::Array>();
   const v8::Local<v8::Function> exitCallback = v8::Local<v8::Function>::Cast(info[4]);
 
+  // Fetch pty handle from ID and start process
+  pty_baton* handle = get_pty_baton(id);
+  if (!handle) {
+    Nan::ThrowError("Invalid pty handle");
+    return;
+  }
+
   // Prepare command line
   std::unique_ptr<wchar_t[]> mutableCommandline = std::make_unique<wchar_t[]>(cmdline.length() + 1);
   HRESULT hr = StringCchCopyW(mutableCommandline.get(), cmdline.length() + 1, cmdline.c_str());
@@ -311,11 +323,8 @@ static NAN_METHOD(PtyConnect) {
   auto envV = vectorFromString(env);
   LPWSTR envArg = envV.empty() ? nullptr : envV.data();
 
-  // Fetch pty handle from ID and start process
-  pty_baton* handle = get_pty_baton(id);
-
-  BOOL success = ConnectNamedPipe(handle->hIn, nullptr);
-  success = ConnectNamedPipe(handle->hOut, nullptr);
+  ConnectNamedPipe(handle->hIn, nullptr);
+  ConnectNamedPipe(handle->hOut, nullptr);
 
   // Attach the pseudoconsole to the client application we're creating
   STARTUPINFOEXW siEx{0};
@@ -391,20 +400,51 @@ static NAN_METHOD(PtyResize) {
   }
 
   int id = info[0]->Int32Value(Nan::GetCurrentContext()).FromJust();
-  SHORT cols = info[1]->Uint32Value(Nan::GetCurrentContext()).FromJust();
-  SHORT rows = info[2]->Uint32Value(Nan::GetCurrentContext()).FromJust();
+  SHORT cols = static_cast<SHORT>(info[1]->Uint32Value(Nan::GetCurrentContext()).FromJust());
+  SHORT rows = static_cast<SHORT>(info[2]->Uint32Value(Nan::GetCurrentContext()).FromJust());
 
   const pty_baton* handle = get_pty_baton(id);
 
-  HANDLE hLibrary = LoadLibraryExW(L"kernel32.dll", 0, 0);
-  bool fLoadedDll = hLibrary != nullptr;
-  if (fLoadedDll)
-  {
-    PFNRESIZEPSEUDOCONSOLE const pfnResizePseudoConsole = (PFNRESIZEPSEUDOCONSOLE)GetProcAddress((HMODULE)hLibrary, "ResizePseudoConsole");
-    if (pfnResizePseudoConsole)
+  if (handle != nullptr) {
+    HANDLE hLibrary = LoadLibraryExW(L"kernel32.dll", 0, 0);
+    bool fLoadedDll = hLibrary != nullptr;
+    if (fLoadedDll)
     {
-      COORD size = {cols, rows};
-      pfnResizePseudoConsole(handle->hpc, size);
+      PFNRESIZEPSEUDOCONSOLE const pfnResizePseudoConsole = (PFNRESIZEPSEUDOCONSOLE)GetProcAddress((HMODULE)hLibrary, "ResizePseudoConsole");
+      if (pfnResizePseudoConsole)
+      {
+        COORD size = {cols, rows};
+        pfnResizePseudoConsole(handle->hpc, size);
+      }
+    }
+  }
+
+  return info.GetReturnValue().SetUndefined();
+}
+
+static NAN_METHOD(PtyClear) {
+  Nan::HandleScope scope;
+
+  if (info.Length() != 1 ||
+      !info[0]->IsNumber()) {
+    Nan::ThrowError("Usage: pty.clear(id)");
+    return;
+  }
+
+  int id = info[0]->Int32Value(Nan::GetCurrentContext()).FromJust();
+
+  const pty_baton* handle = get_pty_baton(id);
+
+  if (handle != nullptr) {
+    HANDLE hLibrary = LoadLibraryExW(L"kernel32.dll", 0, 0);
+    bool fLoadedDll = hLibrary != nullptr;
+    if (fLoadedDll)
+    {
+      PFNCLEARPSEUDOCONSOLE const pfnClearPseudoConsole = (PFNCLEARPSEUDOCONSOLE)GetProcAddress((HMODULE)hLibrary, "ClearPseudoConsole");
+      if (pfnClearPseudoConsole)
+      {
+        pfnClearPseudoConsole(handle->hpc);
+      }
     }
   }
 
@@ -424,18 +464,24 @@ static NAN_METHOD(PtyKill) {
 
   const pty_baton* handle = get_pty_baton(id);
 
-  HANDLE hLibrary = LoadLibraryExW(L"kernel32.dll", 0, 0);
-  bool fLoadedDll = hLibrary != nullptr;
-  if (fLoadedDll)
-  {
-    PFNCLOSEPSEUDOCONSOLE const pfnClosePseudoConsole = (PFNCLOSEPSEUDOCONSOLE)GetProcAddress((HMODULE)hLibrary, "ClosePseudoConsole");
-    if (pfnClosePseudoConsole)
+  if (handle != nullptr) {
+    HANDLE hLibrary = LoadLibraryExW(L"kernel32.dll", 0, 0);
+    bool fLoadedDll = hLibrary != nullptr;
+    if (fLoadedDll)
     {
-      pfnClosePseudoConsole(handle->hpc);
+      PFNCLOSEPSEUDOCONSOLE const pfnClosePseudoConsole = (PFNCLOSEPSEUDOCONSOLE)GetProcAddress((HMODULE)hLibrary, "ClosePseudoConsole");
+      if (pfnClosePseudoConsole)
+      {
+        pfnClosePseudoConsole(handle->hpc);
+      }
     }
-  }
 
-  CloseHandle(handle->hShell);
+    DisconnectNamedPipe(handle->hIn);
+    DisconnectNamedPipe(handle->hOut);
+    CloseHandle(handle->hIn);
+    CloseHandle(handle->hOut);
+    CloseHandle(handle->hShell);
+  }
 
   return info.GetReturnValue().SetUndefined();
 }
@@ -449,6 +495,7 @@ extern "C" void init(v8::Local<v8::Object> target) {
   Nan::SetMethod(target, "startProcess", PtyStartProcess);
   Nan::SetMethod(target, "connect", PtyConnect);
   Nan::SetMethod(target, "resize", PtyResize);
+  Nan::SetMethod(target, "clear", PtyClear);
   Nan::SetMethod(target, "kill", PtyKill);
 };
 
