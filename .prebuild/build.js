@@ -27,6 +27,18 @@ if (process.env.QEMU_ARCH === 'i386') {
   // Linux 32 bit support was dropped with 18.4.0
   nodeBuildTargets = [
     '-t',
+    '10.0.0',
+    '-t',
+    '11.0.0',
+    '-t',
+    ' 12.0.0',
+    '-t',
+    '13.0.0',
+    '-t',
+    '14.0.0',
+    '-t',
+    '15.0.0',
+    '-t',
     '16.0.0',
     '-t',
     '17.0.1',
