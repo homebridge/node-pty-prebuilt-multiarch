@@ -69,8 +69,8 @@ jobs:
           - name: darwin-x86_64
             os: macOS-latest
 
-          - name: windows-x86_64
-            os: windows-2019
+#          - name: windows-x86_64
+#            os: windows-2019
 
     steps: 
     - uses: actions/checkout@v4
