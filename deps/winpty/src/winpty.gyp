@@ -11,7 +11,8 @@
 
     'variables': {
         'WINPTY_COMMIT_HASH%': '<!(cmd /c "cd shared && GetCommitHash.bat")',
-    },
+        'openssl_fips': "",
+    }, 
     'target_defaults' : {
         'defines' : [
             'UNICODE',
