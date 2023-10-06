@@ -65,6 +65,8 @@ if (process.env.QEMU_ARCH === 'i386') {
     '17.0.1',
     '-t',
     '18.0.0',
+    '-t',
+    '20.0.0',
   ]
 }
 
@@ -118,7 +120,7 @@ const electronBuildTargets = [
   '-t',
   '17.0.0',
   '-t',
-  '18.0.0'
+  '18.0.0',
 ]
 
 const electronBuildCmd = [
