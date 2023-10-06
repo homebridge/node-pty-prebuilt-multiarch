@@ -34,6 +34,8 @@ const nodeBuildTargets = [
   "18.0.0",
   "-t",
   "19.0.0",
+  "-t",
+  "20.0.0",
 ];
 
 const nodeBuildCmd = [
