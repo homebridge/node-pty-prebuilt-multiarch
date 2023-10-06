@@ -1,0 +1,29 @@
+name: "Prebuild MacOS ARM64 Binaries"
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag'     
+        required: true
+
+jobs:
+  build:
+    runs-on: [self-hosted, macOS, ARM64]
+    steps: 
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v3
+      with:
+        node-version: 18.x
+
+    - name: macOS - Prebuild Binaries
+      if: runner.os == 'macOS'
+      run: |
+        npm install --ignore-scripts
+        node .prebuild/build.js
+
+    - uses: AButler/upload-release-assets@v2.0
+      with:
+        files: 'prebuilds/*/*.tar.gz'
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+        release-tag: ${{ github.event.inputs.tag }}
