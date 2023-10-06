@@ -17,6 +17,8 @@ try {
   helperPath = '../build/Release/spawn-helper';
 } catch (outerError) {
   try {
+    console.error('outerError', outerError);
+    console.error('Trying Debug version');
     pty = require('../build/Debug/pty.node');
     helperPath = '../build/Debug/spawn-helper';
   } catch (innerError) {
