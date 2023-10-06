@@ -15,12 +15,6 @@ const cwd = path.resolve(__dirname, '../');
 // define build targets
 const nodeBuildTargets = [
   '-t',
-  '14.0.0',
-  '-t',
-  '15.0.0',
-  '-t',
-  '16.0.0',
-  '-t',
   '17.0.1',
   '-t',
   '18.0.0',
