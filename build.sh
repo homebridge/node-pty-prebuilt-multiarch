@@ -44,3 +44,8 @@ export DOCKERFILE="Dockerfile.alpine"
 docker build -f .prebuild/$DOCKERFILE --build-arg BASE_IMAGE=${BASE_IMAGE} --build-arg QEMU_ARCH=${QEMU_ARCH} -t multiarch-build .
 docker run --rm -v $(pwd):/node-pty multiarch-build
 
+ if [ "`uname -m`" = "arm64"  ] || [ "`uname`" = "Darwin" ]; then
+   npm install --ignore-scripts
+   node .prebuild/build.js
+   echo "Manually copy the MacOS/ARM binaries to the release"
+ fi
