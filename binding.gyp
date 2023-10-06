@@ -1,4 +1,7 @@
 {
+  'variables': {
+    'openssl_fips': "",
+  },
   'conditions': [
     ['OS=="win"', {
       'targets': [
