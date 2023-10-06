@@ -7,7 +7,7 @@ ENV QEMU_ARCH=${QEMU_ARCH:-x86_64}
 COPY .prebuild/qemu/qemu-${QEMU_ARCH}-static /usr/bin/
 
 RUN apt-get update \
-  && apt-get install -y gcc g++ make python curl
+  && apt-get install -y gcc g++ make python3 curl
 
 RUN [ "$(uname -m)" = "x86_64" ] && apt-get install -y g++-multilib gcc-multilib || echo "ok"
 
