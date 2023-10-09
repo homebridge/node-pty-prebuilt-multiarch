@@ -11,6 +11,9 @@ const prebuildPath = path.resolve(prebuildPkgPath, 'bin.js');
 const abiRegistryJsonPath = path.resolve(nodeAbiPkgPath, 'abi_registry.json');
 fs.copyFileSync(path.resolve(__dirname, 'abi_registry.json'), abiRegistryJsonPath);
 
+const nodeGypPkgPath = path.dirname(require.resolve('prebuild'));
+const nodeGyp = path.resolve(nodeGypPkgPath, 'node_modules/node-gyp/bin/node-gyp.js');
+
 const altAbiRegistryJsonPath = path.resolve(prebuildPkgPath, 'node_modules/node-abi/abi_registry.json');
 if (fs.existsSync(altAbiRegistryJsonPath)) {
   fs.copyFileSync(path.resolve(__dirname, 'abi_registry.json'), altAbiRegistryJsonPath);
@@ -51,6 +54,8 @@ const nodeBuildTargets = [
 const nodeBuildCmd = [
   prebuildPath,
   ...nodeBuildTargets,
+  '--node-gyp',
+  nodeGyp
 ]
 
 if (os.platform() === 'linux' && fs.existsSync('/etc/alpine-release')) {

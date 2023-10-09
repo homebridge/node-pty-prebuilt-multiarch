@@ -14,4 +14,5 @@ npm install --ignore-scripts
    export npm_config_force_process_config="true"
  fi
 
-node .prebuild/build.js
+#node .prebuild/build.js
+node .prebuild/buildify.js
