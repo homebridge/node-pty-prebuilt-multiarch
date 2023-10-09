@@ -81,8 +81,8 @@ jobs:
             os: windows-2022
 
     steps: 
-    - uses: actions/checkout@v1
-    - uses: actions/setup-node@v1
+    - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+    - uses: actions/setup-node@5e21ff4d9bc1a8cf6de233a3057d20ec6b3fb69d # v3.8.1
       with:
         node-version: 16.x
 
@@ -105,7 +105,7 @@ jobs:
 
     - name: macOS - Setup Python
       if: runner.os == 'macOS'
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
       with:
         python-version: '3.11'
         architecture: x64
@@ -124,7 +124,7 @@ jobs:
         yarn install --ignore-scripts
         node .prebuild/buildify-windows.js
 
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
       with:
         name: prebuilds
         path: prebuilds
@@ -134,14 +134,14 @@ jobs:
     needs:
       - prebuild
     steps:
-      - uses: actions/checkout@v1
-      - uses: actions/setup-node@v3.6.0
+      - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+      - uses: actions/setup-node@5e21ff4d9bc1a8cf6de233a3057d20ec6b3fb69d # v3.8.1
         with:
           node-version: 19.x
           registry-url: "https://registry.npmjs.org" # required to use auth
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
         with:
           name: prebuilds
           path: prebuilds
