@@ -70,6 +70,7 @@
     "typescript": "^3.8.3"
   },
   "resolutions": {
-    "node-gyp": "^9.3.0"
+    "node-gyp": "^9.3.0",
+    "node-abi": "3.47.0"
   }
 }
