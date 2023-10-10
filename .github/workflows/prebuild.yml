@@ -115,10 +115,10 @@ jobs:
 
     - name: Package for release
       shell: bash
-      run: for i in `ls prebuilds/`; do tar cvf $i.tar prebuilds/$i; done
+      run: for i in `ls prebuilds/`; do tar cvf prebuilds-$i.tar prebuilds/$i; done
 
     - uses: AButler/upload-release-assets@v2.0
       with:
-        files: '*tar'
+        files: 'prebuilds-*tar'
         repo-token: ${{ secrets.GITHUB_TOKEN }}
         release-tag: ${{ github.event.inputs.tag }}
