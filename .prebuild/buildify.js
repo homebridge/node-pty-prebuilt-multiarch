@@ -53,9 +53,7 @@ const nodeBuildTargets = [
 
 const nodeBuildCmd = [
   prebuildPath,
-  ...nodeBuildTargets,
-  '--node-gyp',
-  nodeGyp
+  ...nodeBuildTargets
 ]
 
 if (os.platform() === 'linux' && fs.existsSync('/etc/alpine-release')) {
