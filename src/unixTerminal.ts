@@ -117,7 +117,7 @@ export class UnixTerminal extends Terminal {
 
     this._socket = new PipeSocket(term.fd);
     if (encoding !== null) {
-      this._socket.setEncoding(encoding);
+      this._socket.setEncoding(encoding as BufferEncoding);
     }
 
     // setup
@@ -207,13 +207,13 @@ export class UnixTerminal extends Terminal {
 
     self._master = new PipeSocket(<number>term.master);
     if (encoding !== null) {
-      self._master.setEncoding(encoding);
+      self._master.setEncoding(encoding as BufferEncoding);
     }
     self._master.resume();
 
     self._slave = new PipeSocket(term.slave);
     if (encoding !== null) {
-      self._slave.setEncoding(encoding);
+      self._slave.setEncoding(encoding as BufferEncoding);
     }
     self._slave.resume();
 

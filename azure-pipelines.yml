@@ -6,13 +6,13 @@
 jobs:
 - job: Linux
   pool:
-    vmImage: 'ubuntu-16.04'
+    vmImage: 'ubuntu-latest'
   strategy:
     matrix:
-      node_10_x:
-        node_version: 10.x
-      node_12_x:
-        node_version: 12.x
+      node_16_x:
+        node_version: 16.x
+      node_18_x:
+        node_version: 18.x
   steps:
   - task: NodeTool@0
     inputs:
@@ -30,13 +30,13 @@ jobs:
 
 - job: macOS
   pool:
-    vmImage: 'macOS-10.15'
+    vmImage: 'macOS-latest'
   strategy:
     matrix:
-      node_10_x:
-        node_version: 10.x
-      node_12_x:
-        node_version: 12.x
+      node_16_x:
+        node_version: 16.x
+      node_18_x:
+        node_version: 18.x
   steps:
   - task: NodeTool@0
     inputs:
@@ -54,13 +54,13 @@ jobs:
 
 - job: Windows
   pool:
-    vmImage: 'vs2017-win2016'
+    vmImage: 'windows-2019'
   strategy:
     matrix:
-      node_10_x:
-        node_version: 10.x
-      node_12_x:
-        node_version: 12.x
+      node_16_x:
+        node_version: 16.x
+      node_18_x:
+        node_version: 18.x
   steps:
   - task: NodeTool@0
     inputs:
@@ -81,13 +81,13 @@ jobs:
   - Linux
   - macOS
   - Windows
-  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
   pool:
-    vmImage: 'ubuntu-16.04'
+    vmImage: 'ubuntu-latest'
   steps:
   - task: NodeTool@0
     inputs:
-      versionSpec: '8.x'
+      versionSpec: '16.x'
     displayName: 'Install Node.js'
   - script: |
       npm i
@@ -95,3 +95,4 @@ jobs:
   - script: |
       NPM_AUTH_TOKEN="$(NPM_AUTH_TOKEN)" node ./scripts/publish.js
     displayName: 'Publish to npm'
+

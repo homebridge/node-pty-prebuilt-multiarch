@@ -42,7 +42,7 @@ declare module '@homebridge/node-pty-prebuilt-multiarch' {
     /**
      * Environment to be set for the child program.
      */
-    env?: { [key: string]: string };
+    env?: { [key: string]: string | undefined };
 
     /**
      * String encoding of the underlying pty.
@@ -78,8 +78,8 @@ declare module '@homebridge/node-pty-prebuilt-multiarch' {
 
   export interface IPtyForkOptions extends IBasePtyForkOptions {
     /**
-     * Security warning: use this option with great caution, as opened file descriptors
-     * with higher privileges might leak to the child program.
+     * Security warning: use this option with great caution,
+     * as opened file descriptors with higher privileges might leak to the child program.
      */
     uid?: number;
     gid?: number;
@@ -147,28 +147,19 @@ declare module '@homebridge/node-pty-prebuilt-multiarch' {
     readonly onExit: IEvent<{ exitCode: number, signal?: number }>;
 
     /**
-     * Adds a listener to the data event, fired when data is returned from the pty.
-     * @param event The name of the event.
-     * @param listener The callback function.
-     * @deprecated Use IPty.onData
-     */
-    on(event: 'data', listener: (data: string) => void): void;
-
-    /**
-     * Adds a listener to the exit event, fired when the pty exits.
-     * @param event The name of the event.
-     * @param listener The callback function, exitCode is the exit code of the process and signal is
-     * the signal that triggered the exit. signal is not supported on Windows.
-     * @deprecated Use IPty.onExit
-     */
-    on(event: 'exit', listener: (exitCode: number, signal?: number) => void): void;
-
-    /**
      * Resizes the dimensions of the pty.
-     * @param columns THe number of columns to use.
+     * @param columns The number of columns to use.
      * @param rows The number of rows to use.
      */
     resize(columns: number, rows: number): void;
+
+    /**
+     * Clears the pty's internal representation of its buffer. This is a no-op
+     * unless on Windows/ConPTY. This is useful if the buffer is cleared on the
+     * frontend in order to synchronize state with the backend to avoid ConPTY
+     * possibly reprinting the screen.
+     */
+    clear(): void;
 
     /**
      * Writes data to the pty.

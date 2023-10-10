@@ -137,12 +137,12 @@ export abstract class Terminal implements ITerminal {
   }
 
   /** See net.Socket.setEncoding */
-  public setEncoding(encoding: string | null): void {
+  public setEncoding(encoding: string | null | BufferEncoding | undefined): void {
     if ((this._socket as any)._decoder) {
       delete (this._socket as any)._decoder;
     }
     if (encoding) {
-      this._socket.setEncoding(encoding);
+      this._socket.setEncoding(encoding as BufferEncoding);
     }
   }
 

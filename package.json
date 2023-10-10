@@ -54,17 +54,17 @@
     "prebuild-install": "^7.1.1"
   },
   "devDependencies": {
-    "@types/mocha": "^7.0.2",
-    "@types/node": "12",
-    "@typescript-eslint/eslint-plugin": "^2.27.0",
-    "@typescript-eslint/parser": "^2.27.0",
-    "cross-env": "^5.1.4",
-    "eslint": "^6.8.0",
-    "mocha": "^10.2.0  ",
-    "ps-list": "^8.1.1",
-    "typescript": "^3.8.3",
+    "@types/mocha": "^10.0.2",
+    "@types/node": "^18.18.4",
+    "@typescript-eslint/eslint-plugin": "^6.7.3",
+    "@typescript-eslint/parser": "^6.7.3",
+    "cross-env": "^7.0.3",
+    "eslint": "^8.50.0",
+    "mocha": "^10.2.0",
+    "node-abi": "^3.47.0",
     "prebuild": "^12.1.0",
     "prebuildify": "^5.0.1",
-    "node-abi": "^3.47.0"
+    "ps-list": "^7.2.0",
+    "typescript": "^5.2.2"
   }
 }

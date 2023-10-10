@@ -21,7 +21,6 @@ module.exports = {
         "readonly": "generic"
       }
     ],
-    "@typescript-eslint/class-name-casing": "error",
     "@typescript-eslint/consistent-type-definitions": "error",
     "@typescript-eslint/explicit-function-return-type": [
       "error",
@@ -32,10 +31,6 @@ module.exports = {
     "@typescript-eslint/indent": [
       "error",
       2
-    ],
-    "@typescript-eslint/interface-name-prefix": [
-      "error",
-      "always"
     ],
     "@typescript-eslint/member-delimiter-style": [
       "error",
@@ -66,9 +61,10 @@ module.exports = {
       // typeLike
       { "selector": "typeLike", "format": ["PascalCase"] },
       { "selector": "interface", "format": ["PascalCase"], "prefix": ["I"] },
+      // class
+      { "selector": "class", "format": ["PascalCase"] },
     ],
     "@typescript-eslint/prefer-namespace-keyword": "error",
-    "@typescript-eslint/type-annotation-spacing": "error",
     "@typescript-eslint/quotes": [
       "error",
       "single",

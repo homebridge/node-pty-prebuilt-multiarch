@@ -196,6 +196,7 @@ export class WindowsPtyAgent {
       const agent = fork(path.join(__dirname, 'conpty_console_list_agent'), [ this._innerPid.toString() ]);
       agent.on('message', message => {
         clearTimeout(timeout);
+        // @ts-ignore
         resolve(message.consoleProcessList);
       });
       const timeout = setTimeout(() => {
@@ -238,6 +239,7 @@ export class WindowsPtyAgent {
 
   private _flushDataAndCleanUp(): void {
     if (this._closeTimeout) {
+      // @ts-ignore
       clearTimeout(this._closeTimeout);
     }
     this._closeTimeout = setTimeout(() => this._cleanUpProcess(), FLUSH_DATA_INTERVAL);

@@ -320,6 +320,7 @@ if (process.platform !== 'win32') {
                 fs.statSync(`/proc/${sub}/fd/${readFd}`);
                 done('not reachable');
               } catch (error) {
+                // @ts-ignore
                 assert.notStrictEqual(error.message.indexOf('ENOENT'), -1);
               }
               setTimeout(() => {
