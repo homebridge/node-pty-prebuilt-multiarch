@@ -20,10 +20,10 @@ jobs:
       if: runner.os == 'macOS'
       run: |
         npm install --ignore-scripts
-        node .prebuild/build.js
+        node .prebuild/buildify.js
 
     - uses: AButler/upload-release-assets@v2.0
       with:
-        files: 'prebuilds/*/*.tar.gz'
+        files: 'prebuilds/*/*.node'
         repo-token: ${{ secrets.GITHUB_TOKEN }}
         release-tag: ${{ github.event.inputs.tag }}
