@@ -8,7 +8,7 @@ on:
         required: true
 
 jobs:
-  build:
+  buildify:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -113,8 +113,12 @@ jobs:
         node_modules/.bin/prebuildify -t 5.0.0 -t 6.0.0 -t 7.0.0 -t 8.0.0 -t 9.0.0 -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.0 --include-regex "\.(node|exe|dll|pdb)" -r electron 
         node_modules/.bin/prebuildify -t 5.0.0 -t 6.0.0 -t 7.0.0 -t 8.0.0 -t 9.0.0 -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.0 --include-regex "\.(node|exe|dll|pdb)" -r electron -a ia32 
 
+    - name: Package for release
+      shell: bash
+      run: for i in `ls prebuilds/`; do tar cvf $i.tar prebuilds/$i; done
+
     - uses: AButler/upload-release-assets@v2.0
       with:
-        files: 'prebuilds/*/*.node'
+        files: '*tar'
         repo-token: ${{ secrets.GITHUB_TOKEN }}
         release-tag: ${{ github.event.inputs.tag }}
