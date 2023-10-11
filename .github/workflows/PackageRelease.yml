@@ -1,0 +1,28 @@
+name: "Download latest github release and package for NPM Release"
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag'     
+        required: true
+
+jobs:
+  Download Release:
+    runs-on: ubuntu-latest
+
+    steps: 
+      - name: Setup Environment
+        uses: actions/checkout@v4
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+      
+      - name: Download GitHub Release
+      - uses: robinraju/release-downloader@v1.8
+        with:
+          latest: true
+          fileName: 'prebuilds-*tar'
+          extract: true
+
+        

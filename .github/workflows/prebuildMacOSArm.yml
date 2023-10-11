@@ -20,7 +20,7 @@ jobs:
       if: runner.os == 'macOS'
       run: |
         npm install --ignore-scripts
-        node .prebuild/buildify.js
+        env JOBS=max node .prebuild/buildify.js
 
     - uses: AButler/upload-release-assets@v2.0
       with:

@@ -36,7 +36,7 @@ const nodeBuildTargets = [
   '-t',
   '11.0.0',
   '-t',
-  ' 12.0.0',
+  '12.0.0',
   '-t',
   '13.0.0',
   '-t',
@@ -48,7 +48,9 @@ const nodeBuildTargets = [
   '-t',
   '17.0.1',
   '-t',
-  '18.0.0'
+  '18.0.0',
+  '-t',
+  '20.0.0'
 ]
 
 const nodeBuildCmd = [
