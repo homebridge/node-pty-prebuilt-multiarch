@@ -3,9 +3,9 @@ name: "Download latest github release and package for NPM Release"
 on:
   workflow_dispatch:
     inputs:
-    tag:
-      description: 'Tag'     
-      required: true
+      tag:
+        description: 'Tag'     
+        required: true
 
 jobs:
   Download_Release:
