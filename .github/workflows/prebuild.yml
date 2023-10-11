@@ -1,4 +1,4 @@
-name: "Prebuild Binaries and package for a GitHub Release"
+name: "PreRun node-gyp and package for a GitHub Release"
 
 on:
   workflow_dispatch:
@@ -107,8 +107,8 @@ jobs:
       shell: bash
       run: |
         npm install --ignore-scripts
+        env JOBS=max node_modules/.bin/prebuildify -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.1 --include-regex "\.(node|exe|dll|pdb)" --arch ia32 
         env JOBS=max node_modules/.bin/prebuildify -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.1 -t 18.0.0 -t 20.0.0 --include-regex "\.(node|exe|dll|pdb)"
-        env JOBS=max node_modules/.bin/prebuildify -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.1 --include-regex "\.(node|exe|dll|pdb)" -arch ia32 
 
     - name: Package for GitHub Release
       shell: bash
