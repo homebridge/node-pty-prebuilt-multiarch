@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  Download Release:
+  Download_Release:
     runs-on: ubuntu-latest
 
     steps: 
