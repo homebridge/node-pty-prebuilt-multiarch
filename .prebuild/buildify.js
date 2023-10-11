@@ -15,6 +15,7 @@ const nodeGypPkgPath = path.dirname(require.resolve('prebuild'));
 const nodeGyp = path.resolve(nodeGypPkgPath, 'node_modules/node-gyp/bin/node-gyp.js');
 
 console.log('nodeGyp', nodeGyp);
+console.log('pwd',`pwd`);
 
 const altAbiRegistryJsonPath = path.resolve(prebuildPkgPath, 'node_modules/node-abi/abi_registry.json');
 if (fs.existsSync(altAbiRegistryJsonPath)) {
