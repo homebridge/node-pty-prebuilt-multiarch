@@ -1,4 +1,5 @@
 name: "Download GitHub release and package for NPM Release"
+run-name: Download GitHub release  ${{ github.event.inputs.tag }} and package for NPM Release
 
 on:
   workflow_dispatch:
