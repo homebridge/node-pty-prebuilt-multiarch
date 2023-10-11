@@ -2,10 +2,6 @@ name: "Download latest github release and package for NPM Release"
 
 on:
   workflow_dispatch:
-    inputs:
-      tag:
-        description: 'Tag'     
-        required: true
 
 jobs:
   Download Release:
@@ -13,8 +9,8 @@ jobs:
 
     steps: 
       - name: Setup Environment
-        uses: actions/checkout@v4
-        uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v3
         with:
           node-version: 18.x
       
@@ -24,5 +20,3 @@ jobs:
           latest: true
           fileName: 'prebuilds-*tar'
           extract: true
-
-        
