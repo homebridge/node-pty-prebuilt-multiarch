@@ -22,6 +22,12 @@ jobs:
       run: |
         npm install --ignore-scripts
         env JOBS=max node PREBUILD_NODE_GYP=./node_modules/prebuild/node_modules/node-gyp/bin/node-gyp.js .prebuild/buildify.js
+
+    - name: List
+      shell: bash
+      run: |
+        find .
+
     - name: Package for GitHub Release
       shell: bash
       run: for i in `ls prebuilds/`; do tar cvzf prebuilds-$i.tar.gz prebuilds/$i; done
