@@ -100,7 +100,7 @@ jobs:
       if: runner.os == 'macOS'
       run: |
         npm install --ignore-scripts
-        node .prebuild/buildify.js
+        env JOBS=max node .prebuild/buildify.js
 
     - name: Windows - Prebuild Binaries
       if: runner.os == 'Windows'

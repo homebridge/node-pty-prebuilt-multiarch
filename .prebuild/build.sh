@@ -15,4 +15,4 @@ npm install --ignore-scripts
  fi
 
 #node .prebuild/build.js
-node .prebuild/buildify.js
+env JOBS=max node .prebuild/buildify.js
