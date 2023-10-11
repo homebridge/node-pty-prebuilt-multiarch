@@ -34,12 +34,12 @@ jobs:
       - name: List
         shell: bash
         run: |
-        find .
+          find .
 
       - name: Package
         shell: bash
         run: |
-        npm pack
+          npm pack
 
       - uses: AButler/upload-release-assets@v2.0
         with:
