@@ -1,4 +1,4 @@
-name: "Download latest github release and package for NPM Release"
+name: "Download GitHub release and package for NPM Release"
 
 on:
   workflow_dispatch:
@@ -28,15 +28,15 @@ jobs:
           fileName: 'prebuilds-*tar.gz'
           extract: true
 
-      - name: NPM build
-        run: |
-          npm install
-          npm run build
-
       - name: List
         shell: bash
         run: |
           find .
+          
+      - name: NPM build
+        run: |
+          npm install
+          npm run build
 
       - name: Package
         shell: bash
