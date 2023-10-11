@@ -2,6 +2,10 @@ name: "Download latest github release and package for NPM Release"
 
 on:
   workflow_dispatch:
+    inputs:
+    tag:
+      description: 'Tag'     
+      required: true
 
 jobs:
   Download_Release:
@@ -19,6 +23,6 @@ jobs:
       - name: Download GitHub Release
         uses: robinraju/release-downloader@v1.8
         with:
-          latest: true
+          tag: ${{ inputs.tag }}
           fileName: 'prebuilds-*tar.gz'
           extract: true
