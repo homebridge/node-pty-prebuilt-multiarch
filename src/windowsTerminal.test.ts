@@ -7,7 +7,7 @@ import * as fs from 'fs';
 import * as assert from 'assert';
 import { WindowsTerminal } from './windowsTerminal';
 import * as path from 'path';
-import psList from 'ps-list';
+import * as psList from 'ps-list';
 
 interface IProcessState {
   // Whether the PID must exist or must not exist
