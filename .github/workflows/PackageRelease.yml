@@ -18,5 +18,5 @@ jobs:
       - uses: robinraju/release-downloader@v1.8
         with:
           latest: true
-          fileName: 'prebuilds-*tar'
+          fileName: 'prebuilds-*tar.gz'
           extract: true

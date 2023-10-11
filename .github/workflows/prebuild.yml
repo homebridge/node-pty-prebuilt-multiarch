@@ -112,10 +112,10 @@ jobs:
 
     - name: Package for GitHub Release
       shell: bash
-      run: for i in `ls prebuilds/`; do tar cvf prebuilds-$i.tar prebuilds/$i; done
+      run: for i in `ls prebuilds/`; do tar cvzf prebuilds-$i.tar.gz prebuilds/$i; done
 
     - uses: AButler/upload-release-assets@v2.0
       with:
-        files: 'prebuilds-*tar'
+        files: 'prebuilds-*tar.gz'
         repo-token: ${{ secrets.GITHUB_TOKEN }}
         release-tag: ${{ github.event.inputs.tag }}
