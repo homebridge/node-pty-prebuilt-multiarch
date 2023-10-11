@@ -15,6 +15,7 @@ jobs:
     steps: 
       - name: Checkout Code
         uses: actions/checkout@v4
+
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
@@ -23,6 +24,29 @@ jobs:
       - name: Download GitHub Release
         uses: robinraju/release-downloader@v1.8
         with:
-          tag: ${{ inputs.tag }}
+          tag: ${{ github.event.inputs.tag }}
           fileName: 'prebuilds-*tar.gz'
           extract: true
+
+      - name: NPM build
+        run: npm run build --if-present
+
+      - name: List
+        shell: bash
+        run: |
+        find .
+
+      - name: Package
+        shell: bash
+        run: |
+        npm pack
+
+      - uses: AButler/upload-release-assets@v2.0
+        with:
+          files: 'homebridge-node-pty-prebuilt-multiarch-*.tgz'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          release-tag: ${{ github.event.inputs.tag }}     
+
+
+
+      
