@@ -1,5 +1,5 @@
 name: "PreRun node-gyp MacOS ARM64 Binaries and package for a GitHub Release"
-run-name: PreRun node-gyp MacOS ARM64 against ${{ github.event.inputs.tag }} and package for a GitHub Release
+run-name: Package against ${{ github.event.inputs.tag }}
 
 on:
   workflow_dispatch:
@@ -27,6 +27,11 @@ jobs:
       shell: bash
       run: |
         find .
+
+    - name: Check build
+      shell: bash
+      run: |
+        if [ ! -d "prebuilds" ]; then exit 1; fi
 
     - name: Package for GitHub Release
       shell: bash
