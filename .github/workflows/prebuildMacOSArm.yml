@@ -31,7 +31,8 @@ jobs:
     - name: Check build
       shell: bash
       run: |
-        if [ ! -d "prebuilds" ]; then exit 1; fi
+        fileCount=$(ls prebuilds/*/*node | wc)
+        if [ "$backupCount" -eq 0 ]; then exit 1; fi
 
     - name: Package for GitHub Release
       shell: bash
