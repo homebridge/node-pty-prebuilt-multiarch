@@ -10,7 +10,6 @@ on:
 
 jobs:
   buildify:
-    run-name: Package against ${{ github.event.inputs.tag }}
     runs-on: [self-hosted, macOS, ARM64]
     steps: 
     - uses: actions/checkout@v4
