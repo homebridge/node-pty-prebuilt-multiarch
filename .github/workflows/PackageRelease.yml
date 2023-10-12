@@ -33,6 +33,12 @@ jobs:
         shell: bash
         run: |
           find .
+
+      - name: Check prebuilds
+        shell: bash
+        run: |
+          fileCount=$(ls prebuilds/*/*node | wc -l)
+          if [ "$fileCount" -eq 0 ]; then exit 1; fi
           
       - name: NPM build
         run: |
