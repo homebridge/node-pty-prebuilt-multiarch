@@ -66,7 +66,7 @@ jobs:
 
     uses: homebridge/.github/.github/workflows/npm-publish.yml@latest
     with:
-      install_cmd: npm ci && cd ui && npm ci
+      install_cmd: npm ci
     secrets:
       npm_auth_token: ${{ secrets.npm_token }}
 
