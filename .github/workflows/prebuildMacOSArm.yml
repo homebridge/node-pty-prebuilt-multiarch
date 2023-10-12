@@ -32,7 +32,7 @@ jobs:
       shell: bash
       run: |
         fileCount=$(ls prebuilds/*/*node | wc)
-        if [ "$backupCount" -eq 0 ]; then exit 1; fi
+        if [ "$fileCount" -eq 0 ]; then exit 1; fi
 
     - name: Package for GitHub Release
       shell: bash
