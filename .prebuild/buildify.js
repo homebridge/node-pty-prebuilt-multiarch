@@ -12,8 +12,8 @@ const prebuildPath = path.resolve(prebuildPkgPath, 'bin.js');
 const abiRegistryJsonPath = path.resolve(nodeAbiPkgPath, 'abi_registry.json');
 fs.copyFileSync(path.resolve(__dirname, 'abi_registry.json'), abiRegistryJsonPath);
 
-const nodeGypPkgPath = path.dirname(require.resolve('prebuild'));
-const nodeGyp = path.resolve(nodeGypPkgPath, 'node_modules/node-gyp/bin/node-gyp.js');
+// const nodeGypPkgPath = path.dirname(require.resolve('prebuild'));
+// const nodeGyp = path.resolve(nodeGypPkgPath, 'node_modules/node-gyp/bin/node-gyp.js');
 
 console.log('nodeGyp', nodeGyp);
 console.log('pwd',process.cwd());
