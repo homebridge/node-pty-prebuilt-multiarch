@@ -1,5 +1,5 @@
-name: "PreRun node-gyp MacOS ARM64 Binaries and package for a GitHub Release"
-run-name: Package against ${{ github.event.inputs.tag }}
+name: "Prebuild node-gyp MacOS ARM64 Binaries and package for a GitHub Release"
+run-name: Package MacOS ARM64 against ${{ github.event.inputs.tag }}
 
 on:
   workflow_dispatch:

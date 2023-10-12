@@ -1,5 +1,5 @@
-name: "PreRun node-gyp and package for a GitHub Release"
-run-name: PreRun node-gyp against ${{ github.event.inputs.tag }} and package for a GitHub Release
+name: "Prebuild node-gyp and package for a GitHub Release"
+run-name: Package against ${{ github.event.inputs.tag }}
 
 on:
   workflow_dispatch:
