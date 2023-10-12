@@ -78,7 +78,7 @@ jobs:
     - uses: actions/checkout@v4
     - uses: actions/setup-node@v3
       with:
-        node-version: 18.x
+        node-version: lts/*
 
     - name: Linux - Setup Dependencies
       if: runner.os == 'Linux'
@@ -111,10 +111,11 @@ jobs:
         env JOBS=max node_modules/.bin/prebuildify -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.1 --include-regex "\.(node|exe|dll|pdb)" --arch ia32 
         env JOBS=max node_modules/.bin/prebuildify -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.1 -t 18.0.0 -t 20.0.0 --include-regex "\.(node|exe|dll|pdb)"
 
-    - name: Check prebuild
+    - name: Check prebuilds exist
       shell: bash
       run: |
         fileCount=$(ls prebuilds/*/*node | wc -l)
+        echo "Prebuild count ${fileCount}"
         if [ "$fileCount" -eq 0 ]; then exit 1; fi
 
     - name: Package for GitHub Release
