@@ -23,6 +23,11 @@ jobs:
         npm install --ignore-scripts
         env JOBS=max PREBUILD_NODE_GYP=./node_modules/prebuild/node_modules/node-gyp/bin/node-gyp.js node .prebuild/buildify.js
 
+    - name: List
+      shell: bash
+      run: |
+        find .
+
     - name: Check prebuild
       shell: bash
       run: |
