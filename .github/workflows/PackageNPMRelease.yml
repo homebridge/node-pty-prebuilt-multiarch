@@ -51,18 +51,20 @@ jobs:
         run: |
           npm pack
 
-      - uses: AButler/upload-release-assets@v2.0
+      - name: Attach NPM package to Github Release
+        uses: AButler/upload-release-assets@v2.0
         with:
           files: 'homebridge-node-pty-prebuilt-multiarch-*.tgz'
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           release-tag: ${{ github.event.inputs.tag }}
 
-  publish:
+  Publish_NPM_Release:
+    name: Publish NPM Release
     needs: Package_NPM_Release
 
     if: ${{ github.repository == 'homebridge/homebridge-node-pty-prebuilt-multiarch' }}
 
-    uses: homebridge/.github/.github/workflows/npm-publish.yml@main
+    uses: homebridge/.github/.github/workflows/npm-publish.yml@latest
     with:
       install_cmd: npm ci && cd ui && npm ci
     secrets:
