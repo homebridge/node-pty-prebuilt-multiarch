@@ -21,7 +21,7 @@ jobs:
       if: runner.os == 'macOS'
       run: |
         npm install --ignore-scripts
-        env JOBS=max node PREBUILD_NODE_GYP=./node_modules/prebuild/node_modules/node-gyp/bin/node-gyp.js .prebuild/buildify.js
+        env JOBS=max PREBUILD_NODE_GYP=./node_modules/prebuild/node_modules/node-gyp/bin/node-gyp.js node .prebuild/buildify.js
 
     - name: List
       shell: bash
