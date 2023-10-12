@@ -62,7 +62,7 @@ jobs:
     name: Publish NPM Release
     needs: Package_NPM_Release
 
-    if: ${{ github.repository == 'homebridge/homebridge-node-pty-prebuilt-multiarch' }}
+    if: ${{ github.repository == 'NorthernMan54/homebridge-node-pty-prebuilt-multiarch' }}
 
     uses: homebridge/.github/.github/workflows/npm-publish.yml@latest
     with:
