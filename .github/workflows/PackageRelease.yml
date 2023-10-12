@@ -1,4 +1,4 @@
-name: "Download GitHub release and package for NPM Release"
+name: "Package GitHub release for NPM"
 run-name: Package ${{ github.event.inputs.tag }} for NPM Release
 
 on:
