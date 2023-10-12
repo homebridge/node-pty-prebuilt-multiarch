@@ -31,7 +31,7 @@ jobs:
     - name: Check build
       shell: bash
       run: |
-        fileCount=$(ls prebuilds/*/*node | wc)
+        fileCount=$(ls prebuilds/*/*node | wc -l)
         if [ "$fileCount" -eq 0 ]; then exit 1; fi
 
     - name: Package for GitHub Release
