@@ -9,8 +9,8 @@ on:
         required: true
 
 jobs:
-  Download_Release:
-    name: Download Release
+  Package_NPM_Release:
+    name: Package NPM Release
     runs-on: ubuntu-latest
 
     steps: 
