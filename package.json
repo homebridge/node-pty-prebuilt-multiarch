@@ -58,13 +58,13 @@
   },
   "devDependencies": {
     "@types/mocha": "^10.0.2",
-    "@types/node": "^18.18.4",
-    "@typescript-eslint/eslint-plugin": "^6.7.3",
-    "@typescript-eslint/parser": "^6.7.3",
+    "@types/node": "^18.18.5",
+    "@typescript-eslint/eslint-plugin": "^6.8.0",
+    "@typescript-eslint/parser": "^6.8.0",
     "cross-env": "^7.0.3",
-    "eslint": "^8.50.0",
+    "eslint": "^8.51.0",
     "mocha": "^10.2.0",
-    "node-abi": "^3.47.0",
+    "node-abi": "^3.50.0",
     "prebuildify": "^5.0.1",
     "ps-list": "^7.2.0",
     "typescript": "^5.2.2"
