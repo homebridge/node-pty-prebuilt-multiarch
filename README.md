@@ -27,8 +27,19 @@ When `@homebridge/node-pty-prebuilt-multiarch` is installed as a package depende
 | Linux (musl)    | x64, armv6, aarch64         |
 | Windows         | ia32, x64                   |
 
-
 *We only provide prebuilt binaries for Node.js 10 and Electron 5.0.0 or higher.
+
+## Build / Package
+
+Please note releasing this package uses github actions.
+
+1. Make your updates, and update version within package.json
+2. Create a Pre Release on github with the TAG matching the version from Step 1
+3. Run the gituhb action `Prebuild node-gyp and package for a GitHub Release` and supply the version TAG
+4. Start a MacOS ARM64 Local runner in your environment
+5. Run the gituhb action `Prebuild node-gyp MacOS ARM64 Binaries and package for a GitHub Release` and supply the version TAG
+6. Wait for steps 3 and 5 to complete, 3 takes about an hour.  If you need to rerun a step, go into the Release, and remove the attached prebuilds.
+7. Run the gituhb action `Package GitHub release for NPM` and supply the version TAG.
 
 ## License
 
