@@ -15,6 +15,6 @@ jobs:
       - name: Delete old release assets
         uses: mknejp/delete-release-assets@v1
         with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ github.event.inputs.tag }}
           assets: node-pty*tar.gz
