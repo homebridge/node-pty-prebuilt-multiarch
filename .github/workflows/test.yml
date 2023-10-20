@@ -90,14 +90,14 @@ jobs:
     - name: Linux - Build and Run Tests
       if: runner.os == 'Linux'
       run: |
-        docker run --rm -v $(pwd):/node-pty multiarch-build npm install 
+        docker run --rm -v $(pwd):/node-pty multiarch-build npm ci 
         docker run --rm -v $(pwd):/node-pty multiarch-build npm run build
         docker run --rm -v $(pwd):/node-pty multiarch-build npm run test
 
     - name: macOS - Prebuild Binaries
       if: runner.os == 'macOS'
       run: |
-        npm install
+        npm ci
         npm run build
         npm run test
 
@@ -105,6 +105,6 @@ jobs:
       if: runner.os == 'Windows'
       shell: bash
       run: |
-        npm install
+        npm ci
         npm run build
         npm run test

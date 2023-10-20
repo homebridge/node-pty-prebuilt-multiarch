@@ -23,43 +23,19 @@ jobs:
           node-version: lts/*
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Download Prebuilds from Github Release
-        uses: robinraju/release-downloader@v1.8
-        with:
-          tag: ${{ github.event.inputs.tag }}
-          fileName: 'prebuilds-*tar.gz'
-          extract: true
-
-      - name: List Files ( For debugging )
-        shell: bash
-        run: |
-          find .
-
-      - name: Check prebuilds exist
-        shell: bash
-        run: |
-          fileCount=$(ls prebuilds/*/*node | wc -l)
-          echo "Prebuild count ${fileCount}"
-          if [ "$fileCount" -eq 0 ]; then exit 1; fi
-
       - name: NPM build
         run: |
-          npm install
+          npm ci --ignore-scripts
           npm run build
 
-      - name: Create NPM Package for Attaching to Github Release
-        shell: bash
-        run: |
-          npm pack
+  Publish_NPM_Release:
+      name: Publish NPM Release
+      needs: Package_NPM_Release
 
-      - name: Attach NPM package to Github Release
-        uses: AButler/upload-release-assets@v2.0
-        with:
-          files: 'homebridge-node-pty-prebuilt-multiarch-*.tgz'
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          release-tag: ${{ github.event.inputs.tag }}
+      if: ${{ github.repository == 'homebridge/node-pty-prebuilt-multiarch' }}
 
-      - name: Publish NPM Release
-        run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      uses: homebridge/.github/.github/workflows/npm-publish.yml@latest
+      with:
+        install_cmd: npm ci
+      secrets:
+        npm_auth_token: ${{ secrets.npm_token }}

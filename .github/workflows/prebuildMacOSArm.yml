@@ -9,7 +9,7 @@ on:
         required: true
 
 jobs:
-  buildify:
+  build:
     runs-on: [self-hosted, macOS, ARM64]
     steps:
     - uses: actions/checkout@v4
@@ -20,8 +20,8 @@ jobs:
     - name: macOS - Prebuild Binaries
       if: runner.os == 'macOS'
       run: |
-        npm install --ignore-scripts
-        env JOBS=max node .prebuild/buildify.js
+        npm ci --ignore-scripts
+        env JOBS=max node .prebuild/build.js
 
     - name: List
       shell: bash
@@ -31,16 +31,12 @@ jobs:
     - name: Check prebuilds exist
       shell: bash
       run: |
-        fileCount=$(ls prebuilds/*/*node | wc -l)
+        fileCount=$(ls prebuilds/*/node-pty*tar.gz | wc -l)
         echo "Prebuild count ${fileCount}"
         if [ "$fileCount" -eq 0 ]; then exit 1; fi
 
-    - name: Package for GitHub Release
-      shell: bash
-      run: for i in `ls prebuilds/`; do tar cvzf prebuilds-$i.tar.gz prebuilds/$i; done
-
     - uses: AButler/upload-release-assets@v2.0
       with:
-        files: 'prebuilds-*tar.gz'
+        files: 'prebuilds/*/node-pty*tar.gz'
         repo-token: ${{ secrets.GITHUB_TOKEN }}
         release-tag: ${{ github.event.inputs.tag }}
