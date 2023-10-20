@@ -31,7 +31,7 @@ if (process.env.QEMU_ARCH === 'i386') {
     '-t',
     '11.0.0',
     '-t',
-    ' 12.0.0',
+    '12.0.0',
     '-t',
     '13.0.0',
     '-t',
@@ -52,7 +52,7 @@ if (process.env.QEMU_ARCH === 'i386') {
     '-t',
     '11.0.0',
     '-t',
-    ' 12.0.0',
+    '12.0.0',
     '-t',
     '13.0.0',
     '-t',
@@ -79,10 +79,11 @@ console.log('Building for Node.js:');
 console.log(nodeBuildCmd.join(' '));
 
 try {
-  child_process.spawnSync(process.execPath, nodeBuildCmd, {
+  var result = child_process.spawnSync(process.execPath, nodeBuildCmd, {
     cwd: cwd,
     stdio: ['inherit', 'inherit', 'inherit']
   });
+  console.log('Result ', result.status, result.signal, result.error);
 } catch (e) {
   console.error(e);
   process.exit(0);
@@ -134,10 +135,11 @@ console.log('Building for Electron:');
 console.log(electronBuildCmd.join(' '));
 
 try {
-  child_process.spawnSync(process.execPath, electronBuildCmd, {
+  var result = child_process.spawnSync(process.execPath, electronBuildCmd, {
     cwd: cwd,
     stdio: ['inherit', 'inherit', 'inherit']
   });
+  console.log('Result ', result.status, result.signal, result.error);
 } catch (e) {
   process.exit(0);
 }
