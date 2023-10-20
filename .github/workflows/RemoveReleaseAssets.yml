@@ -1,0 +1,20 @@
+name: "Remove Release Assets from a GitHub Release"
+run-name: Remove Assets from ${{ github.event.inputs.tag }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag'
+        required: true
+
+jobs:
+  Remove:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete old release assets
+        uses: mknejp/delete-release-assets@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ github.event.inputs.tag }}
+          assets: node-pty*tar.gz
