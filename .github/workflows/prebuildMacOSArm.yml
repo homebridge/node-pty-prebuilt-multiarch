@@ -23,19 +23,14 @@ jobs:
         npm ci --ignore-scripts
         env JOBS=max node .prebuild/build.js
 
-    - name: List
-      shell: bash
-      run: |
-        find .
-
     - name: Check prebuilds exist
       shell: bash
       run: |
         fileCount=$(ls prebuilds/*/node-pty*tar.gz | wc -l)
         echo "Prebuild count ${fileCount}"
-        echo "::notice::Prebuild count ${fileCount}"
-        echo "${{ matrix.NAME }} - Prebuild count ${fileCount}" >> $GITHUB_STEP_SUMMARY
+        echo "::notice::Prebuild count ${fileCount}, expected 24"
         if [ "$fileCount" -eq 0 ]; then exit 1; fi
+        if [ "$fileCount" -ne 24 ]; then exit 1; fi
 
     - uses: AButler/upload-release-assets@v2.0
       with:

@@ -23,7 +23,8 @@ jobs:
           linux-arm,
           linux-arm64,
           darwin-x64,
-          win32,
+          win32-ia32,
+          win32-x64
         ]
         include:
           - name: linuxmusl-x64
@@ -79,9 +80,15 @@ jobs:
             os: macOS-latest
             COUNT: 24
 
-          - name: win32
+          - name: win32-ia32
             os: windows-2019
-            COUNT: 18
+            arch: ia32
+            COUNT: 15
+
+          - name: win32-x64
+            os: windows-2019
+            arch: x64
+            COUNT: 17
 
     steps:
     - uses: actions/checkout@v4
@@ -112,23 +119,28 @@ jobs:
         npm ci --ignore-scripts
         env JOBS=max node .prebuild/build.js
 
-    - name: Windows - Prebuild Binaries
-      if: runner.os == 'Windows'
+    - name: Windows ia32 - Prebuild Binaries
+      if: runner.os == 'Windows' && ${{ matrix.arch }} == 'ia32'
       shell: bash
       run: |
         npm ci --ignore-scripts
-        env JOBS=max node_modules/.bin/prebuild -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.1 --include-regex "\.(node|exe|dll|pdb)" --arch ia32
-        env JOBS=max node_modules/.bin/prebuild -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.1 -t 18.0.0 -t 20.0.0 --include-regex "\.(node|exe|dll|pdb)"
-        env JOBS=max node_modules/.bin/prebuild -t 5.0.0 -t 6.0.0 -t 7.0.0 -t 8.0.0 -t 9.0.0 -t 10.0.0 -t 11.0.0 --include-regex "\.(node|exe|dll|pdb)" -r electron 
-        env JOBS=max node_modules/.bin/prebuild -t 5.0.0 -t 6.0.0 -t 7.0.0 -t 8.0.0 -t 9.0.0 -t 10.0.0 -t 11.0.0 --include-regex "\.(node|exe|dll|pdb)" -r electron -a ia32 
+        env JOBS=max node_modules/.bin/prebuild -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.1 --include-regex "\.(node|exe|dll|pdb)" --arch ${{ matrix.arch }}
+        env JOBS=max node_modules/.bin/prebuild -t 5.0.0 -t 6.0.0 -t 7.0.0 -t 8.0.0 -t 9.0.0 -t 10.0.0 -t 11.0.0 --include-regex "\.(node|exe|dll|pdb)" -r electron -a ${{ matrix.arch }}
+
+    - name: Windows x64 - Prebuild Binaries
+      if: runner.os == 'Windows' && ${{ matrix.arch }} == 'x64'
+      shell: bash
+      run: |
+        npm ci --ignore-scripts
+        env JOBS=max node_modules/.bin/prebuild -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.1 -t 18.0.0 -t 20.0.0 --include-regex "\.(node|exe|dll|pdb)" --arch ${{ matrix.arch }}
+        env JOBS=max node_modules/.bin/prebuild -t 5.0.0 -t 6.0.0 -t 7.0.0 -t 8.0.0 -t 9.0.0 -t 10.0.0 -t 11.0.0 --include-regex "\.(node|exe|dll|pdb)" -r electron --arch ${{ matrix.arch }}
 
     - name: Check prebuilds exist
       shell: bash
       run: |
         fileCount=$(ls prebuilds/*/node-pty*tar.gz | wc -l)
         echo "Prebuild count ${fileCount}"
-        echo "::notice::Prebuild count ${fileCount} === ${{ matrix.COUNT }}"
-        echo "${{ matrix.NAME }} - Prebuild count ${fileCount} === ${{ matrix.COUNT }}" >> $GITHUB_STEP_SUMMARY
+        echo "::notice::Prebuild count ${fileCount}, expected ${{ matrix.COUNT }}"
         if [ "$fileCount" -eq 0 ]; then exit 1; fi
         if [ "$fileCount" -ne ${{ matrix.COUNT }} ]; then exit 1; fi
 

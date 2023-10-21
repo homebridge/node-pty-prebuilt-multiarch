@@ -21,7 +21,8 @@ on:
         - linuxmusl-arm.tar.gz
         - linuxmusl-arm64.tar.gz
         - linuxmusl-x64.tar.gz
-        - win32*.tar.gz
+        - win32-ia32.tar.gz
+        - win32-x64.tar.gz
 
 jobs:
   Remove:
