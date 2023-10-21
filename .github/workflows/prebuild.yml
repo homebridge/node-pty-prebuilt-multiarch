@@ -15,64 +15,73 @@ jobs:
       fail-fast: false
       matrix:
         name: [
-          alpine-x86_64,
-          alpine-arm32v6,
-          alpine-arm64v8,
-          debian-x86_64,
-          debian-i386,
-          debian-arm32v6,
-          debian-arm64v8,
-          darwin-x86_64,
-          windows-x86_64,
+          linuxmusl-x64,
+          linuxmusl-arm,
+          linuxmusl-arm64,
+          linux-x64,
+          linux-ia32,
+          linux-arm,
+          linux-arm64,
+          darwin-x64,
+          win32,
         ]
         include:
-          - name: alpine-x86_64
+          - name: linuxmusl-x64
             os: ubuntu-latest
             BASE_IMAGE: library/node:16-alpine
             DOCKERFILE: Dockerfile.alpine
             QEMU_ARCH: x86_64
+            COUNT: 24
 
-          - name: alpine-arm32v6
+          - name: linuxmusl-arm
             os: ubuntu-latest
             BASE_IMAGE: arm32v6/node:16-alpine
             DOCKERFILE: Dockerfile.alpine
             QEMU_ARCH: arm
+            COUNT: 24
 
-          - name: alpine-arm64v8
+          - name: linuxmusl-arm64
             os: ubuntu-latest
             BASE_IMAGE: arm64v8/node:16-alpine
             DOCKERFILE: Dockerfile.alpine
             QEMU_ARCH: aarch64
+            COUNT: 24
 
-          - name: debian-x86_64
+          - name: linux-x64
             os: ubuntu-latest
             BASE_IMAGE: library/debian:11.7-slim
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: x86_64
+            COUNT: 24
 
-          - name: debian-i386
+          - name: linux-ia32
             os: ubuntu-latest
             BASE_IMAGE: i386/debian:11.7-slim
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: i386
+            COUNT: 23
 
-          - name: debian-arm32v6
+          - name: linux-arm
             os: ubuntu-latest
             BASE_IMAGE: balenalib/raspberry-pi-debian:bullseye
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: arm
+            COUNT: 24
 
-          - name: debian-arm64v8
+          - name: linux-arm64
             os: ubuntu-latest
             BASE_IMAGE: arm64v8/debian:11.7-slim
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: aarch64
+            COUNT: 24
 
-          - name: darwin-x86_64
+          - name: darwin-x64
             os: macOS-latest
+            COUNT: 24
 
-          - name: windows-x86_64
+          - name: win32
             os: windows-2019
+            COUNT: 18
 
     steps:
     - uses: actions/checkout@v4
@@ -110,15 +119,18 @@ jobs:
         npm ci --ignore-scripts
         env JOBS=max node_modules/.bin/prebuild -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.1 --include-regex "\.(node|exe|dll|pdb)" --arch ia32
         env JOBS=max node_modules/.bin/prebuild -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.1 -t 18.0.0 -t 20.0.0 --include-regex "\.(node|exe|dll|pdb)"
+        env JOBS=max node_modules/.bin/prebuild -t 5.0.0 -t 6.0.0 -t 7.0.0 -t 8.0.0 -t 9.0.0 -t 10.0.0 -t 11.0.0 --include-regex "\.(node|exe|dll|pdb)" -r electron 
+        env JOBS=max node_modules/.bin/prebuild -t 5.0.0 -t 6.0.0 -t 7.0.0 -t 8.0.0 -t 9.0.0 -t 10.0.0 -t 11.0.0 --include-regex "\.(node|exe|dll|pdb)" -r electron -a ia32 
 
     - name: Check prebuilds exist
       shell: bash
       run: |
         fileCount=$(ls prebuilds/*/node-pty*tar.gz | wc -l)
         echo "Prebuild count ${fileCount}"
-        echo "::notice::Prebuild count ${fileCount}"
-        echo "${{ matrix.NAME }} - Prebuild count ${fileCount}" >> $GITHUB_STEP_SUMMARY
+        echo "::notice::Prebuild count ${fileCount} === ${{ matrix.COUNT }}"
+        echo "${{ matrix.NAME }} - Prebuild count ${fileCount} === ${{ matrix.COUNT }}" >> $GITHUB_STEP_SUMMARY
         if [ "$fileCount" -eq 0 ]; then exit 1; fi
+        if [ "$fileCount" -ne ${{ matrix.COUNT }} ]; then exit 1; fi
 
     - uses: AButler/upload-release-assets@v2.0
       with:
