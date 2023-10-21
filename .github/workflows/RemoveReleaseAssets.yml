@@ -7,6 +7,21 @@ on:
       tag:
         description: 'Tag'
         required: true
+      Bundle:
+        description: 'Prebuild Bundle'
+        required: true
+        type: choice
+        options:
+        - darwin-arm64.tar.gz
+        - darwin-x64.tar.gz
+        - linux-arm.tar.gz
+        - linux-arm64tar.gz
+        - linux-ia32.tar.gz
+        - linux-x64.tar.gz
+        - linuxmusl-arm.tar.gz
+        - linuxmusl-arm64.tar.gz
+        - linuxmusl-x64.tar.gz
+        - win32*.tar.gz
 
 jobs:
   Remove:
@@ -17,4 +32,4 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ github.event.inputs.tag }}
-          assets: node-pty*tar.gz
+          assets: node-pty*${{ github.event.inputs.Bundle }}

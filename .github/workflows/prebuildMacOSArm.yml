@@ -33,6 +33,8 @@ jobs:
       run: |
         fileCount=$(ls prebuilds/*/node-pty*tar.gz | wc -l)
         echo "Prebuild count ${fileCount}"
+        echo "::notice::Prebuild count ${fileCount}"
+        echo "${{ matrix.NAME }} - Prebuild count ${fileCount}" >> $GITHUB_STEP_SUMMARY
         if [ "$fileCount" -eq 0 ]; then exit 1; fi
 
     - uses: AButler/upload-release-assets@v2.0
