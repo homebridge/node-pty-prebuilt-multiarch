@@ -12,17 +12,17 @@ on:
         required: true
         type: choice
         options:
-        - darwin-arm64.tar.gz
-        - darwin-x64.tar.gz
-        - linux-arm.tar.gz
+        - darwin-arm64
+        - darwin-x64
+        - linux-arm
         - linux-arm64tar.gz
-        - linux-ia32.tar.gz
-        - linux-x64.tar.gz
-        - linuxmusl-arm.tar.gz
-        - linuxmusl-arm64.tar.gz
-        - linuxmusl-x64.tar.gz
-        - win32-ia32.tar.gz
-        - win32-x64.tar.gz
+        - linux-ia32
+        - linux-x64
+        - linuxmusl-arm
+        - linuxmusl-arm64
+        - linuxmusl-x64
+        - win32-ia32
+        - win32-x64
 
 jobs:
   Remove:
@@ -33,4 +33,4 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ github.event.inputs.tag }}
-          assets: node-pty*${{ github.event.inputs.Bundle }}
+          assets: node-pty*${{ github.event.inputs.Bundle }}.tar.gz
