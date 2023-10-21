@@ -41,7 +41,7 @@ Please note releasing this package uses GitHub actions.
 6. Wait for steps 3 and 5 to complete (step 3 takes about 30 minutes). If you need to rerun a step, go into the GitHub Release, and remove the attached pre-builds.
 7. Run the GitHub action `Package GitHub release for NPM` and supply the version TAG.
 
-If you experience an error and need to rerun portions of `Prebuild node-gyp and package for a GitHub Release`, you will need to remove any attachments from the failed step.  You can do this with the action `Remove Release Assets from a GitHub Release`, and chose the approriate prebuild bundle.
+If you experience an error when running `Prebuild node-gyp and package for a GitHub Release` and need to rerun, you may need to remove any release attachments from the failed build step.  You can do this with the action `Remove Release Assets from a GitHub Release`, and chose the approriate prebuild bundle.
 
 ## License
 
@@ -50,3 +50,4 @@ If you experience an error and need to rerun portions of `Prebuild node-gyp and 
 * Copyright (c) 2018, Microsoft Corporation (MIT License).
 * Copyright (c) 2018, David Wilson (MIT License).
 * Copyright (c) 2018, oznu (MIT License).
+* Copyright (c) 2023, Homebridge (MIT License).
