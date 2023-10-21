@@ -83,12 +83,12 @@ jobs:
           - name: win32-ia32
             os: windows-2019
             arch: ia32
-            COUNT: 15
+            COUNT: 21
 
           - name: win32-x64
             os: windows-2019
             arch: x64
-            COUNT: 17
+            COUNT: 24
 
     steps:
     - uses: actions/checkout@v4
