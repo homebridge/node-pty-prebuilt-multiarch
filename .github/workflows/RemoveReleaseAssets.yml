@@ -1,5 +1,5 @@
 name: "Remove Release Assets from a GitHub Release"
-run-name: Remove Assets from ${{ github.event.inputs.tag }}
+run-name: Remove Assets from ${{ github.event.inputs.tag }} - ${{ github.event.inputs.Bundle }}
 
 on:
   workflow_dispatch:
