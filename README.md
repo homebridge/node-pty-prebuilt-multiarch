@@ -38,8 +38,10 @@ Please note releasing this package uses GitHub actions.
 3. Run the GitHub action `Prebuild node-gyp and package for a GitHub Release` and supply the version TAG
 4. Start a macOS ARM64 Local runner in your environment (see [here](https://github.com/homebridge/node-pty-prebuilt-multiarch/settings/actions/runners))
 5. Run the GitHub action `Prebuild node-gyp MacOS ARM64 Binaries and package for a GitHub Release` and supply the version TAG
-6. Wait for steps 3 and 5 to complete (step 3 takes about 20 minutes). If you need to rerun a step, go into the GitHub Release, and remove the attached pre-builds.
+6. Wait for steps 3 and 5 to complete (step 3 takes about 30 minutes). If you need to rerun a step, go into the GitHub Release, and remove the attached pre-builds.
 7. Run the GitHub action `Package GitHub release for NPM` and supply the version TAG.
+
+If you experience an error and need to rerun portions of `Prebuild node-gyp and package for a GitHub Release`, you will need to remove any attachments from the failed step.  You can do this with the action `Remove Release Assets from a GitHub Release`, and chose the approriate prebuild bundle.
 
 ## License
 
