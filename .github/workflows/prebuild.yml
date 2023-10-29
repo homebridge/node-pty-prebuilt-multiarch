@@ -32,28 +32,32 @@ jobs:
             BASE_IMAGE: library/node:16-alpine
             DOCKERFILE: Dockerfile.alpine
             QEMU_ARCH: x86_64
-            COUNT: 24
+            COUNT: 25
+            NPMCOUNT: 0
 
           - name: linuxmusl-arm
             os: ubuntu-latest
             BASE_IMAGE: arm32v6/node:16-alpine
             DOCKERFILE: Dockerfile.alpine
             QEMU_ARCH: arm
-            COUNT: 24
+            COUNT: 25
+            NPMCOUNT: 0
 
           - name: linuxmusl-arm64
             os: ubuntu-latest
             BASE_IMAGE: arm64v8/node:16-alpine
             DOCKERFILE: Dockerfile.alpine
             QEMU_ARCH: aarch64
-            COUNT: 24
+            COUNT: 25
+            NPMCOUNT: 0
 
           - name: linux-x64
             os: ubuntu-latest
             BASE_IMAGE: library/debian:11.7-slim
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: x86_64
-            COUNT: 24
+            COUNT: 25
+            NPMCOUNT: 0
 
           - name: linux-ia32
             os: ubuntu-latest
@@ -61,34 +65,40 @@ jobs:
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: i386
             COUNT: 23
+            NPMCOUNT: 0
 
           - name: linux-arm
             os: ubuntu-latest
             BASE_IMAGE: balenalib/raspberry-pi-debian:bullseye
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: arm
-            COUNT: 24
+            COUNT: 25
+            NPMCOUNT: 0
 
           - name: linux-arm64
             os: ubuntu-latest
             BASE_IMAGE: arm64v8/debian:11.7-slim
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: aarch64
-            COUNT: 24
+            COUNT: 25
+            NPMCOUNT: 0
 
           - name: darwin-x64
             os: macOS-latest
-            COUNT: 24
+            COUNT: 25
+            NPMCOUNT: 0
 
           - name: win32-ia32
             os: windows-2019
             arch: ia32
             COUNT: 21
+            NPMCOUNT: 0
 
           - name: win32-x64
             os: windows-2019
             arch: x64
-            COUNT: 24
+            COUNT: 25
+            NPMCOUNT: 0
 
     steps:
     - uses: actions/checkout@v4
