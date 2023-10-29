@@ -161,9 +161,10 @@ jobs:
         fileCount=$(ls prebuilds/*/node*node | wc -l)
         echo "NPM Prebuild count ${fileCount}"
         echo "::notice::NPM Prebuild count ${fileCount}, expected ${{ matrix.NPMCOUNT }}"
+        fi
 #        if [ "$fileCount" -eq 0 ]; then exit 1; fi
 #        if [ "$fileCount" -ne ${{ matrix.NPMCOUNT }} ]; then exit 1; fi
-        fi
+
 
     - name: Pack NPM prebuilds
       shell: bash
