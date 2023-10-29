@@ -154,26 +154,40 @@ jobs:
         if [ "$fileCount" -eq 0 ]; then exit 1; fi
         if [ "$fileCount" -ne ${{ matrix.COUNT }} ]; then exit 1; fi
 
+    - name: "Check file existence"
+      id: check_files
+      uses: andstor/file-existence-action@v3
+      with:
+        files: "prebuilds/*/node*node"
+
     - name: Check NPM prebuilds exist
+      if: steps.check_files.outputs.files_exists == 'true'
       shell: bash
       run: |
-        if [[ -f prebuilds/*/node*node ]]; then
         fileCount=$(ls prebuilds/*/node*node | wc -l)
         echo "NPM Prebuild count ${fileCount}"
         echo "::notice::NPM Prebuild count ${fileCount}, expected ${{ matrix.NPMCOUNT }}"
-        fi
 #        if [ "$fileCount" -eq 0 ]; then exit 1; fi
 #        if [ "$fileCount" -ne ${{ matrix.NPMCOUNT }} ]; then exit 1; fi
 
 
     - name: Pack NPM prebuilds
+      if: steps.check_files.outputs.files_exists == 'true'
       shell: bash
       run: |
-        if [[ -f prebuilds/*/node*node ]]; then
         tar -cvzf ${{ matrix.NPMCOUNT }}.tar.gz prebuilds/*/node*node
-        fi
 
     - uses: AButler/upload-release-assets@v2.0
+      name: Update Release Artifacts without NPM prebuilds
+      if: steps.check_files.outputs.files_exists == 'true'
+      with:
+        files: 'prebuilds/*/node-pty*tar.gz'
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+        release-tag: ${{ github.event.inputs.tag }}
+
+    - uses: AButler/upload-release-assets@v2.0
+      name: Update Release Artifacts with NPM prebuilds
+      if: steps.check_files.outputs.files_exists == 'true'
       with:
         files: 'prebuilds/*/node-pty*tar.gz;*.tar.gz'
         repo-token: ${{ secrets.GITHUB_TOKEN }}
