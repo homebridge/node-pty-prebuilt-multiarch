@@ -155,7 +155,6 @@ jobs:
         if [ "$fileCount" -ne ${{ matrix.COUNT }} ]; then exit 1; fi
 
     - name: Check NPM prebuilds exist
-      if: prebuilds/*/node*node
       shell: bash
       run: |
         if [[ -f prebuilds/*/node*node ]]; then
