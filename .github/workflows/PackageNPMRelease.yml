@@ -37,7 +37,7 @@ jobs:
         uses: robinraju/release-downloader@v1.8
         with:
           tag: ${{ github.event.inputs.tag }}
-          fileName: 'prebuilds-*tar.gz'
+          fileName: 'prebuilds.*.tar.gz'
           extract: true
 
       - name: List Files ( For debugging )
