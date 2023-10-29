@@ -7,6 +7,11 @@ on:
       tag:
         description: 'Tag'
         required: true
+      Beta:
+        description: 'Beta Release'
+        required: true
+        default: true
+        type: boolean
 
 jobs:
   Package_NPM_Release:
@@ -35,14 +40,20 @@ jobs:
           fileName: 'prebuilds-*tar.gz'
           extract: true
 
-  Publish_NPM_Release:
-      name: Publish NPM Release
-      needs: Package_NPM_Release
+      - name: List Files ( For debugging )
+        shell: bash
+        run: |
+          find .
 
-      if: ${{ github.repository == 'homebridge/node-pty-prebuilt-multiarch' }}
 
-      uses: homebridge/.github/.github/workflows/npm-publish.yml@latest
-      with:
-        install_cmd: npm ci
-      secrets:
-        npm_auth_token: ${{ secrets.npm_token }}
+#  Publish_NPM_Release:
+#      name: Publish NPM Release
+#      needs: Package_NPM_Release
+
+#      if: ${{ github.repository == 'homebridge/node-pty-prebuilt-multiarch' }}
+
+#      uses: homebridge/.github/.github/workflows/npm-publish.yml@latest
+#      with:
+#        install_cmd: npm ci
+#      secrets:
+#        npm_auth_token: ${{ secrets.npm_token }}

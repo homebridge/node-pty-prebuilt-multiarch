@@ -86,7 +86,7 @@ jobs:
           - name: darwin-x64
             os: macOS-latest
             COUNT: 25
-            NPMCOUNT: 0
+            NPMCOUNT: 11
 
           - name: win32-ia32
             os: windows-2019
