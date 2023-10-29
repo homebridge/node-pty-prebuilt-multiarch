@@ -41,7 +41,7 @@ jobs:
             DOCKERFILE: Dockerfile.alpine
             QEMU_ARCH: arm
             COUNT: 25
-            NPMCOUNT: 0
+            NPMCOUNT: 11
 
           - name: linuxmusl-arm64
             os: ubuntu-latest
@@ -49,7 +49,7 @@ jobs:
             DOCKERFILE: Dockerfile.alpine
             QEMU_ARCH: aarch64
             COUNT: 25
-            NPMCOUNT: 0
+            NPMCOUNT: 11
 
           - name: linux-x64
             os: ubuntu-latest
@@ -73,7 +73,7 @@ jobs:
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: arm
             COUNT: 25
-            NPMCOUNT: 0
+            NPMCOUNT: 11
 
           - name: linux-arm64
             os: ubuntu-latest
@@ -81,7 +81,7 @@ jobs:
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: aarch64
             COUNT: 25
-            NPMCOUNT: 0
+            NPMCOUNT: 11
 
           - name: darwin-x64
             os: macOS-latest
@@ -128,6 +128,7 @@ jobs:
       run: |
         npm ci --ignore-scripts
         env JOBS=max node .prebuild/build.js
+        env JOBS=max node .prebuild/buildify.js
 
     - name: Windows ia32 - Prebuild Binaries
       if: ${{ (runner.os == 'Windows') && (matrix.arch == 'ia32') }}
@@ -154,6 +155,13 @@ jobs:
         if [ "$fileCount" -eq 0 ]; then exit 1; fi
         if [ "$fileCount" -ne ${{ matrix.COUNT }} ]; then exit 1; fi
 
+    - uses: AButler/upload-release-assets@v2.0
+      name: Upload Release Artifacts to ${{ github.event.inputs.tag }}
+      with:
+        files: 'prebuilds/*/node-pty*tar.gz'
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+        release-tag: ${{ github.event.inputs.tag }}
+
     - name: "Check file existence"
       id: check_files
       uses: andstor/file-existence-action@v2
@@ -167,28 +175,20 @@ jobs:
         fileCount=$(ls prebuilds/*/node*node | wc -l)
         echo "NPM Prebuild count ${fileCount}"
         echo "::notice::NPM Prebuild count ${fileCount}, expected ${{ matrix.NPMCOUNT }}"
-#        if [ "$fileCount" -eq 0 ]; then exit 1; fi
-#        if [ "$fileCount" -ne ${{ matrix.NPMCOUNT }} ]; then exit 1; fi
+        if [ "$fileCount" -eq 0 ]; then exit 1; fi
+        if [ "$fileCount" -ne ${{ matrix.NPMCOUNT }} ]; then exit 1; fi
 
     - name: Pack NPM prebuilds
       if: steps.check_files.outputs.files_exists == 'true'
       shell: bash
       run: |
-        tar -cvzf ${{ matrix.NAME }}.tar.gz prebuilds/*/node*node
-
-#    - uses: AButler/upload-release-assets@v2.0
-#      name: Update Release Artifacts without NPM prebuilds
-#      if: steps.check_files.outputs.files_exists == 'false'
-#      with:
-#        files: 'prebuilds/*/node-pty*tar.gz'
-#        repo-token: ${{ secrets.GITHUB_TOKEN }}
-#        release-tag: ${{ github.event.inputs.tag }}
+        tar -cvzf prebuilds.${{ matrix.NAME }}.tar.gz prebuilds/*/node*node
 
     - uses: AButler/upload-release-assets@v2.0
-      name: Update Release Artifacts to ${{ github.event.inputs.tag }}
-#      if: steps.check_files.outputs.files_exists == 'true'
+      name: Upload NPM prebuilds to ${{ github.event.inputs.tag }}
+      if: steps.check_files.outputs.files_exists == 'true'
       with:
-        files: 'prebuilds/*/node-pty*tar.gz;*.tar.gz'
+        files: 'prebuilds.*.tar.gz'
         repo-token: ${{ secrets.GITHUB_TOKEN }}
         release-tag: ${{ github.event.inputs.tag }}
  
