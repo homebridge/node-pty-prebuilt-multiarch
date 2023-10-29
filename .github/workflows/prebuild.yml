@@ -132,21 +132,35 @@ jobs:
       shell: bash
       run: |
         npm ci --ignore-scripts
-        env JOBS=max node_modules/.bin/prebuild -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.1 -t 18.0.0 -t 20.0.0 --include-regex "\.(node|exe|dll|pdb)" --arch ${{ matrix.arch }}
+        env JOBS=max node_modules/.bin/prebuild -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.1 -t 18.0.0 -t 20.0.0 -t 21.0.0 --include-regex "\.(node|exe|dll|pdb)" --arch ${{ matrix.arch }}
         env JOBS=max node_modules/.bin/prebuild -t 5.0.0 -t 6.0.0 -t 7.0.0 -t 8.0.0 -t 9.0.0 -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.2 -t 15.0.0 -t 16.0.0 -t 17.0.0 -t 18.0.0 --include-regex "\.(node|exe|dll|pdb)" -r electron --arch ${{ matrix.arch }}
 
-    - name: Check prebuilds exist
+    - name: Check Release prebuilds exist
       shell: bash
       run: |
         fileCount=$(ls prebuilds/*/node-pty*tar.gz | wc -l)
-        echo "Prebuild count ${fileCount}"
-        echo "::notice::Prebuild count ${fileCount}, expected ${{ matrix.COUNT }}"
+        echo "Release Prebuild count ${fileCount}"
+        echo "::notice::Release Prebuild count ${fileCount}, expected ${{ matrix.COUNT }}"
         if [ "$fileCount" -eq 0 ]; then exit 1; fi
         if [ "$fileCount" -ne ${{ matrix.COUNT }} ]; then exit 1; fi
 
+    - name: Check NPM prebuilds exist
+      shell: bash
+      run: |
+        fileCount=$(ls prebuilds/*/node*node | wc -l)
+        echo "NPM Prebuild count ${fileCount}"
+        echo "::notice::NPM Prebuild count ${fileCount}, expected ${{ matrix.NPMCOUNT }}"
+#        if [ "$fileCount" -eq 0 ]; then exit 1; fi
+#        if [ "$fileCount" -ne ${{ matrix.NPMCOUNT }} ]; then exit 1; fi
+
+    - name: Pack NPM prebuilds
+      shell: bash
+      run: |
+        tar --posix cvzf ${{ matrix.NPMCOUNT }}.tar.gz prebuilds/*/node*node
+
     - uses: AButler/upload-release-assets@v2.0
       with:
-        files: 'prebuilds/*/node-pty*tar.gz'
+        files: 'prebuilds/*/node-pty*tar.gz;*.tar.gz'
         repo-token: ${{ secrets.GITHUB_TOKEN }}
         release-tag: ${{ github.event.inputs.tag }}
  

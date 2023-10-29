@@ -28,6 +28,13 @@ jobs:
           npm ci --ignore-scripts
           npm run build
 
+      - name: Download NPM Prebuild Artifacts
+        uses: robinraju/release-downloader@v1.8
+        with:
+          tag: ${{ github.event.inputs.tag }}
+          fileName: 'prebuilds-*tar.gz'
+          extract: true
+
   Publish_NPM_Release:
       name: Publish NPM Release
       needs: Package_NPM_Release

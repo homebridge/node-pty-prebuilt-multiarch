@@ -15,4 +15,5 @@ npm ci --ignore-scripts
  fi
 
 #node .prebuild/build.js
+env JOBS=max node .prebuild/buildify.js
 env JOBS=max node .prebuild/build.js
