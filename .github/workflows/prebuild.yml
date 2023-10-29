@@ -159,9 +159,9 @@ jobs:
       shell: bash
       run: |
         if [[ -f prebuilds/*/node*node ]]; then
-          fileCount=$(ls prebuilds/*/node*node | wc -l)
-          echo "NPM Prebuild count ${fileCount}"
-          echo "::notice::NPM Prebuild count ${fileCount}, expected ${{ matrix.NPMCOUNT }}"
+        fileCount=$(ls prebuilds/*/node*node | wc -l)
+        echo "NPM Prebuild count ${fileCount}"
+        echo "::notice::NPM Prebuild count ${fileCount}, expected ${{ matrix.NPMCOUNT }}"
 #        if [ "$fileCount" -eq 0 ]; then exit 1; fi
 #        if [ "$fileCount" -ne ${{ matrix.NPMCOUNT }} ]; then exit 1; fi
         fi
@@ -170,7 +170,7 @@ jobs:
       shell: bash
       run: |
         if [[ -f prebuilds/*/node*node ]]; then
-          tar -cvzf ${{ matrix.NPMCOUNT }}.tar.gz prebuilds/*/node*node
+        tar -cvzf ${{ matrix.NPMCOUNT }}.tar.gz prebuilds/*/node*node
         fi
 
     - uses: AButler/upload-release-assets@v2.0
