@@ -33,7 +33,7 @@ jobs:
             DOCKERFILE: Dockerfile.alpine
             QEMU_ARCH: x86_64
             COUNT: 25
-            NPMCOUNT: 0
+            NPMCOUNT: 11
 
           - name: linuxmusl-arm
             os: ubuntu-latest
@@ -57,7 +57,7 @@ jobs:
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: x86_64
             COUNT: 25
-            NPMCOUNT: 0
+            NPMCOUNT: 11
 
           - name: linux-ia32
             os: ubuntu-latest
@@ -65,7 +65,7 @@ jobs:
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: i386
             COUNT: 23
-            NPMCOUNT: 0
+            NPMCOUNT: 11
 
           - name: linux-arm
             os: ubuntu-latest
@@ -170,7 +170,6 @@ jobs:
 #        if [ "$fileCount" -eq 0 ]; then exit 1; fi
 #        if [ "$fileCount" -ne ${{ matrix.NPMCOUNT }} ]; then exit 1; fi
 
-
     - name: Pack NPM prebuilds
       if: steps.check_files.outputs.files_exists == 'true'
       shell: bash
@@ -179,7 +178,7 @@ jobs:
 
     - uses: AButler/upload-release-assets@v2.0
       name: Update Release Artifacts without NPM prebuilds
-      if: steps.check_files.outputs.files_exists == 'true'
+      if: steps.check_files.outputs.files_exists == 'false'
       with:
         files: 'prebuilds/*/node-pty*tar.gz'
         repo-token: ${{ secrets.GITHUB_TOKEN }}
