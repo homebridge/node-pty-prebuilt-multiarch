@@ -174,19 +174,19 @@ jobs:
       if: steps.check_files.outputs.files_exists == 'true'
       shell: bash
       run: |
-        tar -cvzf ${{ matrix.NPMCOUNT }}.tar.gz prebuilds/*/node*node
+        tar -cvzf ${{ matrix.NAME }}.tar.gz prebuilds/*/node*node
+
+#    - uses: AButler/upload-release-assets@v2.0
+#      name: Update Release Artifacts without NPM prebuilds
+#      if: steps.check_files.outputs.files_exists == 'false'
+#      with:
+#        files: 'prebuilds/*/node-pty*tar.gz'
+#        repo-token: ${{ secrets.GITHUB_TOKEN }}
+#        release-tag: ${{ github.event.inputs.tag }}
 
     - uses: AButler/upload-release-assets@v2.0
-      name: Update Release Artifacts without NPM prebuilds
-      if: steps.check_files.outputs.files_exists == 'false'
-      with:
-        files: 'prebuilds/*/node-pty*tar.gz'
-        repo-token: ${{ secrets.GITHUB_TOKEN }}
-        release-tag: ${{ github.event.inputs.tag }}
-
-    - uses: AButler/upload-release-assets@v2.0
-      name: Update Release Artifacts with NPM prebuilds
-      if: steps.check_files.outputs.files_exists == 'true'
+      name: Update Release Artifacts to ${{ github.event.inputs.tag }}
+#      if: steps.check_files.outputs.files_exists == 'true'
       with:
         files: 'prebuilds/*/node-pty*tar.gz;*.tar.gz'
         repo-token: ${{ secrets.GITHUB_TOKEN }}
