@@ -1,5 +1,5 @@
 {
-  "name": "node-pty-prebuilt-multiarch",
+  "name": "@homebridge/node-pty-prebuilt-multiarch",
   "description": "Fork pseudoterminals in Node.JS",
   "author": {
     "name": "Microsoft Corporation"
@@ -10,7 +10,7 @@
   "types": "./typings/node-pty.d.ts",
   "repository": {
     "type": "git",
-    "url": "git://github.com/NorthernMan54/node-pty-prebuilt-multiarch.git"
+    "url": "git://github.com/homebridge/node-pty-prebuilt-multiarch.git"
   },
   "files": [
     "binding.gyp",
@@ -26,9 +26,9 @@
     "prebuilds/linux-arm",
     "prebuilds/linux-arm64"
   ],
-  "homepage": "https://github.com/NorthernMan54/node-pty-prebuilt-multiarch",
+  "homepage": "https://github.com/homebridge/node-pty-prebuilt-multiarch",
   "bugs": {
-    "url": "https://github.com/NorthernMan54/node-pty-prebuilt-multiarch/issues"
+    "url": "https://github.com/homebridge/node-pty-prebuilt-multiarch/issues"
   },
   "keywords": [
     "pty",
