@@ -1,0 +1,255 @@
+name: "Prepare prebuild environment"
+run-name: Package against ${{ github.event.inputs.tag }}
+
+# Create branch for release
+# update package.json for package version
+# 
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag'
+        required: true
+      Beta:
+        description: 'Beta Release'
+        required: true
+        default: true
+        type: boolean
+
+jobs:
+  Prepare_prebuild_environment:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create Branch
+        uses: peterjgrainger/action-create-branch@v2.2.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: lts/*
+
+      - name: Fetch Adjust version script
+        if: ${{ inputs.Beta }}
+        run: wget https://raw.githubusercontent.com/homebridge/.github/latest/.github/npm-version-script.js
+        working-directory: .github
+
+      - name: Adjust version
+        if: ${{ inputs.Beta }}
+        run: node .github/npm-version-script.js ${{ github.ref }} beta
+
+      - name: npm version (without git commit)
+        if: ${{ inputs.Beta }}
+        run: npm version pre --preid=beta --no-git-tag-version
+
+      - name: Commit & Push changes
+        uses: actions-js/push@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: 'release-candidate'
+  
+  prebuild:
+    needs: Prepare_prebuild_environment  
+    strategy:
+      fail-fast: false
+      matrix:
+        name: [
+          darwin-x64,
+          linux-arm,
+          linux-arm64,
+          linux-ia32,
+          linux-x64,
+          linuxmusl-arm,
+          linuxmusl-arm64,
+          linuxmusl-x64,
+          win32-ia32,
+          win32-x64
+        ]
+        include:
+          - name: linuxmusl-x64
+            os: ubuntu-latest
+            BASE_IMAGE: library/node:16-alpine
+            DOCKERFILE: Dockerfile.alpine
+            QEMU_ARCH: x86_64
+            COUNT: 25
+            NPMCOUNT: 11
+
+          - name: linuxmusl-arm
+            os: ubuntu-latest
+            BASE_IMAGE: arm32v6/node:16-alpine
+            DOCKERFILE: Dockerfile.alpine
+            QEMU_ARCH: arm
+            COUNT: 25
+            NPMCOUNT: 11
+
+          - name: linuxmusl-arm64
+            os: ubuntu-latest
+            BASE_IMAGE: arm64v8/node:16-alpine
+            DOCKERFILE: Dockerfile.alpine
+            QEMU_ARCH: aarch64
+            COUNT: 25
+            NPMCOUNT: 11
+
+          - name: linux-x64
+            os: ubuntu-latest
+            BASE_IMAGE: library/debian:11.7-slim
+            DOCKERFILE: Dockerfile.debian
+            QEMU_ARCH: x86_64
+            COUNT: 25
+            NPMCOUNT: 11
+
+          - name: linux-ia32
+            os: ubuntu-latest
+            BASE_IMAGE: i386/debian:11.7-slim
+            DOCKERFILE: Dockerfile.debian
+            QEMU_ARCH: i386
+            COUNT: 23
+            NPMCOUNT: 11
+
+          - name: linux-arm
+            os: ubuntu-latest
+            BASE_IMAGE: balenalib/raspberry-pi-debian:bullseye
+            DOCKERFILE: Dockerfile.debian
+            QEMU_ARCH: arm
+            COUNT: 25
+            NPMCOUNT: 11
+
+          - name: linux-arm64
+            os: ubuntu-latest
+            BASE_IMAGE: arm64v8/debian:11.7-slim
+            DOCKERFILE: Dockerfile.debian
+            QEMU_ARCH: aarch64
+            COUNT: 25
+            NPMCOUNT: 11
+
+          - name: darwin-x64
+            os: macOS-latest
+            COUNT: 25
+            NPMCOUNT: 11
+
+          - name: win32-ia32
+            os: windows-2019
+            arch: ia32
+            COUNT: 21
+            NPMCOUNT: 0
+
+          - name: win32-x64
+            os: windows-2019
+            arch: x64
+            COUNT: 25
+            NPMCOUNT: 0
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        ref: 'release-candidate'
+
+    - uses: actions/setup-node@v3
+      with:
+        node-version: lts/*
+
+    - name: Linux - Setup Dependencies
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get --yes --no-install-recommends install binfmt-support qemu-user-static
+        docker run --rm --privileged multiarch/qemu-user-static:register --reset
+
+    - name: Linux - Build Docker Image
+      if: runner.os == 'Linux'
+      run: |
+        docker build -f .prebuild/${{ matrix.DOCKERFILE }} --build-arg BASE_IMAGE=${{ matrix.BASE_IMAGE }} --build-arg QEMU_ARCH=${{ matrix.QEMU_ARCH }} -t multiarch-build .
+
+    - name: Linux - Prebuild Binaries
+      if: runner.os == 'Linux'
+      run: |
+        docker run --rm -v $(pwd):/node-pty multiarch-build
+
+    - name: macOS - Prebuild Binaries
+      if: runner.os == 'macOS'
+      run: |
+        npm ci --ignore-scripts
+        env JOBS=max node .prebuild/build.js
+#       buildify doesn't work on Mac due to missing spawn_helper
+#       env JOBS=max node .prebuild/buildify.js
+
+    - name: Windows ia32 - Prebuild Binaries
+      if: ${{ (runner.os == 'Windows') && (matrix.arch == 'ia32') }}
+      shell: bash
+      run: |
+        npm ci --ignore-scripts
+        env JOBS=max node_modules/.bin/prebuild -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.1 --include-regex "\.(node|exe|dll|pdb)" --arch ${{ matrix.arch }}
+        env JOBS=max node_modules/.bin/prebuild -t 5.0.0 -t 6.0.0 -t 7.0.0 -t 8.0.0 -t 9.0.0 -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.2 -t 15.0.0 -t 16.0.0 -t 17.0.0 --include-regex "\.(node|exe|dll|pdb)" -r electron -a ${{ matrix.arch }}
+
+    - name: Windows x64 - Prebuild Binaries
+      if: ${{ (runner.os == 'Windows') && (matrix.arch == 'x64') }}
+      shell: bash
+      run: |
+        npm ci --ignore-scripts
+        env JOBS=max node_modules/.bin/prebuild -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.1 -t 18.0.0 -t 20.0.0 -t 21.0.0 --include-regex "\.(node|exe|dll|pdb)" --arch ${{ matrix.arch }}
+        env JOBS=max node_modules/.bin/prebuild -t 5.0.0 -t 6.0.0 -t 7.0.0 -t 8.0.0 -t 9.0.0 -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.2 -t 15.0.0 -t 16.0.0 -t 17.0.0 -t 18.0.0 --include-regex "\.(node|exe|dll|pdb)" -r electron --arch ${{ matrix.arch }}
+
+    - name: Check Release prebuilds exist
+      shell: bash
+      run: |
+        fileCount=$(ls prebuilds/*/node-pty*tar.gz | wc -l)
+        echo "Release Prebuild count ${fileCount}"
+        echo "::notice::Release Prebuild count ${fileCount}, expected ${{ matrix.COUNT }}"
+        if [ "$fileCount" -eq 0 ]; then exit 1; fi
+        if [ "$fileCount" -ne ${{ matrix.COUNT }} ]; then exit 1; fi
+
+    - name: Commit & Push changes
+      uses: actions-js/push@master
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        branch: 'release-candidate'
+        message: 'Prebuilds for ${{ matrix.name }}'
+
+  publish:
+    needs: prebuild
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          ref: 'release-candidate'
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: lts/*
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: NPM build
+        run: |
+          npm ci --ignore-scripts
+          npm run build
+
+      - uses: AButler/upload-release-assets@v2.0
+        name: Upload Prebuild Artifacts to ${{ github.event.inputs.tag }}
+        with:
+          files: 'prebuilds/*/node-pty*tar.gz'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          release-tag: ${{ github.event.inputs.tag }}
+
+      - name: NPM Pack Release 
+        run: |
+          npm pack
+
+      - uses: AButler/upload-release-assets@v2.0
+        name: Upload NPM Release to ${{ github.event.inputs.tag }}
+        with:
+          files: '*node-pty-prebuilt-multiarch*.tgz'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          release-tag: ${{ github.event.inputs.tag }}
+
+      - name: npm publish beta
+        if: ${{ github.repository == 'homebridge/node-pty-prebuilt-multiarch' && inputs.Beta }}
+        run: npm publish --access public --tag=${{ inputs.Beta }}
+
+      - name: npm publish production
+        if: ${{ github.repository == 'homebridge/node-pty-prebuilt-multiarch' && ! inputs.Beta }}
+        run: npm publish --access public         
