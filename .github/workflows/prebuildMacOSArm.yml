@@ -33,6 +33,7 @@ jobs:
         if [ "$fileCount" -ne 25 ]; then exit 1; fi
 
     - uses: AButler/upload-release-assets@v2.0
+      name: Upload Release Artifacts to ${{ github.event.inputs.tag }}
       with:
         files: 'prebuilds/*/node-pty*tar.gz'
         repo-token: ${{ secrets.GITHUB_TOKEN }}
