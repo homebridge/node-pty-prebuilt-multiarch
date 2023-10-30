@@ -45,6 +45,41 @@ jobs:
         run: |
           find .
 
+      - name: Fetch Adjust version script
+        if: ${{ inputs.Beta }}
+        run: wget https://raw.githubusercontent.com/homebridge/.github/latest/.github/npm-version-script.js
+        working-directory: .github
+
+      - name: Adjust version
+        if: ${{ inputs.Beta }}
+        run: node .github/npm-version-script.js ${{ github.ref }} ${{ inputs.Beta }}
+
+      - name: npm version (without git commit)
+        if: ${{ inputs.Beta }}
+        run: npm version pre --preid=beta --no-git-tag-version
+
+      - name: NPM Pack Release 
+        run: |
+          npm pack
+          npm run build
+
+    - uses: AButler/upload-release-assets@v2.0
+      name: Upload NPM Release to ${{ github.event.inputs.tag }}
+      with:
+        files: '*node-pty-prebuilt-multiarch*.tgz'
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+        release-tag: ${{ github.event.inputs.tag }}
+
+    - name: npm publish beta
+      if: ${{ github.repository == 'NorthernMan54/node-pty-prebuilt-multiarch' }}
+      if: ${{ inputs.Beta }}
+      run: npm publish --access public --tag=${{ inputs.Beta }}
+
+    - name: npm publish production
+      if: ${{ github.repository == 'homebridge/node-pty-prebuilt-multiarch' }}
+      if: ${{ ! inputs.Beta }}
+      run: npm publish --access public
+
 
 #  Publish_NPM_Release:
 #      name: Publish NPM Release
