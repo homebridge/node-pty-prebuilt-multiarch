@@ -52,7 +52,7 @@ jobs:
 
       - name: Adjust version
         if: ${{ inputs.Beta }}
-        run: node .github/npm-version-script.js ${{ github.ref }} ${{ inputs.Beta }}
+        run: node .github/npm-version-script.js ${{ github.ref }} beta
 
       - name: npm version (without git commit)
         if: ${{ inputs.Beta }}
