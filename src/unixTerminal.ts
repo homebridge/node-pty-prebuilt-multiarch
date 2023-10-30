@@ -10,6 +10,14 @@ import { IProcessEnv, IPtyForkOptions, IPtyOpenOptions } from './interfaces';
 import { ArgvOrCommandLine } from './types';
 import { assign } from './utils';
 
+import pty from './prebuild-loader';
+let helperPath: string;
+helperPath = '../build/Release/spawn-helper';
+
+/*
+
+https://github.com/NorthernMan54/node-pty-prebuilt-multiarch/commit/9b8a965aa741f8ca44855059ed74dadf7feb7279#diff-1031fbdc51b1e5ce18bb9755e26ba3944670d1f4972253569cebbffc77fd78b1
+
 let pty: IUnixNative;
 let helperPath: string;
 try {
@@ -27,6 +35,7 @@ try {
     throw outerError;
   }
 }
+*/
 
 helperPath = path.resolve(__dirname, helperPath);
 helperPath = helperPath.replace('app.asar', 'app.asar.unpacked');
