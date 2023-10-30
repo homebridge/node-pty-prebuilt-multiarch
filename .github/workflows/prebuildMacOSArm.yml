@@ -28,9 +28,9 @@ jobs:
       run: |
         fileCount=$(ls prebuilds/*/node-pty*tar.gz | wc -l)
         echo "Prebuild count ${fileCount}"
-        echo "::notice::Prebuild count ${fileCount}, expected 24"
+        echo "::notice::Prebuild count ${fileCount}, expected 25"
         if [ "$fileCount" -eq 0 ]; then exit 1; fi
-        if [ "$fileCount" -ne 24 ]; then exit 1; fi
+        if [ "$fileCount" -ne 25 ]; then exit 1; fi
 
     - uses: AButler/upload-release-assets@v2.0
       with:
