@@ -38,7 +38,17 @@ jobs:
         with:
           tag: ${{ github.event.inputs.tag }}
           fileName: 'prebuilds.*.tar.gz'
-          extract: true
+          extract: false
+
+      - name: Unpack NPM Prebuild Artifacts
+        shell: bash
+        run: |
+          for i in `ls prebuilds*tar.gz`
+          do
+            echo $i
+            tar xvzf $i
+            rm $i
+          done
 
       - name: List Files ( For debugging )
         shell: bash
