@@ -61,7 +61,6 @@ jobs:
       - name: NPM Pack Release 
         run: |
           npm pack
-          npm run build
 
       - uses: AButler/upload-release-assets@v2.0
         name: Upload NPM Release to ${{ github.event.inputs.tag }}
