@@ -19,8 +19,6 @@
     "src/",
     "deps/",
     "typings/",
-    "prebuilds/darwin-x64",
-    "prebuilds/darwin-arm64",
     "prebuilds/linux-x64",
     "prebuilds/linux-ia32",
     "prebuilds/linux-arm",

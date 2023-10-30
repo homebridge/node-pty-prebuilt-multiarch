@@ -128,7 +128,8 @@ jobs:
       run: |
         npm ci --ignore-scripts
         env JOBS=max node .prebuild/build.js
-        env JOBS=max node .prebuild/buildify.js
+#       buildify doesn't work on Mac due to missing spawn_helper
+#       env JOBS=max node .prebuild/buildify.js
 
     - name: Windows ia32 - Prebuild Binaries
       if: ${{ (runner.os == 'Windows') && (matrix.arch == 'ia32') }}
