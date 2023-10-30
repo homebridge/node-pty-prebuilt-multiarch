@@ -63,20 +63,20 @@ jobs:
           npm pack
           npm run build
 
-    - uses: AButler/upload-release-assets@v2.0
-      name: Upload NPM Release to ${{ github.event.inputs.tag }}
-      with:
-        files: '*node-pty-prebuilt-multiarch*.tgz'
-        repo-token: ${{ secrets.GITHUB_TOKEN }}
-        release-tag: ${{ github.event.inputs.tag }}
+      - uses: AButler/upload-release-assets@v2.0
+        name: Upload NPM Release to ${{ github.event.inputs.tag }}
+        with:
+          files: '*node-pty-prebuilt-multiarch*.tgz'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          release-tag: ${{ github.event.inputs.tag }}
 
-    - name: npm publish beta
-      if: ${{ github.repository == 'NorthernMan54/node-pty-prebuilt-multiarch' && inputs.Beta }}
-      run: npm publish --access public --tag=${{ inputs.Beta }}
+      - name: npm publish beta
+        if: ${{ github.repository == 'NorthernMan54/node-pty-prebuilt-multiarch' && inputs.Beta }}
+        run: npm publish --access public --tag=${{ inputs.Beta }}
 
-    - name: npm publish production
-      if: ${{ github.repository == 'homebridge/node-pty-prebuilt-multiarch' && ! inputs.Beta }}
-      run: npm publish --access public
+      - name: npm publish production
+        if: ${{ github.repository == 'homebridge/node-pty-prebuilt-multiarch' && ! inputs.Beta }}
+        run: npm publish --access public
 
 
 #  Publish_NPM_Release:
