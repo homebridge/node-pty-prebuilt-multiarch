@@ -71,13 +71,11 @@ jobs:
         release-tag: ${{ github.event.inputs.tag }}
 
     - name: npm publish beta
-      if: ${{ github.repository == 'NorthernMan54/node-pty-prebuilt-multiarch' }}
-      if: ${{ inputs.Beta }}
+      if: ${{ github.repository == 'NorthernMan54/node-pty-prebuilt-multiarch' && inputs.Beta }}
       run: npm publish --access public --tag=${{ inputs.Beta }}
 
     - name: npm publish production
-      if: ${{ github.repository == 'homebridge/node-pty-prebuilt-multiarch' }}
-      if: ${{ ! inputs.Beta }}
+      if: ${{ github.repository == 'homebridge/node-pty-prebuilt-multiarch' && ! inputs.Beta }}
       run: npm publish --access public
 
 
