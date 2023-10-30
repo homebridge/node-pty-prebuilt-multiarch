@@ -50,9 +50,9 @@ jobs:
         run: wget https://raw.githubusercontent.com/homebridge/.github/latest/.github/npm-version-script.js
         working-directory: .github
 
-      - name: Adjust version
-        if: ${{ inputs.Beta }}
-        run: node .github/npm-version-script.js ${{ github.ref }} beta
+#      - name: Adjust version
+#        if: ${{ inputs.Beta }}
+#        run: node .github/npm-version-script.js ${{ github.ref }} beta
 
       - name: npm version (without git commit)
         if: ${{ inputs.Beta }}
@@ -70,7 +70,7 @@ jobs:
           release-tag: ${{ github.event.inputs.tag }}
 
       - name: npm publish beta
-        if: ${{ github.repository == 'NorthernMan54/node-pty-prebuilt-multiarch' && inputs.Beta }}
+        if: ${{ github.repository == 'homebridge/node-pty-prebuilt-multiarch' && inputs.Beta }}
         run: npm publish --access public --tag=${{ inputs.Beta }}
 
       - name: npm publish production
