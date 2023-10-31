@@ -47,6 +47,9 @@ jobs:
         if: ${{ inputs.Beta }}
         run: npm version pre --preid=beta --no-git-tag-version
 
+      -name: Allow prebuilds to be stored on github
+        run: sed -i.bak '/prebuilds/d' .gitignore
+
       - name: Commit & Push changes
         uses: actions-js/push@master
         with:
@@ -210,6 +213,7 @@ jobs:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         branch: 'release-candidate'
         message: 'Prebuilds for ${{ matrix.name }}'
+        directory: 'prebuilds'
 
   publish:
     needs: prebuild
