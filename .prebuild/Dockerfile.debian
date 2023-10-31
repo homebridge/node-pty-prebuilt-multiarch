@@ -1,5 +1,5 @@
 ARG BASE_IMAGE
-FROM ${BASE_IMAGE:-library/debian:11.7-slim}
+FROM ${BASE_IMAGE:-library/debian:buster-slim}
 
 ARG QEMU_ARCH
 ENV QEMU_ARCH=${QEMU_ARCH:-x86_64}
@@ -33,4 +33,4 @@ RUN case "${QEMU_ARCH}" in \
 RUN mkdir /node-pty
 WORKDIR /node-pty
 
-CMD ["./.prebuild/build.sh"]
+## CMD ["./.prebuild/build.sh"]

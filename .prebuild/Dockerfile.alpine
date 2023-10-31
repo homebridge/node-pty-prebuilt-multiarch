@@ -11,4 +11,4 @@ RUN apk add curl git gcc g++ make python3 paxctl
 RUN mkdir /node-pty
 WORKDIR /node-pty
 
-CMD ["./.prebuild/olderBuild.sh", "./.prebuild/build.sh"]
+## CMD ["./.prebuild/olderBuild.sh", "./.prebuild/build.sh"]
