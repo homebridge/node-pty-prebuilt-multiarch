@@ -47,7 +47,7 @@ jobs:
         if: ${{ inputs.Beta }}
         run: npm version pre --preid=beta --no-git-tag-version
 
-      -name: Allow prebuilds to be stored on github
+      - name: Allow prebuilds to be stored on github
         run: sed -i.bak '/prebuilds/d' .gitignore
 
       - name: Commit & Push changes
