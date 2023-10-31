@@ -236,7 +236,7 @@ jobs:
         pull: true
 
   publish:
-    name: Publish GitHub and NPM Release ${{ steps.package-version.outputs.current-version}}
+    name: Publish GitHub and NPM Release
     needs: prebuild
     runs-on: ubuntu-latest
 
