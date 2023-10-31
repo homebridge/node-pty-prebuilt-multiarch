@@ -51,7 +51,8 @@ jobs:
           branch: 'release-candidate'
   
   prebuild:
-    needs: Prepare_prebuild_environment  
+    needs: Prepare_prebuild_environment 
+    runs-on: ${{ matrix.os }} 
     strategy:
       fail-fast: false
       matrix:
