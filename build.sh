@@ -14,7 +14,7 @@ export DOCKERFILE="Dockerfile.oldDebian"
 docker build -f .prebuild/$DOCKERFILE --build-arg QEMU_ARCH=${QEMU_ARCH} -t multiarch-build .
 docker run -v $(pwd):/node-pty multiarch-build ./.prebuild/build.sh .prebuild/prebuild.js ${oldNodeBuildTargets}
 docker run -v $(pwd):/node-pty multiarch-build ./.prebuild/build.sh .prebuild/prebuildify.js ${oldNodeBuildTargets}
-docker run --rm -v $(pwd):/node-pty multiarch-build ./.prebuild/olderBuild.sh .prebuild/electron.js ${electronBuildTargets}
+docker run --rm -v $(pwd):/node-pty multiarch-build ./.prebuild/build.sh .prebuild/electron.js ${electronBuildTargets}
 
 # Newer
 
