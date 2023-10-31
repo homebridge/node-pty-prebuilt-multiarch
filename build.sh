@@ -8,7 +8,9 @@ export BASE_IMAGE=library/debian:9.6-slim
 export QEMU_ARCH=x86_64
 export DOCKERFILE="Dockerfile.oldDebian"
 docker build -f .prebuild/$DOCKERFILE --build-arg BASE_IMAGE=${BASE_IMAGE} --build-arg QEMU_ARCH=${QEMU_ARCH} -t multiarch-build .
-docker run -v $(pwd):/node-pty multiarch-build ./.prebuild/olderBuild.sh
+docker run -v $(pwd):/node-pty multiarch-build ./.prebuild/olderBuild.sh .prebuild/prebuild.js -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.1 -t 18.0.0
+docker run -v $(pwd):/node-pty multiarch-build ./.prebuild/olderBuild.sh .prebuild/prebuildify.js -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.1 -t 18.0.0
+docker run -v $(pwd):/node-pty multiarch-build ./.prebuild/olderBuild.sh .prebuild/electron.js -t 5.0.0 -t 6.0.0 -t 7.0.0 -t 8.0.0 -t 9.0.0 -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.0 -t 18.0.0
 
 exit 0
 
