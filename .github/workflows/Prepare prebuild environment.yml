@@ -224,7 +224,7 @@ jobs:
         if [ "$fileCount" -ne ${{ matrix.NPMCOUNT }} ]; then exit 1; fi
 
     - name: Commit & Push changes
-      uses: actions-js/push@be2c6e7
+      uses: actions-js/push@be2c6e7c16dba301499992e84b3b32aaaa56507c
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         branch: 'release-candidate'
