@@ -103,7 +103,7 @@ jobs:
 
           - name: linux-x64
             os: ubuntu-latest
-            BASE_IMAGE: library/debian:11.7-slim
+            BASE_IMAGE: library/debian:9.6-slim
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: x86_64
             COUNT: 25
@@ -111,7 +111,7 @@ jobs:
 
           - name: linux-ia32
             os: ubuntu-latest
-            BASE_IMAGE: i386/debian:11.7-slim
+            BASE_IMAGE: i386/debian:9.6-slim
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: i386
             COUNT: 23
@@ -127,7 +127,7 @@ jobs:
 
           - name: linux-arm64
             os: ubuntu-latest
-            BASE_IMAGE: arm64v8/debian:11.7-slim
+            BASE_IMAGE: arm64v8/debian:9.6-slim
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: aarch64
             COUNT: 25
@@ -162,7 +162,7 @@ jobs:
 
     - uses: actions/setup-node@v3
       with:
-        node-version: lts/*
+        node-version: 18.x
 
     - name: get-npm-version
       id: package-version
