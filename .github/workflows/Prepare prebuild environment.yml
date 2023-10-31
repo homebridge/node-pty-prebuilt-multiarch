@@ -164,6 +164,10 @@ jobs:
       with:
         node-version: lts/*
 
+    - name: get-npm-version
+      id: package-version
+      uses: martinbeentjes/npm-get-version-action@v1.3.1
+
     - name: Linux - Setup Dependencies
       if: runner.os == 'Linux'
       run: |
@@ -235,7 +239,7 @@ jobs:
         author_name: ${{ github.actor }}
         github_token: ${{ secrets.GITHUB_TOKEN }}
         branch: 'release-candidate'
-        message: 'Prebuilds for ${{ matrix.name }}'
+        message: 'Prebuilds for ${{ steps.package-version.outputs.current-version}} - ${{ matrix.name }}'
         pull: true
 
   publish:
@@ -301,7 +305,7 @@ jobs:
         id: check_files
         uses: andstor/file-existence-action@v2
         with:
-          files: "prebuilds/*/nnode-pty-prebuilt-multiarch-*-node-*-darwin-arm64.tar.gz"
+          files: "prebuilds/*/node-pty-prebuilt-multiarch-*-node-*-darwin-arm64.tar.gz"
 
       - name: Check MacOS ARM prebuilds exist
         if: steps.check_files.outputs.files_exists == 'false'
