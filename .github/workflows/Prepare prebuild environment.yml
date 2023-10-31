@@ -252,23 +252,42 @@ jobs:
           npm ci --ignore-scripts
           npm run build
 
+      - name: get-npm-version
+        id: package-version
+        uses: martinbeentjes/npm-get-version-action@v1.3.1
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.package-version.outputs.current-version}}
+          release_name: Release ${{ steps.package-version.outputs.current-version}}
+          body: |
+            Changes in this Release
+            - First Change
+            - Second Change
+          draft: false
+          prerelease: true
+
       - uses: AButler/upload-release-assets@v2.0
-        name: Upload Prebuild Artifacts to ${{ github.event.inputs.tag }}
+        name: Upload Prebuild Artifacts to ${{ steps.package-version.outputs.current-version}}
         with:
           files: 'prebuilds/*/node-pty*tar.gz'
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-          release-tag: ${{ github.event.inputs.tag }}
+          release-tag: ${{ steps.package-version.outputs.current-version}}
 
       - name: NPM Pack Release 
         run: |
           npm pack
 
       - uses: AButler/upload-release-assets@v2.0
-        name: Upload NPM Release to ${{ github.event.inputs.tag }}
+        name: Upload NPM Release to ${{ steps.package-version.outputs.current-version}}
         with:
           files: '*node-pty-prebuilt-multiarch*.tgz'
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-          release-tag: ${{ github.event.inputs.tag }}
+          release-tag: ${{ steps.package-version.outputs.current-version}}
 
       - name: npm publish beta
         if: ${{ github.repository == 'homebridge/node-pty-prebuilt-multiarch' && inputs.Beta }}
