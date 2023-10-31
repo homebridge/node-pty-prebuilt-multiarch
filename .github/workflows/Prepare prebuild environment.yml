@@ -207,13 +207,29 @@ jobs:
         if [ "$fileCount" -eq 0 ]; then exit 1; fi
         if [ "$fileCount" -ne ${{ matrix.COUNT }} ]; then exit 1; fi
 
+    - name: "Check file existence"
+      id: check_files
+      uses: andstor/file-existence-action@v2
+      with:
+        files: "prebuilds/*/node*node"
+
+    - name: Check NPM prebuilds exist
+      if: steps.check_files.outputs.files_exists == 'true'
+      shell: bash
+      run: |
+        fileCount=$(ls prebuilds/*/node*node | wc -l)
+        echo "NPM Prebuild count ${fileCount}"
+        echo "::notice::NPM Prebuild count ${fileCount}, expected ${{ matrix.NPMCOUNT }}"
+        if [ "$fileCount" -eq 0 ]; then exit 1; fi
+        if [ "$fileCount" -ne ${{ matrix.NPMCOUNT }} ]; then exit 1; fi
+
     - name: Commit & Push changes
-      uses: actions-js/push@master
+      uses: actions-js/push@be2c6e7
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         branch: 'release-candidate'
         message: 'Prebuilds for ${{ matrix.name }}'
-        directory: 'prebuilds'
+        pull: true
 
   publish:
     needs: prebuild
