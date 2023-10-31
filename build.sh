@@ -2,10 +2,10 @@
 
 set -e
 
-export oldNodeBuildTargets=-t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.1 -t 18.0.0
-export nodeBuildTargets=-t 19.0.0 -t 20.0.0 -t 21.0.0
+export oldNodeBuildTargets='-t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.1 -t 18.0.0'
+export nodeBuildTargets='-t 19.0.0 -t 20.0.0 -t 21.0.0'
 
-export electronBuildTargets=-t 5.0.0 -t 6.0.0 -t 7.0.0 -t 8.0.0 -t 9.0.0 -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.0 -t 18.0.0
+export electronBuildTargets='-t 5.0.0 -t 6.0.0 -t 7.0.0 -t 8.0.0 -t 9.0.0 -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.0 -t 18.0.0'
 
 # Older
 
