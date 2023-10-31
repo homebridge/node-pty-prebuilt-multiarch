@@ -17,83 +17,16 @@ if (os.platform() === 'win32') {
 
 const cwd = path.resolve(__dirname, '../');
 
-/**
- * --------------- Node.js Build ---------------
- */
-
-// define build targets
-var nodeBuildTargets = [];
-if (process.env.QEMU_ARCH === 'i386') {
-  // Linux 32 bit support was dropped with 18.4.0
-  nodeBuildTargets = [
-  ]
-  console.error('i386 build not supported')
-  process.exit(0);
-} else {
-  nodeBuildTargets = [
-    '-t',
-    '19.0.0',
-    '-t',
-    '20.0.0',
-    '-t',
-    '21.0.0',    
-  ]
-}
-
-const nodeBuildCmd = [
-  prebuildPath,
-  ...nodeBuildTargets,
-]
-
-console.log('Building for Node.js:');
-console.log(nodeBuildCmd.join(' '));
-
-try {
-  var result = child_process.spawnSync(process.execPath, nodeBuildCmd, {
-    cwd: cwd,
-    stdio: ['inherit', 'inherit', 'inherit']
-  });
-  console.log('Result ', result.status, result.signal, result.error);
-} catch (e) {
-  console.error(e);
-  process.exit(0);
-}
 
 /** 
  * --------------- Electron Build ---------------
  */
 
-/*
-const electronBuildTargets = [
-  '-t',
-  '5.0.0',
-  '-t',
-  '6.0.0',
-  '-t',
-  '7.0.0',
-  '-t',
-  '8.0.0',
-  '-t',
-  '9.0.0',
-  '-t',
-  '10.0.0',
-  '-t',
-  '11.0.0',
-  '-t',
-  '12.0.0',
-  '-t',
-  '13.0.0',
-  '-t',
-  '14.0.0',
-  '-t',
-  '15.0.0',
-  '-t',
-  '16.0.0',
-  '-t',
-  '17.0.0',
-  '-t',
-  '18.0.0',
-]
+
+ var electronBuildTargets = [...process.argv];
+
+ electronBuildTargets.shift();
+ electronBuildTargets.shift();
 
 const electronBuildCmd = [
   prebuildPath,
@@ -114,4 +47,3 @@ try {
 } catch (e) {
   process.exit(0);
 }
-*/

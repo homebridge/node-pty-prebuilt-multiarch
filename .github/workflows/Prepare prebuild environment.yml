@@ -73,6 +73,10 @@ jobs:
           linuxmusl-arm,
           linuxmusl-arm64,
           linuxmusl-x64,
+          olderLinux-arm,
+          olderLinux-arm64,
+          olderLinux-ia32,
+          olderLinux-x64,
           win32-ia32,
           win32-x64
         ]
@@ -101,6 +105,8 @@ jobs:
             COUNT: 25
             NPMCOUNT: 11
 
+# Builds for NodeJS 19+
+
           - name: linux-x64
             os: ubuntu-latest
             BASE_IMAGE: library/debian:buster-slim
@@ -119,7 +125,7 @@ jobs:
 
           - name: linux-arm
             os: ubuntu-latest
-            BASE_IMAGE: balenalib/raspberry-pi-debian:bullseye
+            BASE_IMAGE: balenalib/raspberry-pi-debian:buster
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: arm
             COUNT: 25
@@ -129,6 +135,40 @@ jobs:
             os: ubuntu-latest
             BASE_IMAGE: arm64v8/debian:buster-slim
             DOCKERFILE: Dockerfile.debian
+            QEMU_ARCH: aarch64
+            COUNT: 25
+            NPMCOUNT: 11
+
+# Builds for NodeJS 18 or lower
+
+          - name: olderLinux-x64
+            os: ubuntu-latest
+            BASE_IMAGE: library/debian:debian:9.6-slim
+            DOCKERFILE: Dockerfile.oldDebian
+            QEMU_ARCH: x86_64
+            COUNT: 25
+            NPMCOUNT: 11
+
+          - name: olderLinux-ia32
+            os: ubuntu-latest
+            BASE_IMAGE: i386/debian:debian:9.6-slim
+            DOCKERFILE: Dockerfile.oldDebian
+            QEMU_ARCH: i386
+            COUNT: 23
+            NPMCOUNT: 11
+
+          - name: olderLinux-arm
+            os: ubuntu-latest
+            BASE_IMAGE: balenalib/raspberry-pi-debian:bullseye
+            DOCKERFILE: Dockerfile.oldDebian
+            QEMU_ARCH: arm
+            COUNT: 25
+            NPMCOUNT: 11
+
+          - name: olderLinux-arm64
+            os: ubuntu-latest
+            BASE_IMAGE: arm64v8/debian:debian:9.6-slim
+            DOCKERFILE: Dockerfile.oldDebian
             QEMU_ARCH: aarch64
             COUNT: 25
             NPMCOUNT: 11
@@ -190,7 +230,8 @@ jobs:
       if: runner.os == 'macOS'
       run: |
         npm ci --ignore-scripts
-        env JOBS=max node .prebuild/build.js
+        env JOBS=max node .prebuild/prebuild.js -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.1 -t 18.0.0 -t 19.0.0 -t 20.0.0 -t 21.0.0 
+        env JOBS=max node .prebuild/electron.js -t 5.0.0 -t 6.0.0 -t 7.0.0 -t 8.0.0 -t 9.0.0 -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.0 -t 18.0.0
 #       buildify doesn't work on Mac due to missing spawn_helper
 #       env JOBS=max node .prebuild/buildify.js
 

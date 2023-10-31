@@ -1,7 +1,6 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const process = require('process');
 const child_process = require('child_process');
 
 // node-abi is still shipping the wrong data
@@ -11,17 +10,6 @@ const nodeAbiPkgPath = path.dirname(require.resolve('node-abi'));
 const prebuildPath = path.resolve(prebuildPkgPath, 'bin.js');
 const abiRegistryJsonPath = path.resolve(nodeAbiPkgPath, 'abi_registry.json');
 fs.copyFileSync(path.resolve(__dirname, 'abi_registry.json'), abiRegistryJsonPath);
-
-// const nodeGypPkgPath = path.dirname(require.resolve('prebuild'));
-// const nodeGyp = path.resolve(nodeGypPkgPath, 'node_modules/node-gyp/bin/node-gyp.js');
-
-// console.log('nodeGyp', nodeGyp);
-console.log('pwd',process.cwd());
-
-const altAbiRegistryJsonPath = path.resolve(prebuildPkgPath, 'node_modules/node-abi/abi_registry.json');
-if (fs.existsSync(altAbiRegistryJsonPath)) {
-  fs.copyFileSync(path.resolve(__dirname, 'abi_registry.json'), altAbiRegistryJsonPath);
-}
 
 if (os.platform() === 'win32') {
   process.exit(0);
@@ -33,33 +21,26 @@ const cwd = path.resolve(__dirname, '../');
  * --------------- Node.js Build ---------------
  */
 
-// define build targets
-const nodeBuildTargets = [
-  '-t',
-  '19.0.0',
-  '-t',
-  '20.0.0',
-  '-t',
-  '21.0.0',  
-]
+ var nodeBuildTargets = [...process.argv];
+
+ nodeBuildTargets.shift();
+ nodeBuildTargets.shift();
+
 
 const nodeBuildCmd = [
   prebuildPath,
-  ...nodeBuildTargets
+  ...nodeBuildTargets,
 ]
 
-if (os.platform() === 'linux' && fs.existsSync('/etc/alpine-release')) {
-  nodeBuildCmd.push('--tag-libc')
-}
-
-console.log('Building for Node.js:');
+console.log('Prebuildify for Node.js:');
 console.log(nodeBuildCmd.join(' '));
 
 try {
-  child_process.spawnSync(process.execPath, nodeBuildCmd, {
+  var result = child_process.spawnSync(process.execPath, nodeBuildCmd, {
     cwd: cwd,
     stdio: ['inherit', 'inherit', 'inherit']
   });
+  console.log('Prebuildify Result ', result.status, result.signal, result.error);
 } catch (e) {
   console.error(e);
   process.exit(0);

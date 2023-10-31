@@ -26,17 +26,45 @@ var nodeBuildTargets = [];
 if (process.env.QEMU_ARCH === 'i386') {
   // Linux 32 bit support was dropped with 18.4.0
   nodeBuildTargets = [
+    '-t',
+    '10.0.0',
+    '-t',
+    '11.0.0',
+    '-t',
+    '12.0.0',
+    '-t',
+    '13.0.0',
+    '-t',
+    '14.0.0',
+    '-t',
+    '15.0.0',
+    '-t',
+    '16.0.0',
+    '-t',
+    '17.0.1',
+    '-t',
+    '18.0.0',
   ]
-  console.error('i386 build not supported')
-  process.exit(0);
 } else {
   nodeBuildTargets = [
     '-t',
-    '19.0.0',
+    '10.0.0',
     '-t',
-    '20.0.0',
+    '11.0.0',
     '-t',
-    '21.0.0',    
+    '12.0.0',
+    '-t',
+    '13.0.0',
+    '-t',
+    '14.0.0',
+    '-t',
+    '15.0.0',
+    '-t',
+    '16.0.0',
+    '-t',
+    '17.0.1',
+    '-t',
+    '18.0.0',  
   ]
 }
 
@@ -63,7 +91,6 @@ try {
  * --------------- Electron Build ---------------
  */
 
-/*
 const electronBuildTargets = [
   '-t',
   '5.0.0',
@@ -114,4 +141,3 @@ try {
 } catch (e) {
   process.exit(0);
 }
-*/
