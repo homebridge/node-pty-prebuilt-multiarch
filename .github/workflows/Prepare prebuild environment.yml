@@ -16,6 +16,7 @@ on:
 
 jobs:
   Prepare_prebuild_environment:
+    name: Prepare prebuild environment ${{ github.ref_name }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -50,8 +51,10 @@ jobs:
       - name: Commit & Push changes
         uses: actions-js/push@master
         with:
+          author_name: ${{ github.actor }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           branch: 'release-candidate'
+          message: 'Prepare prebuild environment ${{ github.ref_name }}'
   
   prebuild:
     needs: Prepare_prebuild_environment 
@@ -233,6 +236,7 @@ jobs:
         pull: true
 
   publish:
+    name: Publish GitHub and NPM Release ${{ steps.package-version.outputs.current-version}}
     needs: prebuild
     runs-on: ubuntu-latest
 
