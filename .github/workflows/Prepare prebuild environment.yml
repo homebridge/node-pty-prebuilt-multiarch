@@ -1,5 +1,5 @@
-name: "Prepare prebuild environment"
-run-name: Package against ${{ github.event.inputs.tag }}
+name: "Run prebuild's and create release"
+run-name: Package against ${{ github.ref_name }}
 
 # Create branch for release
 # update package.json for package version
@@ -8,9 +8,6 @@ run-name: Package against ${{ github.event.inputs.tag }}
 on:
   workflow_dispatch:
     inputs:
-      tag:
-        description: 'Tag'
-        required: true
       Beta:
         description: 'Beta Release'
         required: true
@@ -223,11 +220,13 @@ jobs:
         if [ "$fileCount" -eq 0 ]; then exit 1; fi
         if [ "$fileCount" -ne ${{ matrix.NPMCOUNT }} ]; then exit 1; fi
 
-    - run: sudo chown -R $USER:$USER .
-    
+    - if: runner.os == 'Linux'
+      run: sudo chown -R $USER:$USER .
+
     - name: Commit & Push changes
       uses: actions-js/push@be2c6e7c16dba301499992e84b3b32aaaa56507c
       with:
+        author_name: ${{ github.actor }}
         github_token: ${{ secrets.GITHUB_TOKEN }}
         branch: 'release-candidate'
         message: 'Prebuilds for ${{ matrix.name }}'
