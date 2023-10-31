@@ -210,7 +210,7 @@ jobs:
       run: |
         fileCount=$(ls prebuilds/*/node-pty*tar.gz | wc -l)
         echo "Release Prebuild count ${fileCount}"
-        if [ "$fileCount" -ne ${{ matrix.COUNT }} ]; then echo "::error::Release Prebuild count ${fileCount}, expected ${{ matrix.COUNT }}"; else echo "::notice::Release Prebuild count ${fileCount}, expected ${{ matrix.COUNT }}"; fi
+        if [ "$fileCount" -ne ${{ matrix.COUNT }} ]; then echo "::warning::Release Prebuild count ${fileCount}, expected ${{ matrix.COUNT }}"; else echo "::notice::Release Prebuild count ${fileCount}, expected ${{ matrix.COUNT }}"; fi
 
     - name: "Check file existence"
       id: check_files
@@ -224,7 +224,7 @@ jobs:
       run: |
         fileCount=$(ls prebuilds/*/node*node | wc -l)
         echo "NPM Prebuild count ${fileCount}"
-        if [ "$fileCount" -ne ${{ matrix.NPMCOUNT }} ]; then echo "::error::Release NPM Prebuild count ${fileCount}, expected ${{ matrix.NPMCOUNT }}"; else echo "::notice::Release NPM Prebuild count ${fileCount}, expected ${{ matrix.NPMCOUNT }}"; fi
+        if [ "$fileCount" -ne ${{ matrix.NPMCOUNT }} ]; then echo "::warning::Release NPM Prebuild count ${fileCount}, expected ${{ matrix.NPMCOUNT }}"; else echo "::notice::Release NPM Prebuild count ${fileCount}, expected ${{ matrix.NPMCOUNT }}"; fi
 
     - if: runner.os == 'Linux'
       run: sudo chown -R $USER:$USER .
