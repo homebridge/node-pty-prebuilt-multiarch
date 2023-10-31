@@ -43,4 +43,4 @@ RUN case "${QEMU_ARCH}" in \
 RUN mkdir /node-pty
 WORKDIR /node-pty
 
-CMD ["./.prebuild/olderBuild.sh"]
+## CMD ["./.prebuild/olderBuild.sh"]
