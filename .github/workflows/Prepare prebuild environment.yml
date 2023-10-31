@@ -1,4 +1,4 @@
-name: "Run prebuild's and create release"
+name: "Run prebuild's and Create GitHub and NPM release"
 run-name: Package against ${{ github.ref_name }}
 
 # Create branch for release
@@ -57,6 +57,7 @@ jobs:
           message: 'Prepare prebuild environment ${{ github.ref_name }}'
   
   prebuild:
+    name: Prebuild NPM and GitHub Release artifacts
     needs: Prepare_prebuild_environment 
     runs-on: ${{ matrix.os }} 
     strategy:
@@ -203,9 +204,7 @@ jobs:
       run: |
         fileCount=$(ls prebuilds/*/node-pty*tar.gz | wc -l)
         echo "Release Prebuild count ${fileCount}"
-        echo "::notice::Release Prebuild count ${fileCount}, expected ${{ matrix.COUNT }}"
-        if [ "$fileCount" -eq 0 ]; then exit 1; fi
-        if [ "$fileCount" -ne ${{ matrix.COUNT }} ]; then exit 1; fi
+        if [ "$fileCount" -ne ${{ matrix.COUNT }} ]; then echo "::error::Release Prebuild count ${fileCount}, expected ${{ matrix.COUNT }}"; else echo "::notice::Release Prebuild count ${fileCount}, expected ${{ matrix.COUNT }}"; fi
 
     - name: "Check file existence"
       id: check_files
@@ -219,9 +218,7 @@ jobs:
       run: |
         fileCount=$(ls prebuilds/*/node*node | wc -l)
         echo "NPM Prebuild count ${fileCount}"
-        echo "::notice::NPM Prebuild count ${fileCount}, expected ${{ matrix.NPMCOUNT }}"
-        if [ "$fileCount" -eq 0 ]; then exit 1; fi
-        if [ "$fileCount" -ne ${{ matrix.NPMCOUNT }} ]; then exit 1; fi
+        if [ "$fileCount" -ne ${{ matrix.NPMCOUNT }} ]; then echo "::error::Release Prebuild count ${fileCount}, expected ${{ matrix.NPMCOUNT }}"; else echo "::notice::Release Prebuild count ${fileCount}, expected ${{ matrix.NPMCOUNT }}"; fi
 
     - if: runner.os == 'Linux'
       run: sudo chown -R $USER:$USER .
@@ -293,6 +290,18 @@ jobs:
           files: '*node-pty-prebuilt-multiarch*.tgz'
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           release-tag: ${{ steps.package-version.outputs.current-version}}
+
+      - name: "Check file existence"
+        id: check_files
+        uses: andstor/file-existence-action@v2
+        with:
+          files: "prebuilds/*/nnode-pty-prebuilt-multiarch-*-node-*-darwin-arm64.tar.gz"
+
+      - name: Check MacOS ARM prebuilds exist
+        if: steps.check_files.outputs.files_exists == 'false'
+        run: |
+          echo "Missing MacOS ARM prebuilds, please remove release Artifats, and reun"
+          exit 1
 
       - name: npm publish beta
         if: ${{ github.repository == 'homebridge/node-pty-prebuilt-multiarch' && inputs.Beta }}
