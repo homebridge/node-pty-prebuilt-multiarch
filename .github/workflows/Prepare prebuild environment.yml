@@ -57,7 +57,7 @@ jobs:
           message: 'Prepare prebuild environment ${{ github.ref_name }}'
   
   prebuild:
-    name: Prebuild NPM and GitHub Release artifacts
+    name:  ${{ matrix.name }} - Prebuild NPM and GitHub Release artifacts
     needs: Prepare_prebuild_environment 
     runs-on: ${{ matrix.os }} 
     strategy:
@@ -65,6 +65,7 @@ jobs:
       matrix:
         name: [
           darwin-x64,
+          darwin-arm64,
           linux-arm,
           linux-arm64,
           linux-ia32,
@@ -134,6 +135,11 @@ jobs:
 
           - name: darwin-x64
             os: macOS-latest
+            COUNT: 25
+            NPMCOUNT: 11
+
+          - name: darwin-arm64
+            os: [self-hosted, macOS, ARM64]
             COUNT: 25
             NPMCOUNT: 11
 
@@ -218,7 +224,7 @@ jobs:
       run: |
         fileCount=$(ls prebuilds/*/node*node | wc -l)
         echo "NPM Prebuild count ${fileCount}"
-        if [ "$fileCount" -ne ${{ matrix.NPMCOUNT }} ]; then echo "::error::Release Prebuild count ${fileCount}, expected ${{ matrix.NPMCOUNT }}"; else echo "::notice::Release Prebuild count ${fileCount}, expected ${{ matrix.NPMCOUNT }}"; fi
+        if [ "$fileCount" -ne ${{ matrix.NPMCOUNT }} ]; then echo "::error::Release NPM Prebuild count ${fileCount}, expected ${{ matrix.NPMCOUNT }}"; else echo "::notice::Release NPM Prebuild count ${fileCount}, expected ${{ matrix.NPMCOUNT }}"; fi
 
     - if: runner.os == 'Linux'
       run: sudo chown -R $USER:$USER .
