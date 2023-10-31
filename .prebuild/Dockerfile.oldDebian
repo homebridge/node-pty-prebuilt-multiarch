@@ -4,6 +4,9 @@ FROM ${BASE_IMAGE:-library/debian:9.6-slim}
 ARG QEMU_ARCH
 ENV QEMU_ARCH=${QEMU_ARCH:-x86_64}
 
+ARG CMD
+ENV CMD=${CMD:-blank}
+
 COPY .prebuild/qemu/qemu-${QEMU_ARCH}-static /usr/bin/
 
 RUN cat /etc/apt/sources.list
@@ -43,4 +46,4 @@ RUN case "${QEMU_ARCH}" in \
 RUN mkdir /node-pty
 WORKDIR /node-pty
 
-## CMD ["./.prebuild/olderBuild.sh"]
+CMD [$CMD]
