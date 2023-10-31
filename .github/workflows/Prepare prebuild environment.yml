@@ -36,6 +36,9 @@ jobs:
         run: wget https://raw.githubusercontent.com/homebridge/.github/latest/.github/npm-version-script.js
         working-directory: .github
 
+      - if: ${{ inputs.Beta }}
+        run: npm install semver
+
       - name: Adjust version
         if: ${{ inputs.Beta }}
         run: node .github/npm-version-script.js ${{ github.ref }} beta
