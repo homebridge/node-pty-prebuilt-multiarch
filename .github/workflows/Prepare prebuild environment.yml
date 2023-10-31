@@ -223,6 +223,8 @@ jobs:
         if [ "$fileCount" -eq 0 ]; then exit 1; fi
         if [ "$fileCount" -ne ${{ matrix.NPMCOUNT }} ]; then exit 1; fi
 
+    - run: sudo chown -R $USER:$USER .
+    
     - name: Commit & Push changes
       uses: actions-js/push@be2c6e7c16dba301499992e84b3b32aaaa56507c
       with:
