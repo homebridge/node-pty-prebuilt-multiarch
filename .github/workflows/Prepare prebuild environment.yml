@@ -24,9 +24,8 @@ jobs:
     name: Prepare prebuild environment ${{ github.ref_name }}
     runs-on: ubuntu-latest
     steps:
-
-      - name: Setup Build Commands
-        if: runner.os == 'Linux'
+#      - name: Setup Build Commands
+#        if: runner.os == 'Linux'
 #        run: |
 #          echo "oldRunCMD=\"./.prebuild/build.sh .prebuild/prebuild.js ${oldNodeBuildTargets} && \
 #            ./.prebuild/build.sh .prebuild/prebuildify.js ${oldNodeBuildTargets} && \
