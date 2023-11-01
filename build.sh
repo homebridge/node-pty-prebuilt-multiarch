@@ -14,8 +14,8 @@ export oldRunCMD="./.prebuild/build.sh .prebuild/prebuild.js ${oldNodeBuildTarge
 export RunCMD="./.prebuild/build.sh .prebuild/prebuild.js ${nodeBuildTargets} && \
 ./.prebuild/build.sh .prebuild/prebuildify.js ${nodeBuildTargets}"
 
-export BuildAllCMD="./.prebuild/build.sh .prebuild/prebuild.js ${oldNodeBuildTargets} ${nodeBuildTargets}  && \
-./.prebuild/build.sh .prebuild/prebuildify.js ${oldNodeBuildTargets} ${nodeBuildTargets}&& \
+export BuildAllCMD="./.prebuild/build.sh .prebuild/prebuild.js ${oldNodeBuildTargets} ${nodeBuildTargets} && \
+./.prebuild/build.sh .prebuild/prebuildify.js ${oldNodeBuildTargets} ${nodeBuildTargets} && \
 ./.prebuild/build.sh .prebuild/electron.js ${electronBuildTargets}"
 
 # Older
