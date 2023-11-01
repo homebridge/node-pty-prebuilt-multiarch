@@ -251,8 +251,8 @@ jobs:
       if: runner.os == 'macOS'
       run: |
         npm ci --ignore-scripts
-       env JOBS=max node .prebuild/prebuild.js -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.1 -t 18.0.0 -t 19.0.0 -t 20.0.0 -t 21.0.0 
-       env JOBS=max node .prebuild/electron.js -t 5.0.0 -t 6.0.0 -t 7.0.0 -t 8.0.0 -t 9.0.0 -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.0 -t 18.0.0
+        env JOBS=max node .prebuild/prebuild.js -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.1 -t 18.0.0 -t 19.0.0 -t 20.0.0 -t 21.0.0 
+        env JOBS=max node .prebuild/electron.js -t 5.0.0 -t 6.0.0 -t 7.0.0 -t 8.0.0 -t 9.0.0 -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.0 -t 18.0.0
 #       buildify doesn't work on Mac due to missing spawn_helper
 #      env JOBS=max node .prebuild/buildify.js
 
@@ -261,16 +261,16 @@ jobs:
       shell: bash
       run: |
         npm ci --ignore-scripts
-       env JOBS=max node_modules/.bin/prebuild -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.1 --include-regex "\.(node|exe|dll|pdb)" --arch ${{ matrix.arch }}
-       env JOBS=max node_modules/.bin/prebuild -t 5.0.0 -t 6.0.0 -t 7.0.0 -t 8.0.0 -t 9.0.0 -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.2 -t 15.0.0 -t 16.0.0 -t 17.0.0 --include-regex "\.(node|exe|dll|pdb)" -r electron -a ${{ matrix.arch }}
+        env JOBS=max node_modules/.bin/prebuild -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.1 --include-regex "\.(node|exe|dll|pdb)" --arch ${{ matrix.arch }}
+        env JOBS=max node_modules/.bin/prebuild -t 5.0.0 -t 6.0.0 -t 7.0.0 -t 8.0.0 -t 9.0.0 -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.2 -t 15.0.0 -t 16.0.0 -t 17.0.0 --include-regex "\.(node|exe|dll|pdb)" -r electron -a ${{ matrix.arch }}
 
     - name: Windows x64 - Prebuild Binaries
       if: ${{ (runner.os == 'Windows') && (matrix.arch == 'x64') }}
       shell: bash
       run: |
         npm ci --ignore-scripts
-       env JOBS=max node_modules/.bin/prebuild -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.1 -t 18.0.0 -t 20.0.0 -t 21.0.0 --include-regex "\.(node|exe|dll|pdb)" --arch ${{ matrix.arch }}
-       env JOBS=max node_modules/.bin/prebuild -t 5.0.0 -t 6.0.0 -t 7.0.0 -t 8.0.0 -t 9.0.0 -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.2 -t 15.0.0 -t 16.0.0 -t 17.0.0 -t 18.0.0 --include-regex "\.(node|exe|dll|pdb)" -r electron --arch ${{ matrix.arch }}
+        env JOBS=max node_modules/.bin/prebuild -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.1 -t 18.0.0 -t 20.0.0 -t 21.0.0 --include-regex "\.(node|exe|dll|pdb)" --arch ${{ matrix.arch }}
+        env JOBS=max node_modules/.bin/prebuild -t 5.0.0 -t 6.0.0 -t 7.0.0 -t 8.0.0 -t 9.0.0 -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.2 -t 15.0.0 -t 16.0.0 -t 17.0.0 -t 18.0.0 --include-regex "\.(node|exe|dll|pdb)" -r electron --arch ${{ matrix.arch }}
 
     - name: Check Release prebuilds exist
       shell: bash
@@ -334,7 +334,7 @@ jobs:
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
-       env:
+        env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ steps.package-version.outputs.current-version}}
