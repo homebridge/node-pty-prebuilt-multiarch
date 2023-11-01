@@ -264,7 +264,7 @@ jobs:
     - name: Linux - Prebuild Binaries
       if: runner.os == 'Linux'
       run: |
-        docker run --rm -v $(pwd):/node-pty multiarch-build ${{ env.EXECCMD }}
+        docker run --rm -v $(pwd):/node-pty multiarch-build bash -c "${{ env.EXECCMD }}"
 
 # Mac OS
 
