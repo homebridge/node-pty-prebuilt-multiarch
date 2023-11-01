@@ -66,7 +66,7 @@ jobs:
     needs: Prepare_prebuild_environment 
     runs-on: ${{ matrix.os }} 
     env:
-      oldRunCMD: ./.prebuild/build.sh .prebuild/prebuild.js ${{ oldNodeBuildTargets }} && ./.prebuild/build.sh .prebuild/prebuildify.js ${{ oldNodeBuildTargets }} && ./.prebuild/build.sh .prebuild/electron.js ${{ electronBuildTargets}
+      oldRunCMD: ./.prebuild/build.sh .prebuild/prebuild.js ${{ env.oldNodeBuildTargets }} && ./.prebuild/build.sh .prebuild/prebuildify.js ${{ env.oldNodeBuildTargets }} && ./.prebuild/build.sh .prebuild/electron.js ${{ env.electronBuildTargets}
 
       RunCMD: './.prebuild/build.sh .prebuild/prebuild.js ${{ nodeBuildTargets }} && ./.prebuild/build.sh .prebuild/prebuildify.js ${{ nodeBuildTargets}'
 
