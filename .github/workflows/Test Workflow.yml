@@ -6,12 +6,6 @@ name: "Test Variables"
 
 on:
   workflow_dispatch:
-    inputs:
-      Beta:
-        description: 'Beta Release'
-        required: true
-        default: true
-        type: boolean
 
 env:
   oldNodeBuildTargets: -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.1 -t 18.0.0
@@ -41,6 +35,18 @@ jobs:
     env: 
       CMD: BuildAllCMD
     steps:
+      - name: Setup Build Commands
+        if: runner.os == 'Linux'
+        run: |
+          echo "oldRunCMD=\"./.prebuild/build.sh .prebuild/prebuild.js ${oldNodeBuildTargets} && \
+            ./.prebuild/build.sh .prebuild/prebuildify.js ${oldNodeBuildTargets} && \
+            ./.prebuild/build.sh .prebuild/electron.js ${electronBuildTargets}\"" >> $GITHUB_ENV
+          echo "RunCMD=\"./.prebuild/build.sh .prebuild/prebuild.js ${nodeBuildTargets} && \
+            ./.prebuild/build.sh .prebuild/prebuildify.js ${nodeBuildTargets}\"" >> $GITHUB_ENV
+          echo "BuildAllCMD=\"./.prebuild/build.sh .prebuild/prebuild.js ${oldNodeBuildTargets} ${nodeBuildTargets} && \
+            ./.prebuild/build.sh .prebuild/prebuildify.js ${oldNodeBuildTargets} ${nodeBuildTargets} && \
+            ./.prebuild/build.sh .prebuild/electron.js ${electronBuildTargets}\"" >> $GITHUB_ENV
+
       - name: Linux - Build Docker Image
         if: runner.os == 'Linux'
         run: |
