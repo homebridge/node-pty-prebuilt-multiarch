@@ -26,17 +26,16 @@ jobs:
     steps:
 
       - name: Setup Build Commands
+        if: runner.os == 'Linux'
         run: |
-          echo oldRunCMD="./.prebuild/build.sh .prebuild/prebuild.js ${oldNodeBuildTargets} && \
+          echo "oldRunCMD=\"./.prebuild/build.sh .prebuild/prebuild.js ${oldNodeBuildTargets} && \
             ./.prebuild/build.sh .prebuild/prebuildify.js ${oldNodeBuildTargets} && \
-            ./.prebuild/build.sh .prebuild/electron.js ${electronBuildTargets}" >> $GITHUB_ENV
-
-          echo RunCMD="./.prebuild/build.sh .prebuild/prebuild.js ${nodeBuildTargets} && \
-            ./.prebuild/build.sh .prebuild/prebuildify.js ${nodeBuildTargets}" >> $GITHUB_ENV
-
-          echo BuildAllCMD="./.prebuild/build.sh .prebuild/prebuild.js ${oldNodeBuildTargets} ${nodeBuildTargets} && \
+            ./.prebuild/build.sh .prebuild/electron.js ${electronBuildTargets}\"" >> $GITHUB_ENV
+          echo "RunCMD=\"./.prebuild/build.sh .prebuild/prebuild.js ${nodeBuildTargets} && \
+            ./.prebuild/build.sh .prebuild/prebuildify.js ${nodeBuildTargets}\"" >> $GITHUB_ENV
+          echo "BuildAllCMD=\"./.prebuild/build.sh .prebuild/prebuild.js ${oldNodeBuildTargets} ${nodeBuildTargets} && \
             ./.prebuild/build.sh .prebuild/prebuildify.js ${oldNodeBuildTargets} ${nodeBuildTargets} && \
-            ./.prebuild/build.sh .prebuild/electron.js ${electronBuildTargets}" >> $GITHUB_ENV  
+            ./.prebuild/build.sh .prebuild/electron.js ${electronBuildTargets}\"" >> $GITHUB_ENV  
 
       - uses: actions/checkout@v4
       - name: Create Branch
