@@ -103,7 +103,7 @@ jobs:
             BASE_IMAGE: library/node:16-alpine
             DOCKERFILE: Dockerfile.alpine
             QEMU_ARCH: x86_64
-            CMD: ${{ AllRunCMD }}
+            CMD: AllRunCMD
             COUNT: 25
             NPMCOUNT: 11
 
@@ -112,7 +112,7 @@ jobs:
             BASE_IMAGE: arm32v6/node:16-alpine
             DOCKERFILE: Dockerfile.alpine
             QEMU_ARCH: arm
-            CMD: ${{ AllRunCMD }}
+            CMD: AllRunCMD
             COUNT: 25
             NPMCOUNT: 11
 
@@ -121,7 +121,7 @@ jobs:
             BASE_IMAGE: arm64v8/node:16-alpine
             DOCKERFILE: Dockerfile.alpine
             QEMU_ARCH: aarch64
-            CMD: ${{ AllRunCMD }}
+            CMD: AllRunCMD
             COUNT: 25
             NPMCOUNT: 11
 
@@ -130,7 +130,7 @@ jobs:
             BASE_IMAGE: balenalib/raspberry-pi-debian:buster
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: arm
-            CMD: ${{ AllRunCMD }}
+            CMD: AllRunCMD
             COUNT: 25
             NPMCOUNT: 11
 
@@ -141,7 +141,7 @@ jobs:
             BASE_IMAGE: library/debian:buster-slim
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: x86_64
-            CMD: ${{ RunCMD }}
+            CMD: RunCMD
             COUNT: 25
             NPMCOUNT: 11
 
@@ -150,7 +150,7 @@ jobs:
             BASE_IMAGE: i386/debian:buster-slim
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: i386
-            CMD: ${{ RunCMD }}
+            CMD: RunCMD
             COUNT: 23
             NPMCOUNT: 11
 
@@ -159,7 +159,7 @@ jobs:
             BASE_IMAGE: arm64v8/debian:buster-slim
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: aarch64
-            CMD: ${{ RunCMD }}
+            CMD: RunCMD
             COUNT: 25
             NPMCOUNT: 11
 
@@ -170,7 +170,7 @@ jobs:
             BASE_IMAGE: library/debian:debian:9.6-slim
             DOCKERFILE: Dockerfile.oldDebian
             QEMU_ARCH: x86_64
-            CMD: ${{ oldRunCMD }}
+            CMD: oldRunCMD
             COUNT: 25
             NPMCOUNT: 11
 
@@ -179,7 +179,7 @@ jobs:
             BASE_IMAGE: i386/debian:debian:9.6-slim
             DOCKERFILE: Dockerfile.oldDebian
             QEMU_ARCH: i386
-            CMD: ${{ oldRunCMD }}
+            CMD: oldRunCMD
             COUNT: 23
             NPMCOUNT: 11
 
@@ -188,7 +188,7 @@ jobs:
             BASE_IMAGE: arm64v8/debian:debian:9.6-slim
             DOCKERFILE: Dockerfile.oldDebian
             QEMU_ARCH: aarch64
-            CMD: ${{ oldRunCMD }}
+            CMD: oldRunCMD
             COUNT: 25
             NPMCOUNT: 11
 
