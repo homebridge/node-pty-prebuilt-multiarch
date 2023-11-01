@@ -4,6 +4,9 @@ FROM ${BASE_IMAGE:-library/node:15-alpine}
 ARG QEMU_ARCH
 ENV QEMU_ARCH=${QEMU_ARCH:-x86_64}
 
+ARG CMD
+ENV CMD=${CMD:-blank}
+
 COPY .prebuild/qemu/qemu-${QEMU_ARCH}-static /usr/bin/
 
 RUN apk add curl git gcc g++ make python3 paxctl
@@ -11,4 +14,4 @@ RUN apk add curl git gcc g++ make python3 paxctl
 RUN mkdir /node-pty
 WORKDIR /node-pty
 
-## CMD ["./.prebuild/olderBuild.sh", "./.prebuild/build.sh"]
+CMD /bin/bash -c "$CMD"
