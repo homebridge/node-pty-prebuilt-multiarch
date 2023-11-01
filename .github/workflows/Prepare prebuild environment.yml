@@ -240,7 +240,9 @@ jobs:
     - name: Linux - Build Docker Image
       if: runner.os == 'Linux'
       run: |
-        docker build -f .prebuild/${{ matrix.DOCKERFILE }} --build-arg BASE_IMAGE=${{ matrix.BASE_IMAGE }} --build-arg QEMU_ARCH=${{ matrix.QEMU_ARCH }} --build-arg CMD="${{ CMD }}" -t multiarch-build .
+        echo ${{ matrix.CMD }}
+        echo ${{ ${{ matrix.CMD }} }}
+        docker build -f .prebuild/${{ matrix.DOCKERFILE }} --build-arg BASE_IMAGE=${{ matrix.BASE_IMAGE }} --build-arg QEMU_ARCH=${{ matrix.QEMU_ARCH }} --build-arg CMD="${{ matrix.CMD }}" -t multiarch-build .
 
     - name: Linux - Prebuild Binaries
       if: runner.os == 'Linux'
