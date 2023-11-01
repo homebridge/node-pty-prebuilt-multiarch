@@ -36,4 +36,5 @@ RUN case "${QEMU_ARCH}" in \
 RUN mkdir /node-pty
 WORKDIR /node-pty
 
+RUN echo $CMD
 CMD /bin/bash -c "$CMD"
