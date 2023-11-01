@@ -1,0 +1,46 @@
+name: "Test Variables"
+
+# Create branch for release
+# update package.json for package version
+# 
+
+on:
+  workflow_dispatch:
+    inputs:
+      Beta:
+        description: 'Beta Release'
+        required: true
+        default: true
+        type: boolean
+
+env:
+  oldNodeBuildTargets: -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.1 -t 18.0.0
+  nodeBuildTargets: -t 19.0.0 -t 20.0.0 -t 21.0.0
+  electronBuildTargets: -t 5.0.0 -t 6.0.0 -t 7.0.0 -t 8.0.0 -t 9.0.0 -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.0 -t 18.0.0
+
+jobs:
+  Prepare_prebuild_environment:
+    name: Prepare prebuild environment ${{ github.ref_name }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Build Commands
+        if: runner.os == 'Linux'
+        run: |
+          echo "oldRunCMD=\"./.prebuild/build.sh .prebuild/prebuild.js ${oldNodeBuildTargets} && \
+            ./.prebuild/build.sh .prebuild/prebuildify.js ${oldNodeBuildTargets} && \
+            ./.prebuild/build.sh .prebuild/electron.js ${electronBuildTargets}\"" >> $GITHUB_ENV
+          echo "RunCMD=\"./.prebuild/build.sh .prebuild/prebuild.js ${nodeBuildTargets} && \
+            ./.prebuild/build.sh .prebuild/prebuildify.js ${nodeBuildTargets}\"" >> $GITHUB_ENV
+          echo "BuildAllCMD=\"./.prebuild/build.sh .prebuild/prebuild.js ${oldNodeBuildTargets} ${nodeBuildTargets} && \
+            ./.prebuild/build.sh .prebuild/prebuildify.js ${oldNodeBuildTargets} ${nodeBuildTargets} && \
+            ./.prebuild/build.sh .prebuild/electron.js ${electronBuildTargets}\"" >> $GITHUB_ENV  
+
+  prebuild:
+    needs: Prepare_prebuild_environment
+    runs-on: ubuntu-latest
+    env: 
+      CMD: BuildAllCMD
+    - name: Linux - Build Docker Image
+      if: runner.os == 'Linux'
+      run: |
+        echo "${{ env.CMD }}"
