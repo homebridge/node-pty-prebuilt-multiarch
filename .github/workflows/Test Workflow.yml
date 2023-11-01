@@ -38,7 +38,6 @@ jobs:
   prebuild:
     needs: Prepare_prebuild_environment
     runs-on: ubuntu-latest
-
     env: 
       CMD: BuildAllCMD
     steps:
