@@ -90,7 +90,6 @@ jobs:
           linuxmusl-arm,
           linuxmusl-arm64,
           linuxmusl-x64,
-          olderLinux-arm,
           olderLinux-arm64,
           olderLinux-ia32,
           olderLinux-x64,
