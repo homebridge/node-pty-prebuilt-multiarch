@@ -100,7 +100,6 @@ jobs:
             DOCKERFILE: Dockerfile.alpine
             QEMU_ARCH: x86_64
             CMD: BuildAllCMD
-            SHELL: sh
             COUNT: 25
             NPMCOUNT: 11
 
@@ -110,7 +109,6 @@ jobs:
             DOCKERFILE: Dockerfile.alpine
             QEMU_ARCH: arm
             CMD: BuildAllCMD
-            SHELL: sh
             COUNT: 25
             NPMCOUNT: 11
 
@@ -120,7 +118,6 @@ jobs:
             DOCKERFILE: Dockerfile.alpine
             QEMU_ARCH: aarch64
             CMD: BuildAllCMD
-            SHELL: sh
             COUNT: 25
             NPMCOUNT: 11
 
@@ -130,7 +127,6 @@ jobs:
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: arm
             CMD: BuildAllCMD
-            SHELL: bash
             COUNT: 25
             NPMCOUNT: 11
 
@@ -142,7 +138,6 @@ jobs:
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: x86_64
             CMD: BuildNewCMD
-            SHELL: bash
             COUNT: 3
             NPMCOUNT: 3
 
@@ -152,7 +147,6 @@ jobs:
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: i386
             CMD: BuildNewCMD
-            SHELL: bash
             COUNT: 3
             NPMCOUNT: 3
 
@@ -162,7 +156,6 @@ jobs:
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: aarch64
             CMD: BuildNewCMD
-            SHELL: bash
             COUNT: 25
             NPMCOUNT: 11
 
@@ -174,7 +167,6 @@ jobs:
             DOCKERFILE: Dockerfile.oldDebian
             QEMU_ARCH: x86_64
             CMD: BuildOldCMD
-            SHELL: bash
             COUNT: 23
             NPMCOUNT: 9
 
@@ -184,7 +176,6 @@ jobs:
             DOCKERFILE: Dockerfile.oldDebian
             QEMU_ARCH: i386
             CMD: BuildOldCMD
-            SHELL: bash
             COUNT: 23
             NPMCOUNT: 9
 
@@ -194,7 +185,6 @@ jobs:
             DOCKERFILE: Dockerfile.oldDebian
             QEMU_ARCH: aarch64
             CMD: BuildOldCMD
-            SHELL: bash
             COUNT: 25
             NPMCOUNT: 11
 
@@ -274,7 +264,7 @@ jobs:
     - name: Linux - Prebuild Binaries - ${{ env.EXECCMD }}
       if: runner.os == 'Linux'
       run: |
-        docker run --rm -v $(pwd):/node-pty multiarch-build ${{ matrix.SHELL }} -c ${{ env.EXECCMD }}
+        docker run --rm -v $(pwd):/node-pty multiarch-build sh -c ${{ env.EXECCMD }}
 
 # Mac OS
 
