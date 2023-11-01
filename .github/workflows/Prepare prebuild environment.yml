@@ -136,7 +136,7 @@ jobs:
             BASE_IMAGE: library/debian:buster-slim
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: x86_64
-            CMD: RunCMD
+            CMD: BuildNewCMD
             COUNT: 3
             NPMCOUNT: 3
 
@@ -145,7 +145,7 @@ jobs:
             BASE_IMAGE: i386/debian:buster-slim
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: i386
-            CMD: RunCMD
+            CMD: BuildNewCMD
             COUNT: 3
             NPMCOUNT: 3
 
@@ -154,7 +154,7 @@ jobs:
             BASE_IMAGE: arm64v8/debian:buster-slim
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: aarch64
-            CMD: RunCMD
+            CMD: BuildNewCMD
             COUNT: 25
             NPMCOUNT: 11
 
@@ -165,7 +165,7 @@ jobs:
             BASE_IMAGE: library/debian:9.6-slim
             DOCKERFILE: Dockerfile.oldDebian
             QEMU_ARCH: x86_64
-            CMD: oldRunCMD
+            CMD: BuildOldCMD
             COUNT: 23
             NPMCOUNT: 9
 
@@ -174,16 +174,16 @@ jobs:
             BASE_IMAGE: i386/debian:9.6-slim
             DOCKERFILE: Dockerfile.oldDebian
             QEMU_ARCH: i386
-            CMD: oldRunCMD
-            COUNT: 9
-            NPMCOUNT: 11
+            CMD: BuildOldCMD
+            COUNT: 23
+            NPMCOUNT: 9
 
           - name: olderLinux-arm64
             os: ubuntu-latest
             BASE_IMAGE: arm64v8/debian:9.6-slim
             DOCKERFILE: Dockerfile.oldDebian
             QEMU_ARCH: aarch64
-            CMD: oldRunCMD
+            CMD: BuildOldCMD
             COUNT: 25
             NPMCOUNT: 11
 
@@ -237,22 +237,17 @@ jobs:
     - name: Setup Build Commands
       if: runner.os == 'Linux'
       run: |
-        echo "oldRunCMD=\"./.prebuild/build.sh .prebuild/prebuild.js ${oldNodeBuildTargets} && \
+        echo "BuildOldCMD=\"./.prebuild/build.sh .prebuild/prebuild.js ${oldNodeBuildTargets} && \
           ./.prebuild/build.sh .prebuild/prebuildify.js ${oldNodeBuildTargets} && \
           ./.prebuild/build.sh .prebuild/electron.js ${electronBuildTargets}\"" >> $GITHUB_ENV
-        echo "RunCMD=\"./.prebuild/build.sh .prebuild/prebuild.js ${nodeBuildTargets} && \
+        echo "BuildNewCMD=\"./.prebuild/build.sh .prebuild/prebuild.js ${nodeBuildTargets} && \
           ./.prebuild/build.sh .prebuild/prebuildify.js ${nodeBuildTargets}\"" >> $GITHUB_ENV
         echo "BuildAllCMD=\"./.prebuild/build.sh .prebuild/prebuild.js ${oldNodeBuildTargets} ${nodeBuildTargets} && \
           ./.prebuild/build.sh .prebuild/prebuildify.js ${oldNodeBuildTargets} ${nodeBuildTargets} && \
-          ./.prebuild/build.sh .prebuild/electron.js ${electronBuildTargets}\"" >> $GITHUB_ENV  
+          ./.prebuild/build.sh .prebuild/electron.js ${electronBuildTargets}\"" >> $GITHUB_ENV
+        echo "CMD=${{ matrix.CMD }}" >> $GITHUB_ENV  
 
-    - name: Linux - Prep Build CMD
-      if: runner.os == 'Linux'
-      run: |
-        echo "${{ env.CMD }}"
-        echo "CMD=${{ matrix.CMD }}" >> $GITHUB_ENV
-
-    - name: Linux - Prep Build EXECCMD
+    - name: Linux - Prep Build EXECCMD = ${{ env.CMD }}
       if: runner.os == 'Linux'
       run: |
         echo "${{ env.CMD }}"
@@ -260,7 +255,7 @@ jobs:
 
 # Linux builds
 
-    - name: Linux - Build Docker Image
+    - name: Linux - Build Docker Image ${{ matrix.DOCKERFILE }} - ${{ matrix.BASE_IMAGE }} - ${{ matrix.QEMU_ARCH }}
       if: runner.os == 'Linux'
       run: |
         docker build -f .prebuild/${{ matrix.DOCKERFILE }} --build-arg BASE_IMAGE=${{ matrix.BASE_IMAGE }} --build-arg QEMU_ARCH=${{ matrix.QEMU_ARCH }} -t multiarch-build .
