@@ -51,3 +51,9 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           echo "${{ env.CMD }}"
+          echo "EXEC=$(${{ env.CMD }} )" >> $GITHUB_ENV
+
+      - name: Linux - Build Docker Image
+        if: runner.os == 'Linux'
+        run: |
+          echo "${{ env.EXEC }}"
