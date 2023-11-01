@@ -11,6 +11,17 @@ export oldRunCMD="./.prebuild/build.sh .prebuild/prebuild.js ${oldNodeBuildTarge
 ./.prebuild/build.sh .prebuild/prebuildify.js ${oldNodeBuildTargets} && \
 ./.prebuild/build.sh .prebuild/electron.js ${electronBuildTargets}"
 
+export RunCMD="./.prebuild/build.sh .prebuild/prebuild.js ${nodeBuildTargets} && \
+./.prebuild/build.sh .prebuild/prebuildify.js ${nodeBuildTargets} && \
+./.prebuild/build.sh .prebuild/electron.js ${electronBuildTargets}"
+
+export QEMU_ARCH=x86_64
+export DOCKERFILE="Dockerfile.debian"
+docker build -f .prebuild/$DOCKERFILE --build-arg QEMU_ARCH=${QEMU_ARCH} --build-arg CMD="${RunCMD}" -t multiarch-build .
+docker run --rm -v $(pwd):/node-pty multiarch-build
+
+exit 0
+
 # Older
 
 export QEMU_ARCH=x86_64
@@ -24,10 +35,13 @@ docker run --rm -v $(pwd):/node-pty multiarch-build
 
 # Newer
 
+export QEMU_ARCH=x86_64
 export DOCKERFILE="Dockerfile.debian"
-docker build -f .prebuild/$DOCKERFILE --build-arg QEMU_ARCH=${QEMU_ARCH} -t multiarch-build .
-docker run -v $(pwd):/node-pty multiarch-build ./.prebuild/build.sh .prebuild/prebuild.js ${nodeBuildTargets}
-docker run --rm -v $(pwd):/node-pty multiarch-build ./.prebuild/build.sh .prebuild/prebuildify.js ${nodeBuildTargets}
+docker build -f .prebuild/$DOCKERFILE --build-arg QEMU_ARCH=${QEMU_ARCH} --build-arg CMD="${RunCMD}" -t multiarch-build .
+docker run --rm -v $(pwd):/node-pty multiarch-build
+
+#docker run -v $(pwd):/node-pty multiarch-build ./.prebuild/build.sh .prebuild/prebuild.js ${nodeBuildTargets}
+#docker run --rm -v $(pwd):/node-pty multiarch-build ./.prebuild/build.sh .prebuild/prebuildify.js ${nodeBuildTargets}
 
 exit 0
 
