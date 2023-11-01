@@ -57,4 +57,4 @@ jobs:
       - name: Linux - Build Docker Image
         if: runner.os == 'Linux'
         run: |
-          echo "${{ env.EXEC }}"
+          echo ${{ env.EXEC }}
