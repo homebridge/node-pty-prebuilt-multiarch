@@ -246,6 +246,12 @@ jobs:
       if: runner.os == 'Linux'
       run: |
         echo "${{ env.CMD }}"
+        echo "CMD=${{ matrix.CMD }}" >> $GITHUB_ENV
+
+    - name: Linux - Prep Build EXECCMD
+      if: runner.os == 'Linux'
+      run: |
+        echo "${{ env.CMD }}"
         echo "EXECCMD=${!CMD}" >> $GITHUB_ENV
 
     - name: Linux - Build Docker Image
