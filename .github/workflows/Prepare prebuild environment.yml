@@ -24,17 +24,7 @@ jobs:
     name: Prepare prebuild environment ${{ github.ref_name }}
     runs-on: ubuntu-latest
     steps:
-      - name: Setup Build Commands
-        if: runner.os == 'Linux'
-        run: |
-          echo "oldRunCMD=\"./.prebuild/build.sh .prebuild/prebuild.js ${oldNodeBuildTargets} && \
-            ./.prebuild/build.sh .prebuild/prebuildify.js ${oldNodeBuildTargets} && \
-            ./.prebuild/build.sh .prebuild/electron.js ${electronBuildTargets}\"" >> $GITHUB_ENV
-          echo "RunCMD=\"./.prebuild/build.sh .prebuild/prebuild.js ${nodeBuildTargets} && \
-            ./.prebuild/build.sh .prebuild/prebuildify.js ${nodeBuildTargets}\"" >> $GITHUB_ENV
-          echo "BuildAllCMD=\"./.prebuild/build.sh .prebuild/prebuild.js ${oldNodeBuildTargets} ${nodeBuildTargets} && \
-            ./.prebuild/build.sh .prebuild/prebuildify.js ${oldNodeBuildTargets} ${nodeBuildTargets} && \
-            ./.prebuild/build.sh .prebuild/electron.js ${electronBuildTargets}\"" >> $GITHUB_ENV  
+
 
       - name: Delete pr-* branches
         uses: dawidd6/action-delete-branch@v3
@@ -241,6 +231,18 @@ jobs:
         sudo apt-get update
         sudo apt-get --yes --no-install-recommends install binfmt-support qemu-user-static
         docker run --rm --privileged multiarch/qemu-user-static:register --reset
+
+    - name: Setup Build Commands
+      if: runner.os == 'Linux'
+      run: |
+        echo "oldRunCMD=\"./.prebuild/build.sh .prebuild/prebuild.js ${oldNodeBuildTargets} && \
+          ./.prebuild/build.sh .prebuild/prebuildify.js ${oldNodeBuildTargets} && \
+          ./.prebuild/build.sh .prebuild/electron.js ${electronBuildTargets}\"" >> $GITHUB_ENV
+        echo "RunCMD=\"./.prebuild/build.sh .prebuild/prebuild.js ${nodeBuildTargets} && \
+          ./.prebuild/build.sh .prebuild/prebuildify.js ${nodeBuildTargets}\"" >> $GITHUB_ENV
+        echo "BuildAllCMD=\"./.prebuild/build.sh .prebuild/prebuild.js ${oldNodeBuildTargets} ${nodeBuildTargets} && \
+          ./.prebuild/build.sh .prebuild/prebuildify.js ${oldNodeBuildTargets} ${nodeBuildTargets} && \
+          ./.prebuild/build.sh .prebuild/electron.js ${electronBuildTargets}\"" >> $GITHUB_ENV  
 
     - name: Linux - Prep Build CMD
       if: runner.os == 'Linux'
