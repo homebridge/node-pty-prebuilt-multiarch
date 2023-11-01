@@ -41,7 +41,7 @@ docker run --rm -v $(pwd):/node-pty multiarch-build
 
 export BASE_IMAGE=balenalib/raspberry-pi-debian:bullseye
 export QEMU_ARCH=arm
-export DOCKERFILE="Dockerfile.oldDebian"
+export DOCKERFILE="Dockerfile.debian"
 export CMD=$oldRunCMD
 docker build -f .prebuild/$DOCKERFILE --build-arg QEMU_ARCH=${QEMU_ARCH} --build-arg CMD="${CMD}" -t multiarch-build .
 docker run --rm -v $(pwd):/node-pty multiarch-build
