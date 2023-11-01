@@ -98,7 +98,7 @@ jobs:
             BASE_IMAGE: library/node:16-alpine
             DOCKERFILE: Dockerfile.alpine
             QEMU_ARCH: x86_64
-            CMD: AllRunCMD
+            CMD: BuildAllCMD
             COUNT: 25
             NPMCOUNT: 11
 
@@ -107,7 +107,7 @@ jobs:
             BASE_IMAGE: arm32v6/node:16-alpine
             DOCKERFILE: Dockerfile.alpine
             QEMU_ARCH: arm
-            CMD: AllRunCMD
+            CMD: BuildAllCMD
             COUNT: 25
             NPMCOUNT: 11
 
@@ -116,7 +116,7 @@ jobs:
             BASE_IMAGE: arm64v8/node:16-alpine
             DOCKERFILE: Dockerfile.alpine
             QEMU_ARCH: aarch64
-            CMD: AllRunCMD
+            CMD: BuildAllCMD
             COUNT: 25
             NPMCOUNT: 11
 
@@ -125,7 +125,7 @@ jobs:
             BASE_IMAGE: balenalib/raspberry-pi-debian:buster
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: arm
-            CMD: AllRunCMD
+            CMD: BuildAllCMD
             COUNT: 25
             NPMCOUNT: 11
 
