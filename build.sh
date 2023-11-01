@@ -20,11 +20,11 @@ export BuildAllCMD="./.prebuild/build.sh .prebuild/prebuild.js ${oldNodeBuildTar
 
 # Older
 
-#export QEMU_ARCH=x86_64
-#export DOCKERFILE="Dockerfile.oldDebian"
-#export CMD=$oldRunCMD
-#docker build -f .prebuild/$DOCKERFILE --build-arg QEMU_ARCH=${QEMU_ARCH} --build-arg CMD="${CMD}" -t multiarch-build .
-#docker run --rm -v $(pwd):/node-pty multiarch-build
+export QEMU_ARCH=x86_64
+export DOCKERFILE="Dockerfile.oldDebian"
+export CMD=$oldRunCMD
+docker build -f .prebuild/$DOCKERFILE --build-arg QEMU_ARCH=${QEMU_ARCH} -t multiarch-build .
+docker run --rm -v $(pwd):/node-pty multiarch-build bash -c "$CMD"
 
 #docker run -v $(pwd):/node-pty multiarch-build ./.prebuild/build.sh .prebuild/prebuild.js ${oldNodeBuildTargets}
 #docker run -v $(pwd):/node-pty multiarch-build ./.prebuild/build.sh .prebuild/prebuildify.js ${oldNodeBuildTargets}
@@ -32,11 +32,11 @@ export BuildAllCMD="./.prebuild/build.sh .prebuild/prebuild.js ${oldNodeBuildTar
 
 # Newer
 
-#export QEMU_ARCH=x86_64
-#export DOCKERFILE="Dockerfile.debian"
-#export CMD=$RunCMD
-#docker build -f .prebuild/$DOCKERFILE --build-arg QEMU_ARCH=${QEMU_ARCH} --build-arg CMD="${CMD}" -t multiarch-build .
-#docker run --rm -v $(pwd):/node-pty multiarch-build
+export QEMU_ARCH=x86_64
+export DOCKERFILE="Dockerfile.debian"
+export CMD=$RunCMD
+docker build -f .prebuild/$DOCKERFILE --build-arg QEMU_ARCH=${QEMU_ARCH} -t multiarch-build .
+docker run --rm -v $(pwd):/node-pty multiarch-build bash -c "$CMD"
 
 #docker run -v $(pwd):/node-pty multiarch-build ./.prebuild/build.sh .prebuild/prebuild.js ${nodeBuildTargets}
 #docker run --rm -v $(pwd):/node-pty multiarch-build ./.prebuild/build.sh .prebuild/prebuildify.js ${nodeBuildTargets}
@@ -47,8 +47,8 @@ export BASE_IMAGE=balenalib/raspberry-pi-debian:bullseye
 export QEMU_ARCH=arm
 export DOCKERFILE="Dockerfile.debian"
 export CMD=$BuildAllCMD
-docker build -f .prebuild/$DOCKERFILE --build-arg BASE_IMAGE=${BASE_IMAGE} --build-arg QEMU_ARCH=${QEMU_ARCH} --build-arg CMD="${CMD}" -t multiarch-build .
-docker run --rm -v $(pwd):/node-pty multiarch-build
+docker build -f .prebuild/$DOCKERFILE --build-arg BASE_IMAGE=${BASE_IMAGE} --build-arg QEMU_ARCH=${QEMU_ARCH} -t multiarch-build .
+docker run --rm -v $(pwd):/node-pty multiarch-build bash -c "$CMD"
 
 exit 0
 
