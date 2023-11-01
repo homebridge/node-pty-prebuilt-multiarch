@@ -137,8 +137,8 @@ jobs:
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: x86_64
             CMD: RunCMD
-            COUNT: 25
-            NPMCOUNT: 11
+            COUNT: 3
+            NPMCOUNT: 3
 
           - name: linux-ia32
             os: ubuntu-latest
@@ -146,8 +146,8 @@ jobs:
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: i386
             CMD: RunCMD
-            COUNT: 23
-            NPMCOUNT: 11
+            COUNT: 3
+            NPMCOUNT: 3
 
           - name: linux-arm64
             os: ubuntu-latest
@@ -166,8 +166,8 @@ jobs:
             DOCKERFILE: Dockerfile.oldDebian
             QEMU_ARCH: x86_64
             CMD: oldRunCMD
-            COUNT: 25
-            NPMCOUNT: 11
+            COUNT: 23
+            NPMCOUNT: 9
 
           - name: olderLinux-ia32
             os: ubuntu-latest
@@ -175,7 +175,7 @@ jobs:
             DOCKERFILE: Dockerfile.oldDebian
             QEMU_ARCH: i386
             CMD: oldRunCMD
-            COUNT: 23
+            COUNT: 9
             NPMCOUNT: 11
 
           - name: olderLinux-arm64
@@ -191,7 +191,7 @@ jobs:
 
           - name: darwin-x64
             os: macOS-latest
-            COUNT: 25
+            COUNT: 26
             NPMCOUNT: 11
 
           - name: darwin-arm64
@@ -232,6 +232,8 @@ jobs:
         sudo apt-get --yes --no-install-recommends install binfmt-support qemu-user-static
         docker run --rm --privileged multiarch/qemu-user-static:register --reset
 
+# Hackery to setup builds
+
     - name: Setup Build Commands
       if: runner.os == 'Linux'
       run: |
@@ -256,12 +258,14 @@ jobs:
         echo "${{ env.CMD }}"
         echo "EXECCMD=${!CMD}" >> $GITHUB_ENV
 
+# Linux builds
+
     - name: Linux - Build Docker Image
       if: runner.os == 'Linux'
       run: |
         docker build -f .prebuild/${{ matrix.DOCKERFILE }} --build-arg BASE_IMAGE=${{ matrix.BASE_IMAGE }} --build-arg QEMU_ARCH=${{ matrix.QEMU_ARCH }} -t multiarch-build .
 
-    - name: Linux - Prebuild Binaries
+    - name: Linux - Prebuild Binaries - ${{ env.EXECCMD }}
       if: runner.os == 'Linux'
       run: |
         docker run --rm -v $(pwd):/node-pty multiarch-build bash -c ${{ env.EXECCMD }}
@@ -272,8 +276,8 @@ jobs:
       if: runner.os == 'macOS'
       run: |
         npm ci --ignore-scripts
-        env JOBS=max node .prebuild/prebuild.js -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.1 -t 18.0.0 -t 19.0.0 -t 20.0.0 -t 21.0.0 
-        env JOBS=max node .prebuild/electron.js -t 5.0.0 -t 6.0.0 -t 7.0.0 -t 8.0.0 -t 9.0.0 -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.0 -t 18.0.0
+        env JOBS=max node .prebuild/prebuild.js ${oldNodeBuildTargets} ${nodeBuildTargets} 
+        env JOBS=max node .prebuild/electron.js ${electronBuildTargets}
 #       buildify doesn't work on Mac due to missing spawn_helper
 #      env JOBS=max node .prebuild/buildify.js
 
@@ -284,16 +288,16 @@ jobs:
       shell: bash
       run: |
         npm ci --ignore-scripts
-        env JOBS=max node_modules/.bin/prebuild -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.1 --include-regex "\.(node|exe|dll|pdb)" --arch ${{ matrix.arch }}
-        env JOBS=max node_modules/.bin/prebuild -t 5.0.0 -t 6.0.0 -t 7.0.0 -t 8.0.0 -t 9.0.0 -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.2 -t 15.0.0 -t 16.0.0 -t 17.0.0 --include-regex "\.(node|exe|dll|pdb)" -r electron -a ${{ matrix.arch }}
+        env JOBS=max node_modules/.bin/prebuild ${oldNodeBuildTargets}  --include-regex "\.(node|exe|dll|pdb)" --arch ${{ matrix.arch }}
+        env JOBS=max node_modules/.bin/prebuild ${electronBuildTargets} --include-regex "\.(node|exe|dll|pdb)" -r electron -a ${{ matrix.arch }}
 
     - name: Windows x64 - Prebuild Binaries
       if: ${{ (runner.os == 'Windows') && (matrix.arch == 'x64') }}
       shell: bash
       run: |
         npm ci --ignore-scripts
-        env JOBS=max node_modules/.bin/prebuild -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.1 -t 18.0.0 -t 20.0.0 -t 21.0.0 --include-regex "\.(node|exe|dll|pdb)" --arch ${{ matrix.arch }}
-        env JOBS=max node_modules/.bin/prebuild -t 5.0.0 -t 6.0.0 -t 7.0.0 -t 8.0.0 -t 9.0.0 -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.2 -t 15.0.0 -t 16.0.0 -t 17.0.0 -t 18.0.0 --include-regex "\.(node|exe|dll|pdb)" -r electron --arch ${{ matrix.arch }}
+        env JOBS=max node_modules/.bin/prebuild ${oldNodeBuildTargets} ${nodeBuildTargets} --include-regex "\.(node|exe|dll|pdb)" --arch ${{ matrix.arch }}
+        env JOBS=max node_modules/.bin/prebuild ${electronBuildTargets} --include-regex "\.(node|exe|dll|pdb)" -r electron --arch ${{ matrix.arch }}
 
     - name: Check Release prebuilds exist
       shell: bash
