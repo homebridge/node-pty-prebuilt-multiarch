@@ -24,7 +24,7 @@ env:
 ./.prebuild/build.sh .prebuild/electron.js ${{ electronBuildTargets}"
   RunCMD: "./.prebuild/build.sh .prebuild/prebuild.js ${{ nodeBuildTargets }} && \
 ./.prebuild/build.sh .prebuild/prebuildify.js ${{ nodeBuildTargets}"
-  alpineRunCMD: "./.prebuild/build.sh .prebuild/prebuild.js ${{ oldNodeBuildTargets }} ${{ nodeBuildTargets }}  && \
+  AllRunCMD: "./.prebuild/build.sh .prebuild/prebuild.js ${{ oldNodeBuildTargets }} ${{ nodeBuildTargets }}  && \
 ./.prebuild/build.sh .prebuild/prebuildify.js ${{ oldNodeBuildTargets }} ${{ nodeBuildTargets}&& \
 ./.prebuild/build.sh .prebuild/electron.js ${{ electronBuildTargets}"
 

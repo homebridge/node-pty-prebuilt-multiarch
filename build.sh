@@ -14,6 +14,10 @@ export oldRunCMD="./.prebuild/build.sh .prebuild/prebuild.js ${oldNodeBuildTarge
 export RunCMD="./.prebuild/build.sh .prebuild/prebuild.js ${nodeBuildTargets} && \
 ./.prebuild/build.sh .prebuild/prebuildify.js ${nodeBuildTargets}"
 
+export BuildAllCMD="./.prebuild/build.sh .prebuild/prebuild.js ${oldNodeBuildTargets} ${nodeBuildTargets}  && \
+./.prebuild/build.sh .prebuild/prebuildify.js ${oldNodeBuildTargets} ${nodeBuildTargets}&& \
+./.prebuild/build.sh .prebuild/electron.js ${electronBuildTargets}"
+
 # Older
 
 export QEMU_ARCH=x86_64
@@ -42,18 +46,19 @@ docker run --rm -v $(pwd):/node-pty multiarch-build
 export BASE_IMAGE=balenalib/raspberry-pi-debian:bullseye
 export QEMU_ARCH=arm
 export DOCKERFILE="Dockerfile.debian"
-export CMD=$oldRunCMD
+export CMD=$BuildAllCMD
 docker build -f .prebuild/$DOCKERFILE --build-arg QEMU_ARCH=${QEMU_ARCH} --build-arg CMD="${CMD}" -t multiarch-build .
 docker run --rm -v $(pwd):/node-pty multiarch-build
 
 # Newer
 
-export BASE_IMAGE=balenalib/raspberry-pi-debian:bullseye
-export QEMU_ARCH=arm
-export DOCKERFILE="Dockerfile.debian"
-export CMD=$RunCMD
-docker build -f .prebuild/$DOCKERFILE --build-arg QEMU_ARCH=${QEMU_ARCH} --build-arg CMD="${CMD}" -t multiarch-build .
-docker run --rm -v $(pwd):/node-pty multiarch-build
+# export BASE_IMAGE=balenalib/raspberry-pi-debian:bullseye
+# export QEMU_ARCH=arm
+# export DOCKERFILE="Dockerfile.debian"
+# export CMD=$RunCMD
+# docker build -f .prebuild/$DOCKERFILE --build-arg QEMU_ARCH=${QEMU_ARCH} --build-arg CMD="${CMD}" -t multiarch-build .
+# docker run --rm -v $(pwd):/node-pty multiarch-build
+
 
 #Older
 
@@ -93,9 +98,7 @@ docker run --rm -v $(pwd):/node-pty multiarch-build
 
 # Not Impacted
 
-export CMD="./.prebuild/build.sh .prebuild/prebuild.js ${oldNodeBuildTargets} ${nodeBuildTargets}  && \
-./.prebuild/build.sh .prebuild/prebuildify.js ${oldNodeBuildTargets} ${nodeBuildTargets}&& \
-./.prebuild/build.sh .prebuild/electron.js ${electronBuildTargets}"
+export CMD=$BuildAllCMD
 
 export BASE_IMAGE=library/node:16-alpine
 export QEMU_ARCH=x86_64
