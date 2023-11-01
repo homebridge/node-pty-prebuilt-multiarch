@@ -38,9 +38,11 @@ jobs:
   prebuild:
     needs: Prepare_prebuild_environment
     runs-on: ubuntu-latest
+
     env: 
       CMD: BuildAllCMD
-    - name: Linux - Build Docker Image
-      if: runner.os == 'Linux'
-      run: |
-        echo "${{ env.CMD }}"
+    steps:
+      - name: Linux - Build Docker Image
+        if: runner.os == 'Linux'
+        run: |
+          echo "${{ env.CMD }}"
