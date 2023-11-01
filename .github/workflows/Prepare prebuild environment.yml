@@ -162,7 +162,7 @@ jobs:
 
           - name: olderLinux-x64
             os: ubuntu-latest
-            BASE_IMAGE: library/debian:debian:9.6-slim
+            BASE_IMAGE: library/debian:9.6-slim
             DOCKERFILE: Dockerfile.oldDebian
             QEMU_ARCH: x86_64
             CMD: oldRunCMD
@@ -171,7 +171,7 @@ jobs:
 
           - name: olderLinux-ia32
             os: ubuntu-latest
-            BASE_IMAGE: i386/debian:debian:9.6-slim
+            BASE_IMAGE: i386/debian:9.6-slim
             DOCKERFILE: Dockerfile.oldDebian
             QEMU_ARCH: i386
             CMD: oldRunCMD
@@ -180,7 +180,7 @@ jobs:
 
           - name: olderLinux-arm64
             os: ubuntu-latest
-            BASE_IMAGE: arm64v8/debian:debian:9.6-slim
+            BASE_IMAGE: arm64v8/debian:9.6-slim
             DOCKERFILE: Dockerfile.oldDebian
             QEMU_ARCH: aarch64
             CMD: oldRunCMD
@@ -266,6 +266,8 @@ jobs:
       run: |
         docker run --rm -v $(pwd):/node-pty multiarch-build ${{ env.EXECCMD }}
 
+# Mac OS
+
     - name: macOS - Prebuild Binaries
       if: runner.os == 'macOS'
       run: |
@@ -274,6 +276,8 @@ jobs:
         env JOBS=max node .prebuild/electron.js -t 5.0.0 -t 6.0.0 -t 7.0.0 -t 8.0.0 -t 9.0.0 -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.0 -t 18.0.0
 #       buildify doesn't work on Mac due to missing spawn_helper
 #      env JOBS=max node .prebuild/buildify.js
+
+# Windows
 
     - name: Windows ia32 - Prebuild Binaries
       if: ${{ (runner.os == 'Windows') && (matrix.arch == 'ia32') }}
