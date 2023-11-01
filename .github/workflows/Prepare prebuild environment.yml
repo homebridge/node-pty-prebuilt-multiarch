@@ -36,6 +36,12 @@ jobs:
             ./.prebuild/build.sh .prebuild/prebuildify.js ${oldNodeBuildTargets} ${nodeBuildTargets} && \
             ./.prebuild/build.sh .prebuild/electron.js ${electronBuildTargets}\"" >> $GITHUB_ENV  
 
+      - name: Delete pr-* branches
+        uses: dawidd6/action-delete-branch@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branches: 'release-candidate'
+
       - uses: actions/checkout@v4
       - name: Create Branch
         uses: peterjgrainger/action-create-branch@v2.2.0
