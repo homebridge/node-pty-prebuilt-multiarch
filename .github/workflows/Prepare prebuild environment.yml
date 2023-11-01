@@ -236,11 +236,16 @@ jobs:
         sudo apt-get --yes --no-install-recommends install binfmt-support qemu-user-static
         docker run --rm --privileged multiarch/qemu-user-static:register --reset
 
+    - name: Linux - Prep Build CMD
+      if: runner.os == 'Linux'
+      run: |
+        echo "${{ env.CMD }}"
+        echo "EXECCMD=${!CMD}" >> $GITHUB_ENV
+
     - name: Linux - Build Docker Image
       if: runner.os == 'Linux'
       run: |
-        echo "${{ matrix.CMD }}"
-        docker build -f .prebuild/${{ matrix.DOCKERFILE }} --build-arg BASE_IMAGE=${{ matrix.BASE_IMAGE }} --build-arg QEMU_ARCH=${{ matrix.QEMU_ARCH }} --build-arg CMD="${{ matrix.CMD }}" -t multiarch-build .
+        docker build -f .prebuild/${{ matrix.DOCKERFILE }} --build-arg BASE_IMAGE=${{ matrix.BASE_IMAGE }} --build-arg QEMU_ARCH=${{ matrix.QEMU_ARCH }} --build-arg CMD="${{ env.EXECCMD }}" -t multiarch-build .
 
     - name: Linux - Prebuild Binaries
       if: runner.os == 'Linux'
