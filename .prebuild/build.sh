@@ -14,13 +14,6 @@ npm ci --ignore-scripts
    export npm_config_force_process_config="true"
  fi
 
-## Fix for Alpline linux
-
-if ["$0" = "bash"]; then
-  shift
-  shift
-fi
-
 #node .prebuild/build.js
 env JOBS=max node $*
 
