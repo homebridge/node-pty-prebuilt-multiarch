@@ -137,7 +137,7 @@ jobs:
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: x86_64
             CMD: BuildNewCMD
-            COUNT: 26
+            COUNT: 3
             NPMCOUNT: 3
 
           - name: linux-ia32
@@ -146,7 +146,7 @@ jobs:
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: i386
             CMD: BuildNewCMD
-            COUNT: 26
+            COUNT: 3
             NPMCOUNT: 3
 
           - name: linux-arm64
@@ -155,7 +155,7 @@ jobs:
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: aarch64
             CMD: BuildNewCMD
-            COUNT: 26
+            COUNT: 3
             NPMCOUNT: 3
 
 # Builds for NodeJS 18 or lower
@@ -196,7 +196,7 @@ jobs:
 
           - name: darwin-arm64
             os: [self-hosted, macOS, ARM64]
-            COUNT: 25
+            COUNT: 26
             NPMCOUNT: 11
 
           - name: win32-ia32
@@ -208,7 +208,7 @@ jobs:
           - name: win32-x64
             os: windows-2019
             arch: x64
-            COUNT: 26
+            COUNT: 25
             NPMCOUNT: 0
 
     steps:
