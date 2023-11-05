@@ -45,7 +45,10 @@ try {
     stdio: ['inherit', 'inherit', 'inherit']
   });
   console.log('Prebuildify Result ', result.status, result.signal, result.error);
+  if (result.status != 0) {
+    process.exit(1);
+  }
 } catch (e) {
   console.error(e);
-  process.exit(0);
+  process.exit(1);
 }
