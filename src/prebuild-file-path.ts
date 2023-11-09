@@ -18,5 +18,4 @@ function prebuildName(): string {
 
 const pathToBuild = path.resolve(__dirname, `../prebuilds/${os.platform()}-${os.arch()}/${prebuildName()}`);
 
-console.log('prebuild-file-path:', pathToBuild);
 export const ptyPath: string | null = fs.existsSync(pathToBuild) ? pathToBuild : null;
