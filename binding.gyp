@@ -14,7 +14,8 @@
                 '/guard:cf',
                 '/w34244',
                 '/we4267',
-                '/ZH:SHA_256'
+                '/ZH:SHA_256',
+                '/std:c++17'
               ]
             },
             'VCLinkerTool': {
@@ -85,7 +86,8 @@
           'libraries': [
             '-lutil'
           ],
-          'cflags': ['-Wall'],
+          'cflags': ['-Wall', '-std=c++17'],
+          'cflags_cc': [ '-std=c++17' ],
           'conditions': [
             # http://www.gnu.org/software/gnulib/manual/html_node/forkpty.html
             #   One some systems (at least including Cygwin, Interix,
@@ -97,7 +99,8 @@
             }],
             ['OS=="mac"', {
               "xcode_settings": {
-                "MACOSX_DEPLOYMENT_TARGET":"10.7"
+                "MACOSX_DEPLOYMENT_TARGET":"10.7",
+                'CLANG_CXX_LANGUAGE_STANDARD':'c++17'
               }
             }]
           ]
@@ -113,7 +116,8 @@
             'src/unix/spawn-helper.cc',
           ],
           "xcode_settings": {
-            "MACOSX_DEPLOYMENT_TARGET":"10.7"
+            "MACOSX_DEPLOYMENT_TARGET":"10.7",
+            'CLANG_CXX_LANGUAGE_STANDARD':'c++17'
           }
         },
       ]
