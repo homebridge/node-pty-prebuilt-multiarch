@@ -43,7 +43,11 @@ try {
     cwd: cwd,
     stdio: ['inherit', 'inherit', 'inherit']
   });
-  console.log('Result ', result.status, result.signal, result.error);
+  console.log('electronBuild Result ', result.status, result.signal, result.error);
+  if (result.status != 0) {
+    process.exit(1);
+  }
 } catch (e) {
-  process.exit(0);
+  console.error(e);
+  process.exit(1);
 }

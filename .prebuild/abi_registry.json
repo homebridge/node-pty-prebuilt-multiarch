@@ -122,7 +122,7 @@
     "future": false,
     "lts": false,
     "runtime": "electron",
-    "target": "14.0.0"
+    "target": "14.0.2"
   },
   {
     "abi": "98",
@@ -174,11 +174,74 @@
     "abi": "111"
   },
   {
+    "abi": "106",
+    "future": false,
+    "lts": false,
+    "runtime": "electron",
+    "target": "19.0.0-alpha.1"
+  },
+  {
     "abi": "107",
     "future": false,
     "lts": false,
     "runtime": "electron",
     "target": "20.0.0"
+  },
+  {
+    "abi": "109",
+    "future": false,
+    "lts": false,
+    "runtime": "electron",
+    "target": "21.0.0-alpha.1"
+  },
+  {
+    "abi": "110",
+    "future": false,
+    "lts": false,
+    "runtime": "electron",
+    "target": "22.0.0-alpha.1"
+  },
+  {
+    "abi": "113",
+    "future": false,
+    "lts": false,
+    "runtime": "electron",
+    "target": "23.0.0-alpha.1"
+  },
+  {
+    "abi": "114",
+    "future": false,
+    "lts": false,
+    "runtime": "electron",
+    "target": "24.0.0-alpha.1"
+  },
+  {
+    "abi": "116",
+    "future": false,
+    "lts": false,
+    "runtime": "electron",
+    "target": "26.0.0-alpha.1"
+  },
+  {
+    "abi": "116",
+    "future": false,
+    "lts": false,
+    "runtime": "electron",
+    "target": "25.0.0-alpha.1"
+  },
+  {
+    "abi": "118",
+    "future": false,
+    "lts": false,
+    "runtime": "electron",
+    "target": "27.0.0-alpha.1"
+  },
+  {
+    "abi": "119",
+    "future": true,
+    "lts": false,
+    "runtime": "electron",
+    "target": "28.0.0-alpha.1"
   },
   {
     "runtime": "node",

@@ -16,9 +16,10 @@ on:
 env:
   oldNodeBuildTargets: -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.1 -t 18.0.0
   nodeBuildTargets: -t 19.0.0 -t 20.0.0 -t 21.0.0
-  electronBuildTargets: -t 5.0.0 -t 6.0.0 -t 7.0.0 -t 8.0.0 -t 9.0.0 -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.0 -t 18.0.0
+  oldElectronBuildTargets: -t 5.0.0 -t 6.0.0 -t 7.0.0 -t 8.0.0 -t 9.0.0 -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.2 -t 15.0.0 -t 16.0.0 -t 17.0.0 -t 18.0.0 -t 19.0.0
+  electronBuildTargets: -t 20.0.0 -t 21.0.0 -t 22.0.0 -t 23.0.0 -t 24.0.0 -t 25.0.0 -t 26.0.0 -t 27.0.0
   winIA32: -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.1
-  ReleasePrebuildCount: 280
+  ReleasePrebuildCount: 370
   ReleasePrebuildifyCount: 84
 
 jobs:
@@ -83,14 +84,14 @@ jobs:
           darwin-arm64,
           linux-arm,
           linux-arm64,
+          linux-arm64-older,
           linux-ia32,
+          linux-ia32-older,
           linux-x64,
+          linux-x64-older,
           linuxmusl-arm,
           linuxmusl-arm64,
           linuxmusl-x64,
-          olderLinux-arm64,
-          olderLinux-ia32,
-          olderLinux-x64,
           win32-ia32,
           win32-x64
         ]
@@ -101,7 +102,7 @@ jobs:
             DOCKERFILE: Dockerfile.alpine
             QEMU_ARCH: x86_64
             CMD: BuildAllCMD
-            COUNT: 26
+            COUNT: 34
             NPMCOUNT: 12
 
           - name: linuxmusl-arm
@@ -110,7 +111,7 @@ jobs:
             DOCKERFILE: Dockerfile.alpine
             QEMU_ARCH: arm
             CMD: BuildAllCMD
-            COUNT: 26
+            COUNT: 34
             NPMCOUNT: 12
 
           - name: linuxmusl-arm64
@@ -119,7 +120,7 @@ jobs:
             DOCKERFILE: Dockerfile.alpine
             QEMU_ARCH: aarch64
             CMD: BuildAllCMD
-            COUNT: 26
+            COUNT: 34
             NPMCOUNT: 12
 
           - name: linux-arm
@@ -128,7 +129,7 @@ jobs:
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: arm
             CMD: BuildAllCMD
-            COUNT: 26
+            COUNT: 34
             NPMCOUNT: 12
 
 # Builds for NodeJS 19+
@@ -139,7 +140,7 @@ jobs:
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: x86_64
             CMD: BuildNewCMD
-            COUNT: 3
+            COUNT: 10
             NPMCOUNT: 3
 
           - name: linux-ia32
@@ -148,7 +149,7 @@ jobs:
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: i386
             CMD: BuildNewCMD
-            COUNT: 3
+            COUNT: 10
             NPMCOUNT: 3
 
           - name: linux-arm64
@@ -157,60 +158,60 @@ jobs:
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: aarch64
             CMD: BuildNewCMD
-            COUNT: 3
+            COUNT: 10
             NPMCOUNT: 3
 
 # Builds for NodeJS 18 or lower
 
-          - name: olderLinux-x64
+          - name: linux-x64-older
             os: ubuntu-latest
             BASE_IMAGE: library/debian:9.6-slim
             DOCKERFILE: Dockerfile.oldDebian
             QEMU_ARCH: x86_64
             CMD: BuildOldCMD
-            COUNT: 23
+            COUNT: 24
             NPMCOUNT: 9
 
-          - name: olderLinux-ia32
+          - name: linux-ia32-older
             os: ubuntu-latest
             BASE_IMAGE: i386/debian:9.6-slim
             DOCKERFILE: Dockerfile.oldDebian
             QEMU_ARCH: i386
             CMD: BuildOldCMD
-            COUNT: 23
+            COUNT: 24
             NPMCOUNT: 9
 
-          - name: olderLinux-arm64
+          - name: linux-arm64-older
             os: ubuntu-latest
             BASE_IMAGE: arm64v8/debian:9.6-slim
             DOCKERFILE: Dockerfile.oldDebian
             QEMU_ARCH: aarch64
             CMD: BuildOldCMD
-            COUNT: 25
-            NPMCOUNT: 11
+            COUNT: 24
+            NPMCOUNT: 9
 
 # Other OS's
 
           - name: darwin-x64
             os: macOS-latest
-            COUNT: 26
+            COUNT: 34
             NPMCOUNT: 11
 
           - name: darwin-arm64
             os: [self-hosted, macOS, ARM64]
-            COUNT: 26
+            COUNT: 34
             NPMCOUNT: 11
 
           - name: win32-ia32
             os: windows-2019
             arch: ia32
-            COUNT: 21
+            COUNT: 30
             NPMCOUNT: 0 
 
           - name: win32-x64
             os: windows-2019
             arch: x64
-            COUNT: 25
+            COUNT: 34
             NPMCOUNT: 0
 
     steps:
@@ -241,12 +242,13 @@ jobs:
       run: |
         echo "BuildOldCMD=\"./.prebuild/build.sh .prebuild/prebuild.js ${oldNodeBuildTargets} && \
           ./.prebuild/build.sh .prebuild/prebuildify.js ${oldNodeBuildTargets} && \
-          ./.prebuild/build.sh .prebuild/electron.js ${electronBuildTargets}\"" >> $GITHUB_ENV
+          ./.prebuild/build.sh .prebuild/electron.js ${oldElectronBuildTargets}\"" >> $GITHUB_ENV
         echo "BuildNewCMD=\"./.prebuild/build.sh .prebuild/prebuild.js ${nodeBuildTargets} && \
-          ./.prebuild/build.sh .prebuild/prebuildify.js ${nodeBuildTargets}\"" >> $GITHUB_ENV
+          ./.prebuild/build.sh .prebuild/prebuildify.js ${nodeBuildTargets}&& \
+          ./.prebuild/build.sh .prebuild/electron.js ${electronBuildTargets}\"" >> $GITHUB_ENV
         echo "BuildAllCMD=\"./.prebuild/build.sh .prebuild/prebuild.js ${oldNodeBuildTargets} ${nodeBuildTargets} && \
           ./.prebuild/build.sh .prebuild/prebuildify.js ${oldNodeBuildTargets} ${nodeBuildTargets} && \
-          ./.prebuild/build.sh .prebuild/electron.js ${electronBuildTargets}\"" >> $GITHUB_ENV
+          ./.prebuild/build.sh .prebuild/electron.js ${oldElectronBuildTargets} ${electronBuildTargets}\"" >> $GITHUB_ENV
         echo "CMD=${{ matrix.CMD }}" >> $GITHUB_ENV  
 
     - name: Linux - Prep Build EXECCMD = ${{ env.CMD }}
@@ -275,7 +277,7 @@ jobs:
         python3 -m pip install packaging setuptools
         npm ci --ignore-scripts
         env JOBS=max node .prebuild/prebuild.js ${oldNodeBuildTargets} ${nodeBuildTargets} 
-        env JOBS=max node .prebuild/electron.js ${electronBuildTargets}
+        env JOBS=max node .prebuild/electron.js ${oldElectronBuildTargets} ${electronBuildTargets}
 #       buildify doesn't work on Mac due to missing spawn_helper
 #      env JOBS=max node .prebuild/buildify.js
 
@@ -287,7 +289,7 @@ jobs:
       run: |
         npm ci --ignore-scripts
         env JOBS=max node_modules/.bin/prebuild ${winIA32}  --include-regex "\.(node|exe|dll|pdb)" --arch ${{ matrix.arch }}
-        env JOBS=max node_modules/.bin/prebuild ${electronBuildTargets} --include-regex "\.(node|exe|dll|pdb)" -r electron -a ${{ matrix.arch }}
+        env JOBS=max node_modules/.bin/prebuild ${oldElectronBuildTargets} ${electronBuildTargets} --include-regex "\.(node|exe|dll|pdb)" -r electron -a ${{ matrix.arch }}
 
     - name: Windows x64 - Prebuild Binaries
       if: ${{ (runner.os == 'Windows') && (matrix.arch == 'x64') }}
@@ -295,7 +297,9 @@ jobs:
       run: |
         npm ci --ignore-scripts
         env JOBS=max node_modules/.bin/prebuild ${oldNodeBuildTargets} ${nodeBuildTargets} --include-regex "\.(node|exe|dll|pdb)" --arch ${{ matrix.arch }}
-        env JOBS=max node_modules/.bin/prebuild ${electronBuildTargets} --include-regex "\.(node|exe|dll|pdb)" -r electron --arch ${{ matrix.arch }}
+        env JOBS=max node_modules/.bin/prebuild ${oldElectronBuildTargets} ${electronBuildTargets} --include-regex "\.(node|exe|dll|pdb)" -r electron --arch ${{ matrix.arch }}
+
+# Start of Checks
 
     - name: Check Release prebuilds exist
       shell: bash

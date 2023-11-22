@@ -23,7 +23,7 @@ RUN case "${QEMU_ARCH}" in \
     *) echo "unsupported architecture"; exit 1 ;; \
   esac \
   && set -x \
-  && [ "$NODE_ARCH" = "armv6l" -o "$NODE_ARCH" = "x86" ] && curl -SLO  "https://unofficial-builds.nodejs.org/download/release/v$NODE_VERSION/node-v$NODE_VERSION-linux-$NODE_ARCH.tar.gz" || curl -SLO "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-$NODE_ARCH.tar.gz" \
+  && [ "$NODE_ARCH" = "armv6l" -o "$NODE_ARCH" = "x86" ] && curl -k -SLO  "https://unofficial-builds.nodejs.org/download/release/v$NODE_VERSION/node-v$NODE_VERSION-linux-$NODE_ARCH.tar.gz" || curl -SLO "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-$NODE_ARCH.tar.gz" \
   && echo "Installing NodeJS node-v$NODE_VERSION-linux-$NODE_ARCH.tar.gz" \
   && tar -xzf "node-v$NODE_VERSION-linux-$NODE_ARCH.tar.gz" -C /usr/local --strip-components=1 --no-same-owner \
   && rm "node-v$NODE_VERSION-linux-$NODE_ARCH.tar.gz" \
