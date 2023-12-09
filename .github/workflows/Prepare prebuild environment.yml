@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       Beta:
-        description: 'Beta Release'
+        description: "Beta Release"
         required: true
         default: true
         type: boolean
@@ -17,7 +17,7 @@ env:
   oldNodeBuildTargets: -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.1 -t 18.0.0
   nodeBuildTargets: -t 19.0.0 -t 20.0.0 -t 21.0.0
   oldElectronBuildTargets: -t 5.0.0 -t 6.0.0 -t 7.0.0 -t 8.0.0 -t 9.0.0 -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.2 -t 15.0.0 -t 16.0.0 -t 17.0.0 -t 18.0.0 -t 19.0.0
-  electronBuildTargets: -t 20.0.0 -t 21.0.0 -t 22.0.0 -t 23.0.0 -t 24.0.0 -t 25.0.0 -t 26.0.0 -t 27.0.0
+  electronBuildTargets: -t 20.0.0 -t 21.0.0 -t 22.0.0 -t 23.0.0 -t 24.0.0 -t 25.0.0 -t 26.0.0 -t 27.0.0 -t 28.0.0
   winIA32: -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.1
   ReleasePrebuildCount: 370
   ReleasePrebuildifyCount: 84
@@ -27,13 +27,11 @@ jobs:
     name: Prepare prebuild environment ${{ github.ref_name }}
     runs-on: ubuntu-latest
     steps:
-
-
       - name: Delete pr-* branches
         uses: dawidd6/action-delete-branch@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          branches: 'release-candidate'
+          branches: "release-candidate"
 
       - uses: actions/checkout@v4
       - name: Create Branch
@@ -69,32 +67,33 @@ jobs:
         with:
           author_name: ${{ github.actor }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: 'release-candidate'
-          message: 'Prepare prebuild environment ${{ github.ref_name }}'
-  
+          branch: "release-candidate"
+          message: "Prepare prebuild environment ${{ github.ref_name }}"
+
   prebuild:
-    name:  ${{ matrix.name }} - Prebuild NPM and GitHub Release artifacts
-    needs: Prepare_prebuild_environment 
-    runs-on: ${{ matrix.os }} 
+    name: ${{ matrix.name }} - Prebuild NPM and GitHub Release artifacts
+    needs: Prepare_prebuild_environment
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        name: [
-          darwin-x64,
-          darwin-arm64,
-          linux-arm,
-          linux-arm64,
-          linux-arm64-older,
-          linux-ia32,
-          linux-ia32-older,
-          linux-x64,
-          linux-x64-older,
-          linuxmusl-arm,
-          linuxmusl-arm64,
-          linuxmusl-x64,
-          win32-ia32,
-          win32-x64
-        ]
+        name:
+          [
+            darwin-x64,
+            darwin-arm64,
+            linux-arm,
+            linux-arm64,
+            linux-arm64-older,
+            linux-ia32,
+            linux-ia32-older,
+            linux-x64,
+            linux-x64-older,
+            linuxmusl-arm,
+            linuxmusl-arm64,
+            linuxmusl-x64,
+            win32-ia32,
+            win32-x64,
+          ]
         include:
           - name: linuxmusl-x64
             os: ubuntu-latest
@@ -132,7 +131,7 @@ jobs:
             COUNT: 34
             NPMCOUNT: 12
 
-# Builds for NodeJS 19+
+          # Builds for NodeJS 19+
 
           - name: linux-x64
             os: ubuntu-latest
@@ -161,7 +160,7 @@ jobs:
             COUNT: 10
             NPMCOUNT: 3
 
-# Builds for NodeJS 18 or lower
+          # Builds for NodeJS 18 or lower
 
           - name: linux-x64-older
             os: ubuntu-latest
@@ -190,7 +189,7 @@ jobs:
             COUNT: 24
             NPMCOUNT: 9
 
-# Other OS's
+          # Other OS's
 
           - name: darwin-x64
             os: macOS-latest
@@ -206,7 +205,7 @@ jobs:
             os: windows-2019
             arch: ia32
             COUNT: 30
-            NPMCOUNT: 0 
+            NPMCOUNT: 0
 
           - name: win32-x64
             os: windows-2019
@@ -215,124 +214,124 @@ jobs:
             NPMCOUNT: 0
 
     steps:
-    - uses: actions/checkout@v4
-      with:
-        ref: 'release-candidate'
+      - uses: actions/checkout@v4
+        with:
+          ref: "release-candidate"
 
-    - uses: actions/setup-node@v3
-      with:
-        node-version: 18.x
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
 
-    - name: get-npm-version
-      if: runner.os == 'Linux'
-      id: package-version
-      uses: martinbeentjes/npm-get-version-action@v1.3.1
+      - name: get-npm-version
+        if: runner.os == 'Linux'
+        id: package-version
+        uses: martinbeentjes/npm-get-version-action@v1.3.1
 
-    - name: Linux - Setup Dependencies
-      if: runner.os == 'Linux'
-      run: |
-        sudo apt-get update
-        sudo apt-get --yes --no-install-recommends install binfmt-support qemu-user-static
-        docker run --rm --privileged multiarch/qemu-user-static:register --reset
+      - name: Linux - Setup Dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get --yes --no-install-recommends install binfmt-support qemu-user-static
+          docker run --rm --privileged multiarch/qemu-user-static:register --reset
 
-# Hackery to setup builds
+      # Hackery to setup builds
 
-    - name: Setup Build Commands
-      if: runner.os == 'Linux'
-      run: |
-        echo "BuildOldCMD=\"./.prebuild/build.sh .prebuild/prebuild.js ${oldNodeBuildTargets} && \
-          ./.prebuild/build.sh .prebuild/prebuildify.js ${oldNodeBuildTargets} && \
-          ./.prebuild/build.sh .prebuild/electron.js ${oldElectronBuildTargets}\"" >> $GITHUB_ENV
-        echo "BuildNewCMD=\"./.prebuild/build.sh .prebuild/prebuild.js ${nodeBuildTargets} && \
-          ./.prebuild/build.sh .prebuild/prebuildify.js ${nodeBuildTargets}&& \
-          ./.prebuild/build.sh .prebuild/electron.js ${electronBuildTargets}\"" >> $GITHUB_ENV
-        echo "BuildAllCMD=\"./.prebuild/build.sh .prebuild/prebuild.js ${oldNodeBuildTargets} ${nodeBuildTargets} && \
-          ./.prebuild/build.sh .prebuild/prebuildify.js ${oldNodeBuildTargets} ${nodeBuildTargets} && \
-          ./.prebuild/build.sh .prebuild/electron.js ${oldElectronBuildTargets} ${electronBuildTargets}\"" >> $GITHUB_ENV
-        echo "CMD=${{ matrix.CMD }}" >> $GITHUB_ENV  
+      - name: Setup Build Commands
+        if: runner.os == 'Linux'
+        run: |
+          echo "BuildOldCMD=\"./.prebuild/build.sh .prebuild/prebuild.js ${oldNodeBuildTargets} && \
+            ./.prebuild/build.sh .prebuild/prebuildify.js ${oldNodeBuildTargets} && \
+            ./.prebuild/build.sh .prebuild/electron.js ${oldElectronBuildTargets}\"" >> $GITHUB_ENV
+          echo "BuildNewCMD=\"./.prebuild/build.sh .prebuild/prebuild.js ${nodeBuildTargets} && \
+            ./.prebuild/build.sh .prebuild/prebuildify.js ${nodeBuildTargets}&& \
+            ./.prebuild/build.sh .prebuild/electron.js ${electronBuildTargets}\"" >> $GITHUB_ENV
+          echo "BuildAllCMD=\"./.prebuild/build.sh .prebuild/prebuild.js ${oldNodeBuildTargets} ${nodeBuildTargets} && \
+            ./.prebuild/build.sh .prebuild/prebuildify.js ${oldNodeBuildTargets} ${nodeBuildTargets} && \
+            ./.prebuild/build.sh .prebuild/electron.js ${oldElectronBuildTargets} ${electronBuildTargets}\"" >> $GITHUB_ENV
+          echo "CMD=${{ matrix.CMD }}" >> $GITHUB_ENV
 
-    - name: Linux - Prep Build EXECCMD = ${{ env.CMD }}
-      if: runner.os == 'Linux'
-      run: |
-        echo "${{ env.CMD }}"
-        echo "EXECCMD=${!CMD}" >> $GITHUB_ENV
+      - name: Linux - Prep Build EXECCMD = ${{ env.CMD }}
+        if: runner.os == 'Linux'
+        run: |
+          echo "${{ env.CMD }}"
+          echo "EXECCMD=${!CMD}" >> $GITHUB_ENV
 
-# Linux builds
+      # Linux builds
 
-    - name: Linux - Build Docker Image ${{ matrix.DOCKERFILE }} - ${{ matrix.BASE_IMAGE }} - ${{ matrix.QEMU_ARCH }}
-      if: runner.os == 'Linux'
-      run: |
-        docker build -f .prebuild/${{ matrix.DOCKERFILE }} --build-arg BASE_IMAGE=${{ matrix.BASE_IMAGE }} --build-arg QEMU_ARCH=${{ matrix.QEMU_ARCH }} -t multiarch-build .
+      - name: Linux - Build Docker Image ${{ matrix.DOCKERFILE }} - ${{ matrix.BASE_IMAGE }} - ${{ matrix.QEMU_ARCH }}
+        if: runner.os == 'Linux'
+        run: |
+          docker build -f .prebuild/${{ matrix.DOCKERFILE }} --build-arg BASE_IMAGE=${{ matrix.BASE_IMAGE }} --build-arg QEMU_ARCH=${{ matrix.QEMU_ARCH }} -t multiarch-build .
 
-    - name: Linux - Prebuild Binaries - ${{ env.EXECCMD }}
-      if: runner.os == 'Linux'
-      run: |
-        docker run --rm -v $(pwd):/node-pty multiarch-build sh -c ${{ env.EXECCMD }}
+      - name: Linux - Prebuild Binaries - ${{ env.EXECCMD }}
+        if: runner.os == 'Linux'
+        run: |
+          docker run --rm -v $(pwd):/node-pty multiarch-build sh -c ${{ env.EXECCMD }}
 
-# Mac OS
+      # Mac OS
 
-    - name: macOS - Prebuild Binaries
-      if: runner.os == 'macOS'
-      run: |
-        python3 -m pip install packaging setuptools
-        npm ci --ignore-scripts
-        env JOBS=max node .prebuild/prebuild.js ${oldNodeBuildTargets} ${nodeBuildTargets} 
-        env JOBS=max node .prebuild/electron.js ${oldElectronBuildTargets} ${electronBuildTargets}
-#       buildify doesn't work on Mac due to missing spawn_helper
-#      env JOBS=max node .prebuild/buildify.js
+      - name: macOS - Prebuild Binaries
+        if: runner.os == 'macOS'
+        run: |
+          python3 -m pip install packaging setuptools
+          npm ci --ignore-scripts
+          env JOBS=max node .prebuild/prebuild.js ${oldNodeBuildTargets} ${nodeBuildTargets} 
+          env JOBS=max node .prebuild/electron.js ${oldElectronBuildTargets} ${electronBuildTargets}
+      #       buildify doesn't work on Mac due to missing spawn_helper
+      #      env JOBS=max node .prebuild/buildify.js
 
-# Windows
+      # Windows
 
-    - name: Windows ia32 - Prebuild Binaries
-      if: ${{ (runner.os == 'Windows') && (matrix.arch == 'ia32') }}
-      shell: bash
-      run: |
-        npm ci --ignore-scripts
-        env JOBS=max node_modules/.bin/prebuild ${winIA32}  --include-regex "\.(node|exe|dll|pdb)" --arch ${{ matrix.arch }}
-        env JOBS=max node_modules/.bin/prebuild ${oldElectronBuildTargets} ${electronBuildTargets} --include-regex "\.(node|exe|dll|pdb)" -r electron -a ${{ matrix.arch }}
+      - name: Windows ia32 - Prebuild Binaries
+        if: ${{ (runner.os == 'Windows') && (matrix.arch == 'ia32') }}
+        shell: bash
+        run: |
+          npm ci --ignore-scripts
+          env JOBS=max node_modules/.bin/prebuild ${winIA32}  --include-regex "\.(node|exe|dll|pdb)" --arch ${{ matrix.arch }}
+          env JOBS=max node_modules/.bin/prebuild ${oldElectronBuildTargets} ${electronBuildTargets} --include-regex "\.(node|exe|dll|pdb)" -r electron -a ${{ matrix.arch }}
 
-    - name: Windows x64 - Prebuild Binaries
-      if: ${{ (runner.os == 'Windows') && (matrix.arch == 'x64') }}
-      shell: bash
-      run: |
-        npm ci --ignore-scripts
-        env JOBS=max node_modules/.bin/prebuild ${oldNodeBuildTargets} ${nodeBuildTargets} --include-regex "\.(node|exe|dll|pdb)" --arch ${{ matrix.arch }}
-        env JOBS=max node_modules/.bin/prebuild ${oldElectronBuildTargets} ${electronBuildTargets} --include-regex "\.(node|exe|dll|pdb)" -r electron --arch ${{ matrix.arch }}
+      - name: Windows x64 - Prebuild Binaries
+        if: ${{ (runner.os == 'Windows') && (matrix.arch == 'x64') }}
+        shell: bash
+        run: |
+          npm ci --ignore-scripts
+          env JOBS=max node_modules/.bin/prebuild ${oldNodeBuildTargets} ${nodeBuildTargets} --include-regex "\.(node|exe|dll|pdb)" --arch ${{ matrix.arch }}
+          env JOBS=max node_modules/.bin/prebuild ${oldElectronBuildTargets} ${electronBuildTargets} --include-regex "\.(node|exe|dll|pdb)" -r electron --arch ${{ matrix.arch }}
 
-# Start of Checks
+      # Start of Checks
 
-    - name: Check Release prebuilds exist
-      shell: bash
-      run: |
-        fileCount=$(ls prebuilds/*/node-pty*tar.gz | wc -l)
-        echo "Release Prebuild count ${fileCount}"
-        if [ "$fileCount" -ne ${{ matrix.COUNT }} ]; then echo "::warning::Release Prebuild count ${fileCount}, expected ${{ matrix.COUNT }}"; else echo "::notice::Release Prebuild count ${fileCount}, expected ${{ matrix.COUNT }}"; fi
+      - name: Check Release prebuilds exist
+        shell: bash
+        run: |
+          fileCount=$(ls prebuilds/*/node-pty*tar.gz | wc -l)
+          echo "Release Prebuild count ${fileCount}"
+          if [ "$fileCount" -ne ${{ matrix.COUNT }} ]; then echo "::warning::Release Prebuild count ${fileCount}, expected ${{ matrix.COUNT }}"; else echo "::notice::Release Prebuild count ${fileCount}, expected ${{ matrix.COUNT }}"; fi
 
-    - name: "Check file existence"
-      id: check_files
-      uses: andstor/file-existence-action@v2
-      with:
-        files: "prebuilds/*/node*node"
+      - name: "Check file existence"
+        id: check_files
+        uses: andstor/file-existence-action@v2
+        with:
+          files: "prebuilds/*/node*node"
 
-    - name: Check NPM prebuilds exist
-      if: steps.check_files.outputs.files_exists == 'true'
-      shell: bash
-      run: |
-        fileCount=$(ls prebuilds/*/node*node | wc -l)
-        echo "NPM Prebuild count ${fileCount}"
-        if [ "$fileCount" -ne ${{ matrix.NPMCOUNT }} ]; then echo "::warning::Release NPM Prebuild count ${fileCount}, expected ${{ matrix.NPMCOUNT }}"; else echo "::notice::Release NPM Prebuild count ${fileCount}, expected ${{ matrix.NPMCOUNT }}"; fi
+      - name: Check NPM prebuilds exist
+        if: steps.check_files.outputs.files_exists == 'true'
+        shell: bash
+        run: |
+          fileCount=$(ls prebuilds/*/node*node | wc -l)
+          echo "NPM Prebuild count ${fileCount}"
+          if [ "$fileCount" -ne ${{ matrix.NPMCOUNT }} ]; then echo "::warning::Release NPM Prebuild count ${fileCount}, expected ${{ matrix.NPMCOUNT }}"; else echo "::notice::Release NPM Prebuild count ${fileCount}, expected ${{ matrix.NPMCOUNT }}"; fi
 
-    - if: runner.os == 'Linux'
-      run: sudo chown -R $USER:$USER .
+      - if: runner.os == 'Linux'
+        run: sudo chown -R $USER:$USER .
 
-    - name: Commit & Push changes
-      uses: actions-js/push@be2c6e7c16dba301499992e84b3b32aaaa56507c
-      with:
-        author_name: ${{ github.actor }}
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        branch: 'release-candidate'
-        message: 'Prebuilds for ${{ steps.package-version.outputs.current-version}} - ${{ matrix.name }}'
-        pull: true
+      - name: Commit & Push changes
+        uses: actions-js/push@be2c6e7c16dba301499992e84b3b32aaaa56507c
+        with:
+          author_name: ${{ github.actor }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: "release-candidate"
+          message: "Prebuilds for ${{ steps.package-version.outputs.current-version}} - ${{ matrix.name }}"
+          pull: true
 
   publish:
     name: Publish GitHub and NPM Release
@@ -343,14 +342,14 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          ref: 'release-candidate'
+          ref: "release-candidate"
 
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
           node-version: lts/*
-          registry-url: 'https://registry.npmjs.org'
-          cache: 'npm'
+          registry-url: "https://registry.npmjs.org"
+          cache: "npm"
 
       - name: NPM build
         run: |
@@ -393,18 +392,18 @@ jobs:
       - uses: AButler/upload-release-assets@v2.0
         name: Upload Prebuild Artifacts to ${{ steps.package-version.outputs.current-version}}
         with:
-          files: 'prebuilds/*/node-pty*tar.gz'
+          files: "prebuilds/*/node-pty*tar.gz"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           release-tag: v${{ steps.package-version.outputs.current-version}}
 
-      - name: NPM Pack Release 
+      - name: NPM Pack Release
         run: |
           npm pack
 
       - uses: AButler/upload-release-assets@v2.0
         name: Upload NPM Release to ${{ steps.package-version.outputs.current-version}}
         with:
-          files: '*node-pty-prebuilt-multiarch*.tgz'
+          files: "*node-pty-prebuilt-multiarch*.tgz"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           release-tag: v${{ steps.package-version.outputs.current-version}}
 
@@ -424,10 +423,10 @@ jobs:
         if: ${{ github.repository == 'homebridge/node-pty-prebuilt-multiarch' && inputs.Beta }}
         run: npm publish --access public --tag=beta
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }} 
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: npm publish production
         if: ${{ github.repository == 'homebridge/node-pty-prebuilt-multiarch' && ! inputs.Beta }}
-        run: npm publish --access public  
+        run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
