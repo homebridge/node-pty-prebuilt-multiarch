@@ -48,7 +48,7 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "nan": "github:ajgassner/nan#electron-29-workaround",
+    "nan": "https://github.com/ajgassner/nan/tarball/electron-29-workaround",
     "prebuild-install": "^7.1.2"
   },
   "devDependencies": {
