@@ -59,7 +59,7 @@
     "@types/node": "8",
     "@typescript-eslint/eslint-plugin": "^2.27.0",
     "@typescript-eslint/parser": "^2.27.0",
-    "cross-env": "^5.1.4",
+    "cross-env": "^7.0.3",
     "decompress": "^4.2.1",
     "decompress-targz": "^4.1.1",
     "eslint": "^6.8.0",
