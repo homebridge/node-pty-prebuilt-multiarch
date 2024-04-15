@@ -1,0 +1,49 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    # Specify labels for pull requests
+    labels:
+      - "dependencies"
+      - "automerge"
+      - "auto-approve"
+    # Allow up to 10 open pull requests for dependencies
+    open-pull-requests-limit: 10
+    ignore:
+      - dependency-name: "@types/node"
+    groups:
+      mocha:
+        patterns:
+          - "mocha"
+          - "@types/mocha"
+      eslint:
+        patterns:
+          - "eslint"
+          - "eslint-*"
+          - "@typescript-eslint/*"
+      decompress:
+        patterns:
+          - "decompress"
+          - "decompress-*"
+      prebuild:
+        patterns:
+          - "prebuild"
+          - "node-abi"
+          - "node-gyp"
+          - "nan"
+          - "prebuild-*"
+          - "prebuildify"
+  - package-ecosystem: "github-actions"
+    directory: /
+    schedule:
+      interval: "daily"
+    labels:
+      - "dependencies"
+      - "automerge"
+      - "auto-approve"
+    # only update hashicorp actions, external actions managed by tsccr
+    allow:
+      - dependency-name: "hashicorp/*"
+      - dependency-name: "hashicorpdev/*"
