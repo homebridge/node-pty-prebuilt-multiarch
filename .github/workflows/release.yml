@@ -8,126 +8,17 @@ on:
         default: true
         type: boolean
 
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+permissions:
+  contents: read
+
 jobs:
   prebuild:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        name: [
-          alpine-x86_64,
-          alpine-arm32v6,
-          alpine-arm64v8,
-          debian-x86_64,
-          debian-i386,
-          debian-arm32v6,
-          debian-arm64v8,
-          darwin-x86_64,
-          darwin-arm64,
-          windows-x86_64,
-        ]
-        include:
-          - name: alpine-x86_64
-            os: ubuntu-latest
-            BASE_IMAGE: library/node:16-alpine
-            DOCKERFILE: Dockerfile.alpine
-            QEMU_ARCH: x86_64
-
-          - name: alpine-arm32v6
-            os: ubuntu-latest
-            BASE_IMAGE: arm32v6/node:16-alpine
-            DOCKERFILE: Dockerfile.alpine
-            QEMU_ARCH: arm
-
-          - name: alpine-arm64v8
-            os: ubuntu-latest
-            BASE_IMAGE: arm64v8/node:16-alpine
-            DOCKERFILE: Dockerfile.alpine
-            QEMU_ARCH: aarch64
-
-          - name: debian-x86_64
-            os: ubuntu-latest
-            BASE_IMAGE: library/debian:11.7-slim
-            DOCKERFILE: Dockerfile.debian
-            QEMU_ARCH: x86_64
-
-          - name: debian-i386
-            os: ubuntu-latest
-            BASE_IMAGE: i386/debian:11.7-slim
-            DOCKERFILE: Dockerfile.debian
-            QEMU_ARCH: i386
-
-          - name: debian-arm32v6
-            os: ubuntu-latest
-            BASE_IMAGE: balenalib/raspberry-pi-debian:bullseye
-            DOCKERFILE: Dockerfile.debian
-            QEMU_ARCH: arm
-
-          - name: debian-arm64v8
-            os: ubuntu-latest
-            BASE_IMAGE: arm64v8/debian:11.7-slim
-            DOCKERFILE: Dockerfile.debian
-            QEMU_ARCH: aarch64
-
-          - name: darwin-x86_64
-            os: macOS-latest
-          
-          - name: darwin-arm64
-            # xlarge is arm64
-            # https://docs.github.com/en/actions/using-github-hosted-runners/about-larger-runners/about-larger-runners#about-macos-larger-runners
-            os: macos-13-xlarge
-
-          - name: windows-x86_64
-            os: windows-2022
-
-    steps: 
-    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-    - uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
-      with:
-        node-version: 20.x
-
-    - name: Linux - Setup Dependencies
-      if: runner.os == 'Linux'
-      run: |
-        sudo apt-get update
-        sudo apt-get --yes --no-install-recommends install binfmt-support qemu-user-static
-        docker run --rm --privileged multiarch/qemu-user-static:register --reset
-
-    - name: Linux - Build Docker Image
-      if: runner.os == 'Linux'
-      run: |
-        docker build -f .prebuild/${{ matrix.DOCKERFILE }} --build-arg BASE_IMAGE=${{ matrix.BASE_IMAGE }} --build-arg QEMU_ARCH=${{ matrix.QEMU_ARCH }} -t multiarch-build .
-
-    - name: Linux - Prebuild Binaries
-      if: runner.os == 'Linux'
-      run: |
-        docker run --rm -v $(pwd):/node-pty multiarch-build
-
-    - name: macOS - Setup Python
-      if: runner.os == 'macOS'
-      uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
-      with:
-        python-version: '3.11'
-        architecture: x64
-    
-    - name: macOS - Prebuild Binaries
-      if: runner.os == 'macOS'
-      run: |
-        corepack enable # we use yarn
-        yarn install --ignore-scripts
-        node .prebuild/buildify.js
-
-    - name: Windows - Prebuild Binaries
-      if: runner.os == 'Windows'
-      shell: bash
-      run: |
-        yarn install --ignore-scripts
-        node .prebuild/buildify-windows.js
-
-    - uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
-      with:
-        name: prebuilds
-        path: prebuilds
+    uses: ./.github/workflows/prebuild.yml
+    with:
+      ref: ${{ github.ref }}
+      repository: ${{ github.repository }}
     
   release:
     runs-on: ubuntu-latest
@@ -143,12 +34,12 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
       - uses: actions/download-artifact@c850b930e6ba138125429b7e5c93fc707a7f8427 # v4.1.4
         with:
-          name: prebuilds
           path: prebuilds
+          merge-multiple: true
       - run: tree prebuilds
-      - run: yarn
-      - run: yarn lint
+      - run: yarn install --ignore-scripts
       - run: yarn build
+      - run: yarn
       - run: yarn test
       - name: Simulate Publishing to NPM
         if:  ${{ inputs.dryrun }}
