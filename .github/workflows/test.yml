@@ -19,8 +19,9 @@ jobs:
   prebuild:
     uses: ./.github/workflows/prebuild.yml
     with:
-      ref: ${{ env.GIT_REF }}
-      repository: ${{ env.GIT_REPO }}
+      # Sadly, we cannot use environment variables here
+      ref: ${{ github.head_ref || github.ref }}
+      repository: ${{ github.repository }}
   test:
     needs: [prebuild]
     runs-on: ubuntu-latest
