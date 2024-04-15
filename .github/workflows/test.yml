@@ -18,6 +18,9 @@ permissions:
 jobs:
   prebuild:
     uses: ./.github/workflows/prebuild.yml
+    with:
+      ref: ${{ env.GIT_REF }}
+      repository: ${{ env.GIT_REPO }}
   test:
     needs: [prebuild]
     runs-on: ubuntu-latest
