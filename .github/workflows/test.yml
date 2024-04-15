@@ -1,0 +1,40 @@
+name: Test
+on:
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+      - ready_for_review
+      - synchronize
+    paths-ignore:
+      - "**/*.md"
+  workflow_dispatch: {} # allow manual triggering just in case
+concurrency: ${{ github.workflow }}-${{ github.head_ref }}
+env:
+  GIT_REF: ${{ github.head_ref || github.ref }}
+  GIT_REPO: ${{ github.repository }}
+permissions:
+  contents: read
+jobs:
+  prebuild:
+    uses: ./.github/workflows/prebuild.yml
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          ref: ${{ env.GIT_REF }}
+          repository: ${{ env.GIT_REPO }}
+      - name: Setup Node.js
+        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
+        with:
+          node-version: 20
+      - uses: actions/download-artifact@c850b930e6ba138125429b7e5c93fc707a7f8427 # v4.1.4
+        with:
+          name: prebuilds
+          path: prebuilds
+      - run: tree prebuilds
+      - run: yarn
+      - run: yarn build
+      - run: yarn test
