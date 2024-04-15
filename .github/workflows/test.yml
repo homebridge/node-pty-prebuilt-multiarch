@@ -19,6 +19,7 @@ jobs:
   prebuild:
     uses: ./.github/workflows/prebuild.yml
   test:
+    needs: [prebuild]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
