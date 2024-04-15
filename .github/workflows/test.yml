@@ -36,6 +36,7 @@ jobs:
           path: prebuilds
           merge-multiple: true
       - run: tree prebuilds
-      - run: yarn
+      - run: yarn install --ignore-scripts
       - run: yarn build
+      - run: yarn
       - run: yarn test
