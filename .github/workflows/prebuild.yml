@@ -2,10 +2,6 @@ name: "Prebuild"
 
 on:
   workflow_call:
-    outputs:
-      artifactId:
-        description: "The ID of artifact that was uploaded"
-        value: ${{ jobs.prebuild.outputs.artifactId }}
 
 permissions:
   contents: read
