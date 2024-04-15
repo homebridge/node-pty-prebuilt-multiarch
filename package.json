@@ -55,7 +55,7 @@
     "prebuild-install": "^7.1.1"
   },
   "devDependencies": {
-    "@types/mocha": "^7.0.2",
+    "@types/mocha": "^10.0.6",
     "@types/node": "8",
     "@typescript-eslint/eslint-plugin": "^2.27.0",
     "@typescript-eslint/parser": "^2.27.0",
@@ -63,7 +63,7 @@
     "decompress": "^4.2.1",
     "decompress-targz": "^4.1.1",
     "eslint": "^6.8.0",
-    "mocha": "^7.1.1",
+    "mocha": "^10.4.0",
     "node-abi": "3.47.0",
     "node-gyp": "^9.3.0",
     "prebuild": "^12.1.0",
