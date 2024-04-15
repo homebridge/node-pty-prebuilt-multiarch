@@ -64,13 +64,11 @@
     "decompress-targz": "^4.1.1",
     "eslint": "^6.8.0",
     "mocha": "^7.1.1",
+    "node-abi": "3.47.0",
+    "node-gyp": "^9.3.0",
     "prebuild": "^12.1.0",
     "prebuildify": "^5.0.1",
     "ps-list": "^6.0.0",
     "typescript": "^3.8.3"
-  },
-  "resolutions": {
-    "node-gyp": "^9.3.0",
-    "node-abi": "3.47.0"
   }
 }
