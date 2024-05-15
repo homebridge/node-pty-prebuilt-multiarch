@@ -31,8 +31,8 @@ echo
 #node .prebuild/build.js
 env JOBS=max node $*
 echo
-#env JOBS=max node .prebuild/prebuild.js -t 19.0.0 -t 20.0.0 -t 21.0.0
-#env JOBS=max node .prebuild/prebuildify.js -t 19.0.0 -t 20.0.0 -t 21.0.0
+#env JOBS=max node .prebuild/prebuild.js -t 19.0.0 -t 20.0.0 -t 21.0.0 -t 22.0.0
+#env JOBS=max node .prebuild/prebuildify.js -t 19.0.0 -t 20.0.0 -t 21.0.0 -t 22.0.0
 
 #env JOBS=max node .prebuild/prebuild.js -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.1 -t 18.0.0
 #env JOBS=max node .prebuild/prebuildify.js -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.1 -t 18.0.0
