@@ -278,7 +278,6 @@
     "future": true,
     "abi": "127"
   },
-  ,
   {
     "runtime": "node",
     "target": "23.0.0",
