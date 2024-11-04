@@ -277,5 +277,13 @@
     "lts": false,
     "future": true,
     "abi": "127"
+  },
+  ,
+  {
+    "runtime": "node",
+    "target": "23.0.0",
+    "lts": false,
+    "future": true,
+    "abi": "131"
   }
 ]
