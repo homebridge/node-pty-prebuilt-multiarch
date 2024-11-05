@@ -17,7 +17,7 @@ env:
   # Order reversed so newer versions are built first - Add new versions to the front (fail fast)
   # electronBuildTargets version 28 has an issue
   oldNodeBuildTargets: -t 18.0.0 -t 17.0.1 -t 16.0.0 
-  nodeBuildTargets: -t 22.0.0 -t 21.0.0 -t 20.0.0 -t 19.0.0
+  nodeBuildTargets: -t 23.0 -t 22.0.0 -t 21.0.0 -t 20.0.0 -t 19.0.0
   oldElectronBuildTargets: -t 19.0.0 -t 18.0.0 -t 17.0.0 -t 16.0.0
   electronBuildTargets: -t 29.0.0 -t 27.0.0 -t 26.0.0 -t 25.0.0 -t 24.0.0 -t 23.0.0 -t 22.0.0 -t 21.0.0 -t 20.0.0
   winIA32nodeBuildTargets: -t 17.0.1 -t 16.0.0 

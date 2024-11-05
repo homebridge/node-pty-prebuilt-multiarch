@@ -48,20 +48,20 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "nan": "^2.19.0",
+    "nan": "^2.22.0",
     "prebuild-install": "^7.1.2"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.6",
-    "@types/node": "^20.12.12",
+    "@types/node": "^22.9.0",
     "@typescript-eslint/eslint-plugin": "^7.10.0",
     "@typescript-eslint/parser": "^7.10.0",
     "cross-env": "^7.0.3",
     "mocha": "^10.4.0",
-    "node-abi": "^3.62.0",
-    "node-gyp": "^10.1.0",
+    "node-abi": "^3.71.0",
+    "node-gyp": "^10.2.0",
     "prebuild": "^13.0.1",
-    "prebuildify": "^5.0.1",
+    "prebuildify": "^6.0.1",
     "ps-list": "=7.2.0",
     "typescript": "^5.4.5"
   }
