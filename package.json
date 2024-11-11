@@ -52,7 +52,7 @@
     "prebuild-install": "^7.1.2"
   },
   "engines": {
-    "node": "^16 || ^17 || ^18 || ^19 || ^20 || ^21 || ^22"
+    "node": "^16 || ^17 || ^18 || ^19 || ^20 || ^21 || ^22 || ^23"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.6",
@@ -62,7 +62,7 @@
     "cross-env": "^7.0.3",
     "mocha": "^10.4.0",
     "node-abi": "^3.71.0",
-    "node-gyp": "^10.2.0",
+    "node-gyp": "^10.1.0",
     "prebuild": "^13.0.1",
     "prebuildify": "^6.0.1",
     "ps-list": "=7.2.0",
