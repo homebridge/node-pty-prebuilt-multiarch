@@ -105,7 +105,7 @@ jobs:
             DOCKERFILE: Dockerfile.alpine
             QEMU_ARCH: x86_64
             CMD: BuildAllCMD
-            COUNT: 19
+            COUNT: 20
             NPMCOUNT: 7
 
           - name: linuxmusl-arm
@@ -114,7 +114,7 @@ jobs:
             DOCKERFILE: Dockerfile.alpine
             QEMU_ARCH: arm
             CMD: BuildAllCMD
-            COUNT: 19
+            COUNT: 20
             NPMCOUNT: 7
 
           - name: linuxmusl-arm64
@@ -123,7 +123,7 @@ jobs:
             DOCKERFILE: Dockerfile.alpine
             QEMU_ARCH: aarch64
             CMD: BuildAllCMD
-            COUNT: 19
+            COUNT: 20
             NPMCOUNT: 7
 
           - name: linux-arm
@@ -132,7 +132,7 @@ jobs:
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: arm
             CMD: BuildAllCMD
-            COUNT: 19
+            COUNT: 20
             NPMCOUNT: 7
 
           # Builds for NodeJS 19+
@@ -197,12 +197,12 @@ jobs:
 
           - name: darwin-x64
             os: macOS-13
-            COUNT: 19
+            COUNT: 20
             NPMCOUNT: 11
 
           - name: darwin-arm64
             os: macOS-14
-            COUNT: 19
+            COUNT: 20
             NPMCOUNT: 11
 
           - name: win32-ia32
@@ -214,7 +214,7 @@ jobs:
           - name: win32-x64
             os: windows-2019
             arch: x64
-            COUNT: 19
+            COUNT: 20
             NPMCOUNT: 0
 
     steps:
