@@ -3,20 +3,7 @@
     'openssl_fips': "",
   },
   'target_defaults': {
-    'conditions': [[
-        "OS==\"linux\"",
-        {
-          "cflags": [
-            "-std=c++20"
-          ],
-          "cflags!": [
-            "-fno-exceptions"
-          ],
-          "cflags_cc!": [
-            "-fno-exceptions"
-          ]
-        }
-      ],
+    'conditions': [
       [
         "OS==\"mac\"",
         {
