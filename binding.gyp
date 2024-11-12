@@ -3,7 +3,7 @@
     'openssl_fips': "",
   },
   'target_defaults': {
-    'conditions': [      [
+    'conditions': [[
         "OS==\"linux\"",
         {
           "cflags": [
@@ -16,7 +16,7 @@
             "-fno-exceptions"
           ]
         }
-      ]
+      ],
       [
         "OS==\"mac\"",
         {
