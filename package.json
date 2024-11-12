@@ -48,7 +48,7 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "nan": "^2.19.0",
+    "nan": "^2.22.0",
     "prebuild-install": "^7.1.2"
   },
   "engines": {
