@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 . /etc/os-release
 
 cd /node-pty
