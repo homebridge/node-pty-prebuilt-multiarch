@@ -157,7 +157,7 @@ jobs:
 
           - name: linux-arm64
             os: ubuntu-latest
-            BASE_IMAGE: arm64v8/debian:bookworm-slim
+            BASE_IMAGE: arm64v8/debian:11.7-slim
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: aarch64
             CMD: BuildNewCMD

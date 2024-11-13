@@ -45,8 +45,8 @@ export CMD="./.prebuild/build.sh .prebuild/prebuild.js ${nodeBuildTargets}"
 echo
 echo "--------------------------- $QEMU_ARCH - $DOCKERFILE -------------------------------"
 echo
-docker build -f .prebuild/$DOCKERFILE --build-arg QEMU_ARCH=${QEMU_ARCH} -t multiarch-build .
-docker run --rm -v $(pwd):/node-pty multiarch-build bash -c "$CMD"
+# docker build -f .prebuild/$DOCKERFILE --build-arg QEMU_ARCH=${QEMU_ARCH} -t multiarch-build .
+# docker run --rm -v $(pwd):/node-pty multiarch-build bash -c "$CMD"
 
 #docker run -v $(pwd):/node-pty multiarch-build ./.prebuild/build.sh .prebuild/prebuild.js ${nodeBuildTargets}
 #docker run --rm -v $(pwd):/node-pty multiarch-build ./.prebuild/build.sh .prebuild/prebuildify.js ${nodeBuildTargets}
@@ -97,8 +97,8 @@ export CMD="./.prebuild/build.sh .prebuild/electron.js ${electronBuildTargets}"
 echo
 echo "--------------------------- $QEMU_ARCH - $DOCKERFILE -------------------------------"
 echo
-docker build -f .prebuild/$DOCKERFILE --build-arg BASE_IMAGE=${BASE_IMAGE} --build-arg QEMU_ARCH=${QEMU_ARCH} -t multiarch-build .
-docker run --rm --privileged -v $(pwd):/node-pty multiarch-build bash -c "$CMD"
+#docker build -f .prebuild/$DOCKERFILE --build-arg BASE_IMAGE=${BASE_IMAGE} --build-arg QEMU_ARCH=${QEMU_ARCH} -t multiarch-build .
+#docker run --rm --privileged -v $(pwd):/node-pty multiarch-build bash -c "$CMD"
 
 #Older
 
@@ -121,8 +121,8 @@ export CMD=$RunCMD
 echo
 echo "--------------------------- $QEMU_ARCH - $DOCKERFILE -------------------------------"
 echo
-#docker build -f .prebuild/$DOCKERFILE --build-arg BASE_IMAGE=${BASE_IMAGE} --build-arg QEMU_ARCH=${QEMU_ARCH} -t multiarch-build .
-#docker run --rm -v $(pwd):/node-pty multiarch-build bash -c "$CMD"
+docker build -f .prebuild/$DOCKERFILE --build-arg BASE_IMAGE=${BASE_IMAGE} --build-arg QEMU_ARCH=${QEMU_ARCH} -t multiarch-build .
+docker run --rm -v $(pwd):/node-pty multiarch-build bash -c "$CMD"
 
 # Not Impacted
 
