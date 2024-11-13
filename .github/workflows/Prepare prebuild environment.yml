@@ -22,7 +22,7 @@ env:
   electronBuildTargets: -t 29.0.0 -t 27.0.0 -t 26.0.0 -t 25.0.0 -t 24.0.0 -t 23.0.0 -t 22.0.0 -t 21.0.0 -t 20.0.0
   winIA32nodeBuildTargets: -t 17.0.1 
   winIA32electronBuildTargets: -t 29.0.0 -t 27.0.0 -t 26.0.0 -t 25.0.0 -t 24.0.0 -t 23.0.0 -t 22.0.0 -t 21.0.0 -t 20.0.0
-  ReleasePrebuildCount: 204
+  ReleasePrebuildCount: 192
   ReleasePrebuildifyCount: 49
 
 jobs:
