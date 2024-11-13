@@ -128,7 +128,7 @@ jobs:
 
           - name: linux-arm
             os: ubuntu-latest
-            BASE_IMAGE: balenalib/raspberry-pi-debian:buster
+            BASE_IMAGE: balenalib/raspberrypi3-debian:bookworm
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: arm
             CMD: BuildAllCMD
@@ -139,7 +139,7 @@ jobs:
 
           - name: linux-x64
             os: ubuntu-latest
-            BASE_IMAGE: library/debian:buster-slim
+            BASE_IMAGE: library/debian:bookworm-slim
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: x86_64
             CMD: BuildNewCMD
@@ -148,7 +148,7 @@ jobs:
 
           - name: linux-ia32
             os: ubuntu-latest
-            BASE_IMAGE: i386/debian:buster-slim
+            BASE_IMAGE: i386/debian:bookworm-slim
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: i386
             CMD: BuildNewCMD
@@ -157,7 +157,7 @@ jobs:
 
           - name: linux-arm64
             os: ubuntu-latest
-            BASE_IMAGE: arm64v8/debian:buster-slim
+            BASE_IMAGE: arm64v8/debian:bookworm-slim
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: aarch64
             CMD: BuildNewCMD
