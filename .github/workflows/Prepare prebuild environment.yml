@@ -16,8 +16,8 @@ on:
 env:
   # Order reversed so newer versions are built first - Add new versions to the front (fail fast)
   # electronBuildTargets version 28 has an issue
-  oldNodeBuildTargets: -t 18.0.0 -t 17.0.1 -t 16.0.0 
-  nodeBuildTargets: -t 22.0.0 -t 21.0.0 -t 20.0.0 -t 19.0.0
+  oldNodeBuildTargets: -t 17.0.1 -t 16.0.0 
+  currentNodeBuildTargets: -t 23.0.0 -t 22.0.0 -t 21.0.0 -t 20.0.0 -t 19.0.0 -t 18.0.0 
   oldElectronBuildTargets: -t 19.0.0 -t 18.0.0 -t 17.0.0 -t 16.0.0
   electronBuildTargets: -t 29.0.0 -t 27.0.0 -t 26.0.0 -t 25.0.0 -t 24.0.0 -t 23.0.0 -t 22.0.0 -t 21.0.0 -t 20.0.0
   winIA32nodeBuildTargets: -t 17.0.1 -t 16.0.0 
@@ -246,11 +246,11 @@ jobs:
           echo "BuildOldCMD=\"./.prebuild/build.sh .prebuild/prebuild.js ${oldNodeBuildTargets} && \
             ./.prebuild/build.sh .prebuild/prebuildify.js ${oldNodeBuildTargets} && \
             ./.prebuild/build.sh .prebuild/electron.js ${oldElectronBuildTargets}\"" >> $GITHUB_ENV
-          echo "BuildNewCMD=\"./.prebuild/build.sh .prebuild/prebuild.js ${nodeBuildTargets} && \
-            ./.prebuild/build.sh .prebuild/prebuildify.js ${nodeBuildTargets}&& \
+          echo "BuildNewCMD=\"./.prebuild/build.sh .prebuild/prebuild.js ${currentNodeBuildTargets} && \
+            ./.prebuild/build.sh .prebuild/prebuildify.js ${currentNodeBuildTargets}&& \
             ./.prebuild/build.sh .prebuild/electron.js ${electronBuildTargets}\"" >> $GITHUB_ENV
-          echo "BuildAllCMD=\"./.prebuild/build.sh .prebuild/prebuild.js ${nodeBuildTargets} ${oldNodeBuildTargets} && \
-            ./.prebuild/build.sh .prebuild/prebuildify.js ${nodeBuildTargets} ${oldNodeBuildTargets} && \
+          echo "BuildAllCMD=\"./.prebuild/build.sh .prebuild/prebuild.js ${currentNodeBuildTargets} ${oldNodeBuildTargets} && \
+            ./.prebuild/build.sh .prebuild/prebuildify.js ${currentNodeBuildTargets} ${oldNodeBuildTargets} && \
             ./.prebuild/build.sh .prebuild/electron.js ${electronBuildTargets} ${oldElectronBuildTargets}\"" >> $GITHUB_ENV
           echo "CMD=${{ matrix.CMD }}" >> $GITHUB_ENV
 
@@ -279,7 +279,7 @@ jobs:
         run: |
           python3 -m pip install packaging setuptools
           npm ci --ignore-scripts
-          env JOBS=max node .prebuild/prebuild.js ${nodeBuildTargets}  ${oldNodeBuildTargets}
+          env JOBS=max node .prebuild/prebuild.js ${currentNodeBuildTargets}  ${oldNodeBuildTargets}
           env JOBS=max node .prebuild/electron.js ${electronBuildTargets} ${oldElectronBuildTargets} 
       #       buildify doesn't work on Mac due to missing spawn_helper
       #      env JOBS=max node .prebuild/buildify.js
@@ -292,7 +292,7 @@ jobs:
           python3 -m pip install packaging setuptools
           brew install python-setuptools
           npm ci --ignore-scripts
-          env JOBS=max node .prebuild/prebuild.js ${nodeBuildTargets}  ${oldNodeBuildTargets}
+          env JOBS=max node .prebuild/prebuild.js ${currentNodeBuildTargets}  ${oldNodeBuildTargets}
           env JOBS=max node .prebuild/electron.js ${electronBuildTargets} ${oldElectronBuildTargets} 
     #       buildify doesn't work on Mac due to missing spawn_helper
     #      env JOBS=max node .prebuild/buildify.js
@@ -312,7 +312,7 @@ jobs:
         shell: bash
         run: |
           npm ci --ignore-scripts
-          env JOBS=max node_modules/.bin/prebuild ${nodeBuildTargets} ${oldNodeBuildTargets} --include-regex "\.(node|exe|dll|pdb)" --arch ${{ matrix.arch }}
+          env JOBS=max node_modules/.bin/prebuild ${currentNodeBuildTargets} ${oldNodeBuildTargets} --include-regex "\.(node|exe|dll|pdb)" --arch ${{ matrix.arch }}
           env JOBS=max node_modules/.bin/prebuild ${electronBuildTargets} ${oldElectronBuildTargets} --include-regex "\.(node|exe|dll|pdb)" -r electron --arch ${{ matrix.arch }}
 
       # Start of Checks

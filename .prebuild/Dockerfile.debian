@@ -1,5 +1,5 @@
 ARG BASE_IMAGE
-FROM ${BASE_IMAGE:-library/debian:buster-slim}
+FROM ${BASE_IMAGE:-library/debian:bookworm-slim}
 
 ARG QEMU_ARCH
 ENV QEMU_ARCH=${QEMU_ARCH:-x86_64}
@@ -13,7 +13,7 @@ RUN [ "$(uname -m)" = "x86_64" ] && apt-get install -y g++-multilib gcc-multilib
 
 ## Linux 32 bit support was dropped with NodeJS 18.4.0
 
-ENV NODE_VERSION 18.18.2
+ENV NODE_VERSION 22.11.0
 
 RUN case "${QEMU_ARCH}" in \
     x86_64) NODE_ARCH='x64';; \

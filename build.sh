@@ -6,7 +6,7 @@
 set -e
 
 export oldNodeBuildTargets='-t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.1 -t 18.0.0'
-export nodeBuildTargets='-t 19.0.0 -t 20.0.0 -t 21.0.0 -t 22.0.0'
+export nodeBuildTargets='-t 23.0.0 -t 19.0.0 -t 20.0.0 -t 21.0.0 -t 22.0.0'
 
 export oldElectronBuildTargets='-t 5.0.0 -t 6.0.0 -t 7.0.0 -t 8.0.0 -t 9.0.0 -t 10.0.0 -t 11.0.0 -t 12.0.0 -t 13.0.0 -t 14.0.0 -t 15.0.0 -t 16.0.0 -t 17.0.0 -t 18.0.0 -t 19.0.0'
 export electronBuildTargets='-t 20.0.0 -t 21.0.0 -t 22.0.0 -t 23.0.0 -t 24.0.0 -t 25.0.0 -t 26.0.0 -t 27.0.0 -t 28.0.0'
@@ -45,12 +45,12 @@ export CMD=$RunCMD
 echo
 echo "--------------------------- $QEMU_ARCH - $DOCKERFILE -------------------------------"
 echo
-#docker build -f .prebuild/$DOCKERFILE --build-arg QEMU_ARCH=${QEMU_ARCH} -t multiarch-build .
-#docker run --rm -v $(pwd):/node-pty multiarch-build bash -c "$CMD"
+docker build -f .prebuild/$DOCKERFILE --build-arg QEMU_ARCH=${QEMU_ARCH} -t multiarch-build .
+docker run --rm -v $(pwd):/node-pty multiarch-build bash -c "$CMD"
 
 #docker run -v $(pwd):/node-pty multiarch-build ./.prebuild/build.sh .prebuild/prebuild.js ${nodeBuildTargets}
 #docker run --rm -v $(pwd):/node-pty multiarch-build ./.prebuild/build.sh .prebuild/prebuildify.js ${nodeBuildTargets}
-
+ exit 0
 # Older
 
 export BASE_IMAGE=balenalib/raspberry-pi-debian:bullseye
