@@ -22,7 +22,8 @@
     "prebuilds/linux-x64",
     "prebuilds/linux-ia32",
     "prebuilds/linux-arm",
-    "prebuilds/linux-arm64"
+    "prebuilds/linux-arm64",
+    "third_party/conpty"
   ],
   "homepage": "https://github.com/homebridge/node-pty-prebuilt-multiarch",
   "bugs": {
