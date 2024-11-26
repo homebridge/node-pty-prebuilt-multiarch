@@ -54,7 +54,7 @@ jobs:
 
       - name: Display structure of downloaded files
         run: ls -R
-
+      - run: npm run
       - run: npm run build
       - run: npm run test
       - run: |
