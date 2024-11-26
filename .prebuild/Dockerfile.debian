@@ -13,7 +13,7 @@ RUN [ "$(uname -m)" = "x86_64" ] && apt-get install -y g++-multilib gcc-multilib
 
 ## Linux 32 bit support was dropped with NodeJS 18.4.0
 
-ENV NODE_VERSION 22.11.0
+ENV NODE_VERSION 20.18.1
 
 RUN case "${QEMU_ARCH}" in \
     x86_64) NODE_ARCH='x64';; \
