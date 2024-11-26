@@ -1,0 +1,45 @@
+name: Stage 2 - Validate
+run-name: Stage 2 - Validate against ${{ github.ref_name }}
+
+on:
+  push:
+    branches: [latest, beta-*.*.*, beta, alpha-*.*.*, alpha]
+  pull_request:
+    branches: [latest, beta-*.*.*, beta]
+    types: [review_requested, ready_for_review]
+  workflow_dispatch:
+
+jobs:
+  # Validate that the UI can be installed and ran across all platforms
+  version:
+    outputs:
+      version: ${{ steps.package-version.outputs.current-version }}
+    name: Version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: get-npm-version
+        id: package-version
+        uses: martinbeentjes/npm-get-version-action@v1.3.1
+
+  validate_service_starts:
+    name: Validate
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [18.x, 20.x, 22.x, 23.x]
+        os: [ubuntu-latest, ubuntu-24.04, ubuntu-22.04, ubuntu-20.04, macos-latest, macos-15, macos-14, macos-13, macos-12, windows-latest, windows-2022, windows-2019]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: npm install
+      - run: npm run build
+      - run: npm run test
+      - run: |
+          echo "::notice::Successfully tested on ${{ matrix.os }} with Node.js ${{ matrix.node-version }}"
+     
