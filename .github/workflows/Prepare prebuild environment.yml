@@ -1,4 +1,4 @@
-name: "Run prebuild's and Create GitHub and NPM release"
+name: "Stage 1 - Run prebuild's and Create GitHub and NPM release"
 run-name: Package against ${{ github.ref_name }}
 
 # Create branch for release
