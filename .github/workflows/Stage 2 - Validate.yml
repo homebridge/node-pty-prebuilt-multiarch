@@ -26,6 +26,7 @@ jobs:
 
   validate_service_starts:
     name: Validate
+    needs: version
     strategy:
       fail-fast: false
       matrix:
@@ -49,5 +50,5 @@ jobs:
       - run: npm run build
       - run: npm run test
       - run: |
-          echo "::notice::Successfully tested on ${{ matrix.os }} with Node.js ${{ matrix.node-version }}"
+          echo "::notice::Successfully tested ${{ github.ref_name }} on ${{ matrix.os }} with Node.js ${{ matrix.node-version }}"
      
