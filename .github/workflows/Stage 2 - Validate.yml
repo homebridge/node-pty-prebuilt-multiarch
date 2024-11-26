@@ -21,6 +21,8 @@ jobs:
       - name: get-npm-version
         id: package-version
         uses: martinbeentjes/npm-get-version-action@v1.3.1
+      - run: |
+          echo "::notice::Running against version ${{ steps.package-version.outputs.current-version }}"
 
   validate_service_starts:
     name: Validate
@@ -37,6 +39,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
+      - if: runner.os == 'Linux'
+        run: cat /etc/os-release
+      - if: runner.os == 'Windows'
+        run: systeminfo
+      - if: runner.os == 'macOS'
+        run: sw_vers
       - run: npm install
       - run: npm run build
       - run: npm run test
