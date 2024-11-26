@@ -58,9 +58,7 @@ jobs:
       - run: |
           cd ./node_modules/@homebridge/node-pty-prebuilt-multiarch
           npm run install
-      - run: |
-          cd ./node_modules/@homebridge/node-pty-prebuilt-multiarch
-          npm run build
+
       - run: |
           cd ./node_modules/@homebridge/node-pty-prebuilt-multiarch
           npm run test
