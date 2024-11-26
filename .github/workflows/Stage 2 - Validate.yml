@@ -46,22 +46,26 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - if: runner.os == 'Linux'
         run: cat /etc/os-release
+        
       - if: runner.os == 'Windows'
         run: systeminfo
+
       - if: runner.os == 'macOS'
         run: sw_vers
+
       - run: npm install @homebridge/node-pty-prebuilt-multiarch@${{ needs.determine_tag.outputs.tag }}
 
       - name: Display structure of downloaded files
         run: ls -R
-      - run: npm run
-      - run: |
-          cd ./node_modules/@homebridge/node-pty-prebuilt-multiarch
-          npm run install
 
       - run: |
           cd ./node_modules/@homebridge/node-pty-prebuilt-multiarch
-          npm run test
+          npm run validate
+
+      - run: |
+          cd ./node_modules/@homebridge/node-pty-prebuilt-multiarch
+          npm run postinstall
+
       - run: |
           echo "::notice::Successfully tested ${{ github.ref_name }} on ${{ matrix.os }} with Node.js ${{ matrix.node-version }}"
      

@@ -42,6 +42,7 @@
     "watch": "tsc -b -w ./src/tsconfig.json",
     "lint": "eslint -c .eslintrc.js --ext .ts src/",
     "install": "node scripts/check-prebuild.js || prebuild-install --verbose || node scripts/install.js",
+    "validate": "node scripts/check-prebuild.js || prebuild-install --verbose",
     "postinstall": "node scripts/post-install.js",
     "test": "cross-env NODE_ENV=test mocha -R spec --exit lib/*.test.js",
     "posttest": "npm run lint",
