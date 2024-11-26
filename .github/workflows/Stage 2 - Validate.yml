@@ -10,23 +10,27 @@ on:
   workflow_dispatch:
 
 jobs:
-  # Validate that the UI can be installed and ran across all platforms
-  version:
-    outputs:
-      version: ${{ steps.package-version.outputs.current-version }}
-    name: Version
+  # Validate that node-pty can be installed and ran across all platforms
+  determine_tag:
+    name: Determine Tag
     runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
     steps:
-      - uses: actions/checkout@v4
-      - name: get-npm-version
-        id: package-version
-        uses: martinbeentjes/npm-get-version-action@v1.3.1
-      - run: |
-          echo "::notice::Running against version ${{ steps.package-version.outputs.current-version }}"
+    - name: Merge Username
+      id: tag
+      run: |
+        if [[ ${{ github.ref_name }} == *"beta"* ]]; then
+          TAG="beta"
+        else
+          TAG="latest"
+        fi
+        echo "Using TAG: $TAG"
+        echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
   validate_service_starts:
     name: Validate
-    needs: version
+    needs: determine_tag
     strategy:
       fail-fast: false
       matrix:
@@ -36,7 +40,6 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
@@ -46,7 +49,11 @@ jobs:
         run: systeminfo
       - if: runner.os == 'macOS'
         run: sw_vers
-      - run: npm install
+      - run: npm install @homebridge/node-pty-prebuilt-multiarch@${{ needs.determine_tag.outputs.tag }}
+
+      - name: Display structure of downloaded files
+        run: ls -R
+
       - run: npm run build
       - run: npm run test
       - run: |
