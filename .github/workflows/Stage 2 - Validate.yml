@@ -17,7 +17,7 @@ jobs:
     outputs:
       tag: ${{ steps.tag.outputs.tag }}
     steps:
-    - name: Merge Username
+    - name: Tag
       id: tag
       run: |
         if [[ ${{ github.ref_name }} == *"beta"* ]]; then
@@ -27,6 +27,7 @@ jobs:
         fi
         echo "Using TAG: $TAG"
         echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+        echo "::notice::Using TAG: $TAG"
 
   validate_service_starts:
     name: Validate
