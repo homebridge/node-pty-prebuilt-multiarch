@@ -323,6 +323,22 @@ jobs:
           registry-url: "https://registry.npmjs.org"
           cache: "npm"
 
+      - name: Fetch Adjust version script
+        if: ${{ inputs.Beta }}
+        run: wget https://raw.githubusercontent.com/homebridge/.github/latest/.github/npm-version-script.js
+        working-directory: .github
+
+      - if: ${{ inputs.Beta }}
+        run: npm install semver
+
+      - name: Adjust version
+        if: ${{ inputs.Beta }}
+        run: node .github/npm-version-script.js ${{ github.ref }} beta
+
+      - name: npm version (without git commit)
+        if: ${{ inputs.Beta }}
+        run: npm version pre --preid=beta --no-git-tag-version
+  
       - uses: actions/download-artifact@v4
         with:
           merge-multiple: true
