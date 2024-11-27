@@ -282,21 +282,21 @@ jobs:
           echo "NPM Prebuild count ${fileCount}"
           if [ "$fileCount" -ne ${{ matrix.NPMCOUNT }} ]; then echo "::warning::Release NPM Prebuild count ${fileCount}, expected ${{ matrix.NPMCOUNT }}"; else echo "::notice::Release NPM Prebuild count ${fileCount}, expected ${{ matrix.NPMCOUNT }}"; fi
 
-      - name: What files were created
-        if: runner.os != 'Windows'
+      - name: What files were created unix
+        if: ${{ (runner.os == 'macOS') || (runner.os	 == 'Linux') }}
         run: ls -R prebuilds 
       
-      - name: What files were created
-        if: runner.os != 'Windows'
+      - name: What files were created Windows
+        if: ${{ runner.os == 'Windows' }}
         run: dir prebuilds 
 
-      - name: Create Archive of prebuilds
-        if: runner.os != 'Windows'
+      - name: Create Archive of prebuilds Unix
+        if: ${{ (runner.os == 'macOS') || (runner.os	 == 'Linux') }}
         run: |
           tar -czf archive.${{ matrix.name }}.tar.gz prebuilds/
 
-      - name: Create Archive of prebuilds
-        if: runner.os == 'Windows'
+      - name: Create Archive of prebuilds Windows
+        if: ${{ runner.os == 'Windows' }}
         run: |
           tar -czf archive.${{ matrix.name }}.tar.gz prebuilds
 
