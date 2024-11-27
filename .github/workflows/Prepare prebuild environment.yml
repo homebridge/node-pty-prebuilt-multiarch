@@ -40,14 +40,14 @@ jobs:
             linux-ia32-older,
             linux-x64,
             linux-x64-older,
-#            linux-arm,
-#            linux-arm64,
-#            linux-arm64-older,   
-#            linuxmusl-arm,
-#            linuxmusl-arm64,
-#            linuxmusl-x64,
-#            win32-ia32,
-#            win32-x64,
+            linux-arm,
+            linux-arm64,
+            linux-arm64-older,   
+            linuxmusl-arm,
+            linuxmusl-arm64,
+            linuxmusl-x64,
+            win32-ia32,
+            win32-x64,
           ]
         include:
           - name: linuxmusl-x64
@@ -288,7 +288,7 @@ jobs:
       
       - name: What files were created Windows
         if: ${{ runner.os == 'Windows' }}
-        run: dir /S prebuilds 
+        run: dir /s prebuilds 
 
       - name: Create Archive of prebuilds Unix
         if: ${{ (runner.os == 'macOS') || (runner.os	 == 'Linux') }}
