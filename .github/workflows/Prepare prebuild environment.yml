@@ -282,13 +282,17 @@ jobs:
           echo "NPM Prebuild count ${fileCount}"
           if [ "$fileCount" -ne ${{ matrix.NPMCOUNT }} ]; then echo "::warning::Release NPM Prebuild count ${fileCount}, expected ${{ matrix.NPMCOUNT }}"; else echo "::notice::Release NPM Prebuild count ${fileCount}, expected ${{ matrix.NPMCOUNT }}"; fi
 
+      - name: Create Archive of prebuilds
+        run: |
+          tar -czf archive.${{ matrix.name }}.tar.gz prebuilds/
+
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.name }}
           retention-days: 7
           if-no-files-found: warn
           path: |
-            prebuilds/*
+            archive.${{ matrix.name }}.tar.gz
 
   publish:
     name: Publish GitHub and NPM Release
@@ -298,10 +302,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-
       - uses: actions/download-artifact@v4
         with:
-          path: prebuilds/
+          merge-multiple: true
+          path: artifacts/
+
+      - name: Extract prebuilds
+        run: |
+          for file in artifacts/archive.*.tar.gz; do
+            tar -xzf "$file"
+          done
 
       - name: Display structure of downloaded files
         run: ls -R
