@@ -191,7 +191,7 @@ jobs:
             ./.prebuild/build.sh .prebuild/prebuildify.js ${oldNodeBuildTargets} && \
             ./.prebuild/build.sh .prebuild/electron.js ${oldElectronBuildTargets}\"" >> $GITHUB_ENV
           echo "BuildNewCMD=\"./.prebuild/build.sh .prebuild/prebuild.js ${currentNodeBuildTargets} && \
-            ./.prebuild/build.sh .prebuild/prebuildify.js ${currentNodeBuildTargets}&& \
+            ./.prebuild/build.sh .prebuild/prebuildify.js ${currentNodeBuildTargets} && \
             ./.prebuild/build.sh .prebuild/electron.js ${electronBuildTargets}\"" >> $GITHUB_ENV
           echo "BuildAllCMD=\"./.prebuild/build.sh .prebuild/prebuild.js ${currentNodeBuildTargets} ${oldNodeBuildTargets} && \
             ./.prebuild/build.sh .prebuild/prebuildify.js ${currentNodeBuildTargets} ${oldNodeBuildTargets} && \
@@ -288,7 +288,7 @@ jobs:
       
       - name: What files were created Windows
         if: ${{ runner.os == 'Windows' }}
-        run: dir prebuilds 
+        run: dir /S prebuilds 
 
       - name: Create Archive of prebuilds Unix
         if: ${{ (runner.os == 'macOS') || (runner.os	 == 'Linux') }}
