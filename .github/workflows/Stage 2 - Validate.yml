@@ -1,4 +1,4 @@
-name: Stage 2 - Validate
+name: Stage 2 - Validate NPM Package contents
 run-name: Stage 2 - Validate against ${{ github.ref_name }}
 
 on:
