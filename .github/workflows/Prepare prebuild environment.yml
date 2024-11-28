@@ -73,7 +73,7 @@ jobs:
           branch: "release-candidate"
           message: "Prepare prebuild environment ${{ github.ref_name }}"
           rebase: true
-          
+
   prebuild:
     name: ${{ matrix.name }} - Prebuild NPM and GitHub Release artifacts
     runs-on: ${{ matrix.os }}
@@ -219,26 +219,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: "release-candidate"
 
       - uses: actions/setup-node@v4
         with:
           node-version: lts/*
-
-      - name: Fetch Adjust version script
-        if: ${{ inputs.Beta }}
-        run: wget https://raw.githubusercontent.com/homebridge/.github/latest/.github/npm-version-script.js
-        working-directory: .github
-
-      - if: ${{ inputs.Beta }}
-        run: npm install semver
-
-      - name: Adjust version
-        if: ${{ inputs.Beta }}
-        run: node .github/npm-version-script.js ${{ github.ref }} beta
-
-      - name: npm version (without git commit)
-        if: ${{ inputs.Beta }}
-        run: npm version pre --preid=beta --no-git-tag-version
 
       - name: Linux - Setup Dependencies
         if: runner.os == 'Linux'
@@ -383,7 +369,10 @@ jobs:
       repository-projects: write
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          ref: "release-candidate"
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -391,22 +380,6 @@ jobs:
           node-version: lts/*
           registry-url: "https://registry.npmjs.org"
           cache: "npm"
-
-      - name: Fetch Adjust version script
-        if: ${{ inputs.Beta }}
-        run: wget https://raw.githubusercontent.com/homebridge/.github/latest/.github/npm-version-script.js
-        working-directory: .github
-
-      - if: ${{ inputs.Beta }}
-        run: npm install semver
-
-      - name: Adjust version
-        if: ${{ inputs.Beta }}
-        run: node .github/npm-version-script.js ${{ github.ref }} beta
-
-      - name: npm version (without git commit)
-        if: ${{ inputs.Beta }}
-        run: npm version pre --preid=beta --no-git-tag-version
   
       - uses: actions/download-artifact@v4
         with:
