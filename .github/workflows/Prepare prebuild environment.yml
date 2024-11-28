@@ -26,6 +26,54 @@ env:
   ReleasePrebuildifyCount: 49
 
 jobs:
+  Prepare_prebuild_environment:
+    name: Prepare prebuild environment ${{ github.ref_name }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete pr-* branches
+        uses: homebridge/action-delete-branch@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branches: "release-candidate"
+
+      - uses: actions/checkout@v4
+      - name: Create Branch
+        uses: peterjgrainger/action-create-branch@v3.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      - name: Fetch Adjust version script
+        if: ${{ inputs.Beta }}
+        run: wget https://raw.githubusercontent.com/homebridge/.github/latest/.github/npm-version-script.js
+        working-directory: .github
+
+      - if: ${{ inputs.Beta }}
+        run: npm install semver
+
+      - name: Adjust version
+        if: ${{ inputs.Beta }}
+        run: node .github/npm-version-script.js ${{ github.ref }} beta
+
+      - name: npm version (without git commit)
+        if: ${{ inputs.Beta }}
+        run: npm version pre --preid=beta --no-git-tag-version
+
+      - name: Allow prebuilds to be stored on github
+        run: sed -i.bak '/prebuilds/d' .gitignore
+
+      - name: Commit & Push changes
+        uses: actions-js/push@master
+        with:
+          author_name: ${{ github.actor }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: "release-candidate"
+          message: "Prepare prebuild environment ${{ github.ref_name }}"
+          rebase: true
+          
   prebuild:
     name: ${{ matrix.name }} - Prebuild NPM and GitHub Release artifacts
     runs-on: ${{ matrix.os }}
@@ -175,7 +223,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: lts/*
-          
+
       - name: Fetch Adjust version script
         if: ${{ inputs.Beta }}
         run: wget https://raw.githubusercontent.com/homebridge/.github/latest/.github/npm-version-script.js
