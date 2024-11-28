@@ -29,6 +29,8 @@ jobs:
   Prepare_prebuild_environment:
     name: Prepare prebuild environment ${{ github.ref_name }}
     runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.package-version.outputs.current-version }}
     steps:
       - name: Delete pr-* branches
         uses: homebridge/action-delete-branch@v4
@@ -73,6 +75,10 @@ jobs:
           branch: "release-candidate"
           message: "Prepare prebuild environment ${{ github.ref_name }}"
           rebase: true
+
+      - name: get-npm-version
+        id: package-version
+        uses: martinbeentjes/npm-get-version-action@v1.3.1
 
   prebuild:
     name: ${{ matrix.name }} - Prebuild NPM and GitHub Release artifacts
