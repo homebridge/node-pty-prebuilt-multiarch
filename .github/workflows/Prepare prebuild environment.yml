@@ -30,7 +30,7 @@ jobs:
     name: Prepare prebuild environment ${{ github.ref_name }}
     runs-on: ubuntu-latest
     outputs:
-      tag: ${{ steps.package-version.outputs.current-version }}
+      releaseTag: ${{ steps.package-version.outputs.current-version }}
     steps:
       - name: Delete pr-* branches
         uses: homebridge/action-delete-branch@v4
@@ -81,6 +81,7 @@ jobs:
         uses: martinbeentjes/npm-get-version-action@v1.3.1
 
   prebuild:
+    needs: Prepare_prebuild_environment
     name: ${{ matrix.name }} - Prebuild NPM and GitHub Release artifacts
     runs-on: ${{ matrix.os }}
     strategy:
@@ -367,7 +368,7 @@ jobs:
 
   publish:
     name: Publish GitHub and NPM Release
-    needs: prebuild
+    needs: [prebuild, Prepare_prebuild_environment]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -424,18 +425,14 @@ jobs:
 
         # if [ "$fileCount" -ne ${ReleasePrebuildifyCount} ]; then echo "::error::Release Prebuildify count ${fileCount}, expected ${ReleasePrebuildifyCount}"; exit 1; else echo "::notice::Release Prebuildify count ${fileCount}, expected ${ReleasePrebuildifyCount}"; fi
 
-      - name: get-npm-version
-        id: package-version
-        uses: martinbeentjes/npm-get-version-action@v1.3.1
-
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v${{ steps.package-version.outputs.current-version}}
-          release_name: Release v${{ steps.package-version.outputs.current-version}}
+          tag_name: v${{ needs.Prepare_prebuild_environment.outputs.releaseTag}}
+          release_name: Release v${{ needs.Prepare_prebuild_environment.outputs.releaseTag}}
           body: |
             Changes in this Release
             - First Change
@@ -444,22 +441,22 @@ jobs:
           prerelease: true
 
       - uses: AButler/upload-release-assets@v2.0
-        name: Upload Prebuild Artifacts to ${{ steps.package-version.outputs.current-version}}
+        name: Upload Prebuild Artifacts to ${{ needs.Prepare_prebuild_environment.outputs.releaseTag}}
         with:
           files: "prebuilds/*/node-pty*tar.gz"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-          release-tag: v${{ steps.package-version.outputs.current-version}}
+          release-tag: v${{ needs.Prepare_prebuild_environment.outputs.releaseTag}}
 
       - name: NPM Pack Release
         run: |
           npm pack
 
       - uses: AButler/upload-release-assets@v2.0
-        name: Upload NPM Release to ${{ steps.package-version.outputs.current-version}}
+        name: Upload NPM Release to ${{ needs.Prepare_prebuild_environment.outputs.releaseTag}}
         with:
           files: "*node-pty-prebuilt-multiarch*.tgz"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-          release-tag: v${{ steps.package-version.outputs.current-version}}
+          release-tag: v${{ needs.Prepare_prebuild_environment.outputs.releaseTag}}
 
       - name: "Check file existence"
         id: check_files
@@ -487,4 +484,5 @@ jobs:
 
       - name: "Output Results"
         run: |
-          echo "::notice:: Release Version: ${{ steps.package-version.outputs.current-version }}"
+          echo "::notice:: GitHub run_id: ${{ github.run_id }}"
+          echo "::notice:: Release Version: ${{ needs.Prepare_prebuild_environment.outputs.releaseTag }}"
