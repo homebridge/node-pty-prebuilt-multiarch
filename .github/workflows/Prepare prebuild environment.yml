@@ -100,7 +100,7 @@ jobs:
 
           - name: linux-ia32
             os: ubuntu-latest
-            BASE_IMAGE: i386/debian:buster-slim
+            BASE_IMAGE: i386/debian:bullseye-slim
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: i386
             CMD: BuildNewCMD
