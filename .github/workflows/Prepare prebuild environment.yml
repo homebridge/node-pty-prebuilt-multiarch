@@ -51,7 +51,7 @@ jobs:
           ]
         #  buster -> bullseye -> bookworm
         include:
-          - name: linuxmusl-x64
+          - name: linuxmusl-x64 # Ok
             os: ubuntu-latest
             BASE_IMAGE: library/node:16-alpine
             DOCKERFILE: Dockerfile.alpine
@@ -60,7 +60,7 @@ jobs:
             COUNT: 19
             NPMCOUNT: 7
 
-          - name: linuxmusl-arm
+          - name: linuxmusl-arm  # Ok
             os: ubuntu-latest
             BASE_IMAGE: arm32v6/node:16-alpine
             DOCKERFILE: Dockerfile.alpine
@@ -69,20 +69,11 @@ jobs:
             COUNT: 19
             NPMCOUNT: 7
 
-          - name: linuxmusl-arm64
+          - name: linuxmusl-arm64 # Ok
             os: ubuntu-latest
             BASE_IMAGE: arm64v8/node:16-alpine
             DOCKERFILE: Dockerfile.alpine
             QEMU_ARCH: aarch64
-            CMD: BuildAllCMD
-            COUNT: 19
-            NPMCOUNT: 7
-
-          - name: linux-arm
-            os: ubuntu-latest
-            BASE_IMAGE: balenalib/raspberrypi3-debian:buster
-            DOCKERFILE: Dockerfile.debian
-            QEMU_ARCH: arm
             CMD: BuildAllCMD
             COUNT: 19
             NPMCOUNT: 7
@@ -107,9 +98,18 @@ jobs:
             COUNT: 12
             NPMCOUNT: 4
 
+          - name: linux-arm
+            os: ubuntu-latest
+            BASE_IMAGE: balenalib/raspberrypi3-debian:bullseye
+            DOCKERFILE: Dockerfile.debian
+            QEMU_ARCH: arm
+            CMD: BuildAllCMD
+            COUNT: 19
+            NPMCOUNT: 7
+
           - name: linux-arm64
             os: ubuntu-latest
-            BASE_IMAGE: arm64v8/debian:buster-slim
+            BASE_IMAGE: arm64v8/debian:bullseye
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: aarch64
             CMD: BuildNewCMD
@@ -118,7 +118,7 @@ jobs:
 
           # Builds for NodeJS 18 or lower
 
-          - name: linux-x64-older
+          - name: linux-x64-older # Ok
             os: ubuntu-latest
             BASE_IMAGE: library/debian:9.6-slim
             DOCKERFILE: Dockerfile.oldDebian
@@ -127,7 +127,7 @@ jobs:
             COUNT: 7
             NPMCOUNT: 3
 
-          - name: linux-ia32-older
+          - name: linux-ia32-older # Ok
             os: ubuntu-latest
             BASE_IMAGE: i386/debian:9.6-slim
             DOCKERFILE: Dockerfile.oldDebian
@@ -136,7 +136,7 @@ jobs:
             COUNT: 7
             NPMCOUNT: 3
 
-          - name: linux-arm64-older
+          - name: linux-arm64-older # Ok
             os: ubuntu-latest
             BASE_IMAGE: arm64v8/debian:9.6-slim
             DOCKERFILE: Dockerfile.oldDebian
@@ -147,23 +147,23 @@ jobs:
 
           # Other OS's
 
-          - name: darwin-x64
+          - name: darwin-x64  # Ok
             os: macOS-13
             COUNT: 19
-            NPMCOUNT: 11
+            NPMCOUNT: 0
 
-          - name: darwin-arm64
+          - name: darwin-arm64 # Ok
             os: macOS-14
             COUNT: 19
-            NPMCOUNT: 11
+            NPMCOUNT: 0
 
-          - name: win32-ia32
+          - name: win32-ia32 # Ok
             os: windows-2019
             arch: ia32
             COUNT: 14
             NPMCOUNT: 0
 
-          - name: win32-x64
+          - name: win32-x64 # Ok
             os: windows-2019
             arch: x64
             COUNT: 19
@@ -304,6 +304,10 @@ jobs:
           if-no-files-found: warn
           path: |
             archive.${{ matrix.name }}.tar.gz
+      - name: "Output Results"
+        run: |
+          echo "::notice:: GitHub run_id: ${{ github.run_id }}"
+
 
   publish:
     name: Publish GitHub and NPM Release
