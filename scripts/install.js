@@ -10,7 +10,8 @@ if (process.env.NODE_PTY_DEBUG) {
 }
 const gypProcess = spawn(os.platform() === 'win32' ? 'node-gyp.cmd' : 'node-gyp', gypArgs, {
   cwd: path.join(__dirname, '..'),
-  stdio: 'inherit'
+  stdio: 'inherit',
+  shell: os.platform() === 'win32'
 });
 
 gypProcess.on('exit', function (code) {
