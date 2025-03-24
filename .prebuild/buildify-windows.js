@@ -22,20 +22,22 @@ const cwd = path.resolve(__dirname, "../");
 
 // define build targets
 const nodeBuildTargets = [
-  "-t",
   "17.0.1",
-  "-t",
   "18.0.0",
-  "-t",
   "19.0.0",
-  "-t",
   "20.0.0",
-];
+  "21.0.0",
+  "22.0.0",
+].reduce((acc, ver) => {
+  acc.push("-t");
+  acc.push(ver);
+  return acc;
+}, []);
 
 const nodeBuildCmd = [
   prebuildPath,
   "--include-regex",
-  '.(node|exe|dll|pdb)',
+  ".(node|exe|dll|pdb)",
   ...nodeBuildTargets,
 ];
 
@@ -70,7 +72,7 @@ const all = files.map((file) => {
     cwd,
     "prebuilds",
     `${os.platform}-${os.arch}`,
-    `abi${abi}`
+    `abi${abi}`,
   );
   return decompress(fullname, dest, {
     plugins: [decompressTargz()],

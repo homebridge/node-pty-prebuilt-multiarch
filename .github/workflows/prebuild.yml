@@ -23,18 +23,19 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        name: [
-          alpine-x86_64,
-          alpine-arm32v6,
-          alpine-arm64v8,
-          debian-x86_64,
-          debian-i386,
-          debian-arm32v6,
-          debian-arm64v8,
-          darwin-x86_64,
-          darwin-arm64,
-          windows-x86_64,
-        ]
+        name:
+          [
+            alpine-x86_64,
+            alpine-arm32v6,
+            alpine-arm64v8,
+            debian-x86_64,
+            debian-i386,
+            debian-arm32v6,
+            debian-arm64v8,
+            darwin-x86_64,
+            darwin-arm64,
+            windows-x86_64,
+          ]
         include:
           - name: alpine-x86_64
             os: ubuntu-latest
@@ -80,7 +81,7 @@ jobs:
 
           - name: darwin-x86_64
             os: macOS-latest
-          
+
           - name: darwin-arm64
             # xlarge is arm64
             # https://docs.github.com/en/actions/using-github-hosted-runners/about-larger-runners/about-larger-runners#about-macos-larger-runners
@@ -89,55 +90,55 @@ jobs:
           - name: windows-x86_64
             os: windows-2022
 
-    steps: 
-    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-      with:
-        ref: ${{ inputs.ref }}
-        repository: ${{ inputs.repository }}
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          ref: ${{ inputs.ref }}
+          repository: ${{ inputs.repository }}
 
-    - uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
-      with:
-        node-version: 20.x
+      - uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
+        with:
+          node-version: 22.x
 
-    - name: Linux - Setup Dependencies
-      if: runner.os == 'Linux'
-      run: |
-        sudo apt-get update
-        sudo apt-get --yes --no-install-recommends install binfmt-support qemu-user-static
-        docker run --rm --privileged multiarch/qemu-user-static:register --reset
+      - name: Linux - Setup Dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get --yes --no-install-recommends install binfmt-support qemu-user-static
+          docker run --rm --privileged multiarch/qemu-user-static:register --reset
 
-    - name: Linux - Build Docker Image
-      if: runner.os == 'Linux'
-      run: |
-        docker build -f .prebuild/${{ matrix.DOCKERFILE }} --build-arg BASE_IMAGE=${{ matrix.BASE_IMAGE }} --build-arg QEMU_ARCH=${{ matrix.QEMU_ARCH }} -t multiarch-build .
+      - name: Linux - Build Docker Image
+        if: runner.os == 'Linux'
+        run: |
+          docker build -f .prebuild/${{ matrix.DOCKERFILE }} --build-arg BASE_IMAGE=${{ matrix.BASE_IMAGE }} --build-arg QEMU_ARCH=${{ matrix.QEMU_ARCH }} -t multiarch-build .
 
-    - name: Linux - Prebuild Binaries
-      if: runner.os == 'Linux'
-      run: |
-        docker run --rm -v $(pwd):/node-pty multiarch-build
+      - name: Linux - Prebuild Binaries
+        if: runner.os == 'Linux'
+        run: |
+          docker run --rm -v $(pwd):/node-pty multiarch-build
 
-    - name: macOS - Setup Python
-      if: runner.os == 'macOS'
-      uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
-      with:
-        python-version: '3.11'
-        architecture: x64
+      - name: macOS - Setup Python
+        if: runner.os == 'macOS'
+        uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
+        with:
+          python-version: "3.11"
+          architecture: x64
 
-    - name: macOS - Prebuild Binaries
-      if: runner.os == 'macOS'
-      run: |
-        corepack enable # we use yarn
-        yarn install --ignore-scripts
-        node .prebuild/buildify.js
+      - name: macOS - Prebuild Binaries
+        if: runner.os == 'macOS'
+        run: |
+          corepack enable # we use yarn
+          yarn install --ignore-scripts
+          node .prebuild/buildify.js
 
-    - name: Windows - Prebuild Binaries
-      if: runner.os == 'Windows'
-      shell: bash
-      run: |
-        yarn install --ignore-scripts
-        node .prebuild/buildify-windows.js
+      - name: Windows - Prebuild Binaries
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          yarn install --ignore-scripts
+          node .prebuild/buildify-windows.js
 
-    - uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
-      with:
-        name: ${{ matrix.name }}
-        path: prebuilds
+      - uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
+        with:
+          name: ${{ matrix.name }}
+          path: prebuilds
