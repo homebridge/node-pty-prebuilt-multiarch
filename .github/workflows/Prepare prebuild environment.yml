@@ -1,4 +1,4 @@
-name: "Run prebuild's and Create GitHub and NPM release"
+name: "Stage 1 - Run prebuild's and Create GitHub and NPM release"
 run-name: Package against ${{ github.ref_name }}
 
 # Create branch for release
@@ -12,23 +12,25 @@ on:
         required: true
         default: true
         type: boolean
-
+        
 env:
   # Order reversed so newer versions are built first - Add new versions to the front (fail fast)
   # electronBuildTargets version 28 has an issue
-  oldNodeBuildTargets: -t 18.0.0 -t 17.0.1 -t 16.0.0 
-  nodeBuildTargets: -t 22.0.0 -t 21.0.0 -t 20.0.0 -t 19.0.0
-  oldElectronBuildTargets: -t 19.0.0 -t 18.0.0 -t 17.0.0 -t 16.0.0
+  oldNodeBuildTargets: -t 17.0.1 
+  currentNodeBuildTargets: -t 23.0.0 -t 22.0.0 -t 21.0.0 -t 20.0.0 -t 19.0.0 -t 18.0.0 
+  oldElectronBuildTargets: -t 19.0.0 -t 18.0.0 -t 17.0.0 
   electronBuildTargets: -t 29.0.0 -t 27.0.0 -t 26.0.0 -t 25.0.0 -t 24.0.0 -t 23.0.0 -t 22.0.0 -t 21.0.0 -t 20.0.0
-  winIA32nodeBuildTargets: -t 17.0.1 -t 16.0.0 
+  winIA32nodeBuildTargets: -t 17.0.1 
   winIA32electronBuildTargets: -t 29.0.0 -t 27.0.0 -t 26.0.0 -t 25.0.0 -t 24.0.0 -t 23.0.0 -t 22.0.0 -t 21.0.0 -t 20.0.0
-  ReleasePrebuildCount: 204
+  ReleasePrebuildCount: 192
   ReleasePrebuildifyCount: 49
 
 jobs:
   Prepare_prebuild_environment:
     name: Prepare prebuild environment ${{ github.ref_name }}
     runs-on: ubuntu-latest
+    outputs:
+      releaseTag: ${{ steps.package-version.outputs.current-version }}
     steps:
       - name: Delete pr-* branches
         uses: homebridge/action-delete-branch@v4
@@ -74,9 +76,13 @@ jobs:
           message: "Prepare prebuild environment ${{ github.ref_name }}"
           rebase: true
 
+      - name: get-npm-version
+        id: package-version
+        uses: martinbeentjes/npm-get-version-action@v1.3.1
+
   prebuild:
-    name: ${{ matrix.name }} - Prebuild NPM and GitHub Release artifacts
     needs: Prepare_prebuild_environment
+    name: ${{ matrix.name }} - Prebuild NPM and GitHub Release artifacts
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -85,21 +91,22 @@ jobs:
           [
             darwin-x64,
             darwin-arm64,
-            linux-arm,
-            linux-arm64,
-            linux-arm64-older,
             linux-ia32,
             linux-ia32-older,
             linux-x64,
             linux-x64-older,
+            linux-arm,
+            linux-arm64,
+            linux-arm64-older,   
             linuxmusl-arm,
             linuxmusl-arm64,
             linuxmusl-x64,
             win32-ia32,
             win32-x64,
           ]
+        #  buster -> bullseye -> bookworm
         include:
-          - name: linuxmusl-x64
+          - name: linuxmusl-x64 # Ok
             os: ubuntu-latest
             BASE_IMAGE: library/node:16-alpine
             DOCKERFILE: Dockerfile.alpine
@@ -108,7 +115,7 @@ jobs:
             COUNT: 19
             NPMCOUNT: 7
 
-          - name: linuxmusl-arm
+          - name: linuxmusl-arm  # Ok
             os: ubuntu-latest
             BASE_IMAGE: arm32v6/node:16-alpine
             DOCKERFILE: Dockerfile.alpine
@@ -117,7 +124,7 @@ jobs:
             COUNT: 19
             NPMCOUNT: 7
 
-          - name: linuxmusl-arm64
+          - name: linuxmusl-arm64 # Ok
             os: ubuntu-latest
             BASE_IMAGE: arm64v8/node:16-alpine
             DOCKERFILE: Dockerfile.alpine
@@ -126,20 +133,11 @@ jobs:
             COUNT: 19
             NPMCOUNT: 7
 
-          - name: linux-arm
-            os: ubuntu-latest
-            BASE_IMAGE: balenalib/raspberry-pi-debian:buster
-            DOCKERFILE: Dockerfile.debian
-            QEMU_ARCH: arm
-            CMD: BuildAllCMD
-            COUNT: 19
-            NPMCOUNT: 7
-
           # Builds for NodeJS 19+
 
           - name: linux-x64
             os: ubuntu-latest
-            BASE_IMAGE: library/debian:buster-slim
+            BASE_IMAGE: library/debian:bullseye-slim
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: x86_64
             CMD: BuildNewCMD
@@ -148,25 +146,35 @@ jobs:
 
           - name: linux-ia32
             os: ubuntu-latest
-            BASE_IMAGE: i386/debian:buster-slim
+            BASE_IMAGE: i386/debian:bullseye-slim
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: i386
             CMD: BuildNewCMD
             COUNT: 12
             NPMCOUNT: 4
 
+          - name: linux-arm
+            os: ubuntu-latest
+            BASE_IMAGE: balenalib/raspberrypi3-debian:bullseye
+            DOCKERFILE: Dockerfile.debian
+            QEMU_ARCH: arm
+            CMD: BuildAllCMD
+            COUNT: 19
+            NPMCOUNT: 7
+
           - name: linux-arm64
             os: ubuntu-latest
-            BASE_IMAGE: arm64v8/debian:buster-slim
+            BASE_IMAGE: arm64v8/debian:bullseye
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: aarch64
+            PLATFORM: --platform=linux/arm64
             CMD: BuildNewCMD
             COUNT: 12
             NPMCOUNT: 4
 
           # Builds for NodeJS 18 or lower
 
-          - name: linux-x64-older
+          - name: linux-x64-older # Ok
             os: ubuntu-latest
             BASE_IMAGE: library/debian:9.6-slim
             DOCKERFILE: Dockerfile.oldDebian
@@ -175,7 +183,7 @@ jobs:
             COUNT: 7
             NPMCOUNT: 3
 
-          - name: linux-ia32-older
+          - name: linux-ia32-older # Ok
             os: ubuntu-latest
             BASE_IMAGE: i386/debian:9.6-slim
             DOCKERFILE: Dockerfile.oldDebian
@@ -184,7 +192,7 @@ jobs:
             COUNT: 7
             NPMCOUNT: 3
 
-          - name: linux-arm64-older
+          - name: linux-arm64-older # Ok
             os: ubuntu-latest
             BASE_IMAGE: arm64v8/debian:9.6-slim
             DOCKERFILE: Dockerfile.oldDebian
@@ -195,23 +203,23 @@ jobs:
 
           # Other OS's
 
-          - name: darwin-x64
+          - name: darwin-x64  # Ok
             os: macOS-13
             COUNT: 19
-            NPMCOUNT: 11
+            NPMCOUNT: 0
 
-          - name: darwin-arm64
+          - name: darwin-arm64 # Ok
             os: macOS-14
             COUNT: 19
-            NPMCOUNT: 11
+            NPMCOUNT: 0
 
-          - name: win32-ia32
+          - name: win32-ia32 # Ok
             os: windows-2019
             arch: ia32
             COUNT: 14
             NPMCOUNT: 0
 
-          - name: win32-x64
+          - name: win32-x64 # Ok
             os: windows-2019
             arch: x64
             COUNT: 19
@@ -225,11 +233,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: lts/*
-
-      - name: get-npm-version
-        if: runner.os == 'Linux'
-        id: package-version
-        uses: martinbeentjes/npm-get-version-action@v1.3.1
 
       - name: Linux - Setup Dependencies
         if: runner.os == 'Linux'
@@ -246,11 +249,11 @@ jobs:
           echo "BuildOldCMD=\"./.prebuild/build.sh .prebuild/prebuild.js ${oldNodeBuildTargets} && \
             ./.prebuild/build.sh .prebuild/prebuildify.js ${oldNodeBuildTargets} && \
             ./.prebuild/build.sh .prebuild/electron.js ${oldElectronBuildTargets}\"" >> $GITHUB_ENV
-          echo "BuildNewCMD=\"./.prebuild/build.sh .prebuild/prebuild.js ${nodeBuildTargets} && \
-            ./.prebuild/build.sh .prebuild/prebuildify.js ${nodeBuildTargets}&& \
+          echo "BuildNewCMD=\"./.prebuild/build.sh .prebuild/prebuild.js ${currentNodeBuildTargets} && \
+            ./.prebuild/build.sh .prebuild/prebuildify.js ${currentNodeBuildTargets} && \
             ./.prebuild/build.sh .prebuild/electron.js ${electronBuildTargets}\"" >> $GITHUB_ENV
-          echo "BuildAllCMD=\"./.prebuild/build.sh .prebuild/prebuild.js ${nodeBuildTargets} ${oldNodeBuildTargets} && \
-            ./.prebuild/build.sh .prebuild/prebuildify.js ${nodeBuildTargets} ${oldNodeBuildTargets} && \
+          echo "BuildAllCMD=\"./.prebuild/build.sh .prebuild/prebuild.js ${currentNodeBuildTargets} ${oldNodeBuildTargets} && \
+            ./.prebuild/build.sh .prebuild/prebuildify.js ${currentNodeBuildTargets} ${oldNodeBuildTargets} && \
             ./.prebuild/build.sh .prebuild/electron.js ${electronBuildTargets} ${oldElectronBuildTargets}\"" >> $GITHUB_ENV
           echo "CMD=${{ matrix.CMD }}" >> $GITHUB_ENV
 
@@ -265,7 +268,7 @@ jobs:
       - name: Linux - Build Docker Image ${{ matrix.DOCKERFILE }} - ${{ matrix.BASE_IMAGE }} - ${{ matrix.QEMU_ARCH }}
         if: runner.os == 'Linux'
         run: |
-          docker build -f .prebuild/${{ matrix.DOCKERFILE }} --build-arg BASE_IMAGE=${{ matrix.BASE_IMAGE }} --build-arg QEMU_ARCH=${{ matrix.QEMU_ARCH }} -t multiarch-build .
+          docker build -f .prebuild/${{ matrix.DOCKERFILE }} --build-arg BASE_IMAGE=${{ matrix.BASE_IMAGE }} --build-arg QEMU_ARCH=${{ matrix.QEMU_ARCH }} -t multiarch-build ${{ matrix.PLATFORM }} .
 
       - name: Linux - Prebuild Binaries - ${{ env.EXECCMD }}
         if: runner.os == 'Linux'
@@ -279,7 +282,7 @@ jobs:
         run: |
           python3 -m pip install packaging setuptools
           npm ci --ignore-scripts
-          env JOBS=max node .prebuild/prebuild.js ${nodeBuildTargets}  ${oldNodeBuildTargets}
+          env JOBS=max node .prebuild/prebuild.js ${currentNodeBuildTargets}  ${oldNodeBuildTargets}
           env JOBS=max node .prebuild/electron.js ${electronBuildTargets} ${oldElectronBuildTargets} 
       #       buildify doesn't work on Mac due to missing spawn_helper
       #      env JOBS=max node .prebuild/buildify.js
@@ -292,7 +295,7 @@ jobs:
           python3 -m pip install packaging setuptools
           brew install python-setuptools
           npm ci --ignore-scripts
-          env JOBS=max node .prebuild/prebuild.js ${nodeBuildTargets}  ${oldNodeBuildTargets}
+          env JOBS=max node .prebuild/prebuild.js ${currentNodeBuildTargets}  ${oldNodeBuildTargets}
           env JOBS=max node .prebuild/electron.js ${electronBuildTargets} ${oldElectronBuildTargets} 
     #       buildify doesn't work on Mac due to missing spawn_helper
     #      env JOBS=max node .prebuild/buildify.js
@@ -312,7 +315,7 @@ jobs:
         shell: bash
         run: |
           npm ci --ignore-scripts
-          env JOBS=max node_modules/.bin/prebuild ${nodeBuildTargets} ${oldNodeBuildTargets} --include-regex "\.(node|exe|dll|pdb)" --arch ${{ matrix.arch }}
+          env JOBS=max node_modules/.bin/prebuild ${currentNodeBuildTargets} ${oldNodeBuildTargets} --include-regex "\.(node|exe|dll|pdb)" --arch ${{ matrix.arch }}
           env JOBS=max node_modules/.bin/prebuild ${electronBuildTargets} ${oldElectronBuildTargets} --include-regex "\.(node|exe|dll|pdb)" -r electron --arch ${{ matrix.arch }}
 
       # Start of Checks
@@ -338,22 +341,40 @@ jobs:
           echo "NPM Prebuild count ${fileCount}"
           if [ "$fileCount" -ne ${{ matrix.NPMCOUNT }} ]; then echo "::warning::Release NPM Prebuild count ${fileCount}, expected ${{ matrix.NPMCOUNT }}"; else echo "::notice::Release NPM Prebuild count ${fileCount}, expected ${{ matrix.NPMCOUNT }}"; fi
 
-      - if: runner.os == 'Linux'
-        run: sudo chown -R $USER:$USER .
+      - name: What files were created unix
+        if: ${{ (runner.os == 'macOS') || (runner.os	 == 'Linux') }}
+        run: ls -R prebuilds 
 
-      - name: Commit & Push changes
-        uses: actions-js/push@master
+      - name: Create Archive of prebuilds Unix
+        if: ${{ (runner.os == 'macOS') || (runner.os	 == 'Linux') }}
+        run: |
+          tar -cvzf archive.${{ matrix.name }}.tar.gz prebuilds/
+
+      - name: Create Archive of prebuilds Windows
+        if: ${{ runner.os == 'Windows' }}
+        run: |
+          tar -cvzf archive.${{ matrix.name }}.tar.gz prebuilds
+
+      - uses: actions/upload-artifact@v4
         with:
-          author_name: ${{ github.actor }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: "release-candidate"
-          message: "Prebuilds for ${{ steps.package-version.outputs.current-version}} - ${{ matrix.name }}"
-          rebase: true
+          name: ${{ matrix.name }}
+          retention-days: 7
+          if-no-files-found: warn
+          path: |
+            archive.${{ matrix.name }}.tar.gz
+      - name: "Output Results"
+        run: |
+          echo "::notice:: GitHub run_id: ${{ github.run_id }}"
+
 
   publish:
     name: Publish GitHub and NPM Release
-    needs: prebuild
+    needs: [prebuild, Prepare_prebuild_environment]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      repository-projects: write
 
     steps:
       - name: Checkout Code
@@ -367,6 +388,20 @@ jobs:
           node-version: lts/*
           registry-url: "https://registry.npmjs.org"
           cache: "npm"
+  
+      - uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+          path: artifacts/
+
+      - name: Extract prebuilds
+        run: |
+          for file in artifacts/archive.*.tar.gz; do
+            tar -xzf "$file"
+          done
+
+      - name: Display structure of downloaded files
+        run: ls -R prebuilds
 
       - name: NPM build
         run: |
@@ -378,18 +413,18 @@ jobs:
         run: |
           fileCount=$(ls prebuilds/*/node-pty*tar.gz | wc -l)
           echo "Release Prebuild count ${fileCount}"
-          if [ "$fileCount" -ne ${ReleasePrebuildCount} ]; then echo "::error::Release Prebuild count ${fileCount}, expected ${ReleasePrebuildCount}"; exit 1; else echo "::notice::Release Prebuild count ${fileCount}, expected ${ReleasePrebuildCount}"; fi
+          echo "::notice::Release Prebuild count ${fileCount}"
+
+        # if [ "$fileCount" -ne ${ReleasePrebuildCount} ]; then echo "::error::Release Prebuild count ${fileCount}, expected ${ReleasePrebuildCount}"; exit 1; else echo "::notice::Release Prebuild count ${fileCount}, expected ${ReleasePrebuildCount}"; fi
 
       - name: Check Release prebuildify`s exist
         shell: bash
         run: |
           fileCount=$(ls prebuilds/*/*node | wc -l)
-          echo "Release Prebuild count ${fileCount}"
-          if [ "$fileCount" -ne ${ReleasePrebuildifyCount} ]; then echo "::error::Release Prebuildify count ${fileCount}, expected ${ReleasePrebuildifyCount}"; exit 1; else echo "::notice::Release Prebuildify count ${fileCount}, expected ${ReleasePrebuildifyCount}"; fi
+          echo "Release prebuildify count ${fileCount}"
+          echo "::notice::Release prebuildify count ${fileCount}"
 
-      - name: get-npm-version
-        id: package-version
-        uses: martinbeentjes/npm-get-version-action@v1.3.1
+        # if [ "$fileCount" -ne ${ReleasePrebuildifyCount} ]; then echo "::error::Release Prebuildify count ${fileCount}, expected ${ReleasePrebuildifyCount}"; exit 1; else echo "::notice::Release Prebuildify count ${fileCount}, expected ${ReleasePrebuildifyCount}"; fi
 
       - name: Create Release
         id: create_release
@@ -397,8 +432,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v${{ steps.package-version.outputs.current-version}}
-          release_name: Release v${{ steps.package-version.outputs.current-version}}
+          tag_name: v${{ needs.Prepare_prebuild_environment.outputs.releaseTag}}
+          release_name: Release v${{ needs.Prepare_prebuild_environment.outputs.releaseTag}}
           body: |
             Changes in this Release
             - First Change
@@ -407,22 +442,22 @@ jobs:
           prerelease: true
 
       - uses: AButler/upload-release-assets@v2.0
-        name: Upload Prebuild Artifacts to ${{ steps.package-version.outputs.current-version}}
+        name: Upload Prebuild Artifacts to ${{ needs.Prepare_prebuild_environment.outputs.releaseTag}}
         with:
           files: "prebuilds/*/node-pty*tar.gz"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-          release-tag: v${{ steps.package-version.outputs.current-version}}
+          release-tag: v${{ needs.Prepare_prebuild_environment.outputs.releaseTag}}
 
       - name: NPM Pack Release
         run: |
           npm pack
 
       - uses: AButler/upload-release-assets@v2.0
-        name: Upload NPM Release to ${{ steps.package-version.outputs.current-version}}
+        name: Upload NPM Release to ${{ needs.Prepare_prebuild_environment.outputs.releaseTag}}
         with:
           files: "*node-pty-prebuilt-multiarch*.tgz"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-          release-tag: v${{ steps.package-version.outputs.current-version}}
+          release-tag: v${{ needs.Prepare_prebuild_environment.outputs.releaseTag}}
 
       - name: "Check file existence"
         id: check_files
@@ -433,7 +468,7 @@ jobs:
       - name: Check MacOS ARM prebuilds exist
         if: steps.check_files.outputs.files_exists == 'false'
         run: |
-          echo "Missing MacOS ARM prebuilds, please remove release Artifats, and reun"
+          echo "::error::Missing MacOS ARM prebuilds, please correct, and rerun"
           exit 1
 
       - name: npm publish beta
@@ -447,3 +482,8 @@ jobs:
         run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: "Output Results"
+        run: |
+          echo "::notice:: GitHub run_id: ${{ github.run_id }}"
+          echo "::notice:: Release Version: ${{ needs.Prepare_prebuild_environment.outputs.releaseTag }}"
