@@ -34,8 +34,8 @@ If a corresponding prebuilt package is not found, `node-gyp` is invoked to build
 | OS            | Architectures             |
 |---------------|---------------------------|
 | macOS         | x64, arm64                |
-| Linux (glibc) | ia32, x64, armv6, aarch64 |
-| Linux (musl)  | x64, armv6, aarch64       |
+| Linux (glibc) | ia32, x64, aarch64 |
+| Linux (musl)  | x64, aarch64       |
 | Windows       | ia32, x64                 |
 
 We only provide prebuilt binaries for Node.js 17 and Electron 17.0.0 or higher.  Pls note that prebuilds for Electron 28 are not supplied due to build issues.
