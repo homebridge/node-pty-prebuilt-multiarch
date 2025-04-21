@@ -42,9 +42,9 @@ We only provide prebuilt binaries for Node.js 17 and Electron 17.0.0 or higher. 
 
 ## Build / Package
 
-Please note releasing this package uses GitHub actions.
+Please note releasing this package uses the GitHub action `Stage 1 - Run prebuild's and Create GitHub and NPM release` and `Stage 2 - Validate NPM Package contents`.
 
-This flows takes the branch selected from the workflow start drop down, and creates a GitHub and NPM Release containing the prebuild artifacts.
+The github action takes the branch selected from the workflow start drop down, and creates a GitHub and NPM Release containing the prebuild artifacts.
 The version of the Release comes from the package.json, and in the case of a BETA release automatically appends the beta release version.
 During processing, it leverages a branch called `release-candidate` as a holding area for prebuilds.
 
@@ -64,4 +64,4 @@ A typical run has 3-4 steps fail.
 * Copyright (c) 2018, Microsoft Corporation (MIT License).
 * Copyright (c) 2018, David Wilson (MIT License).
 * Copyright (c) 2018, oznu (MIT License).
-* Copyright (c) 2023, Homebridge (MIT License).
+* Copyright (c) 2025, Homebridge (MIT License).
