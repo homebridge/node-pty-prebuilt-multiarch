@@ -4,7 +4,7 @@
   "author": {
     "name": "Microsoft Corporation"
   },
-  "version": "0.11.14",
+  "version": "0.12.0",
   "license": "MIT",
   "main": "./lib/index.js",
   "types": "./typings/node-pty.d.ts",
@@ -22,7 +22,8 @@
     "prebuilds/linux-x64",
     "prebuilds/linux-ia32",
     "prebuilds/linux-arm",
-    "prebuilds/linux-arm64"
+    "prebuilds/linux-arm64",
+    "third_party/conpty"
   ],
   "homepage": "https://github.com/homebridge/node-pty-prebuilt-multiarch",
   "bugs": {
@@ -41,6 +42,7 @@
     "watch": "tsc -b -w ./src/tsconfig.json",
     "lint": "eslint -c .eslintrc.js --ext .ts src/",
     "install": "node scripts/check-prebuild.js || prebuild-install --verbose || node scripts/install.js",
+    "validate": "node scripts/check-prebuild.js || prebuild-install --verbose",
     "postinstall": "node scripts/post-install.js",
     "test": "cross-env NODE_ENV=test mocha -R spec --exit lib/*.test.js",
     "posttest": "npm run lint",
@@ -48,21 +50,22 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "nan": "^2.19.0",
+    "node-addon-api": "^7.1.0",
     "prebuild-install": "^7.1.2"
   },
   "devDependencies": {
-    "@types/mocha": "^10.0.6",
-    "@types/node": "^20.12.12",
-    "@typescript-eslint/eslint-plugin": "^7.10.0",
-    "@typescript-eslint/parser": "^7.10.0",
-    "cross-env": "^7.0.3",
-    "mocha": "^10.4.0",
-    "node-abi": "^3.62.0",
-    "node-gyp": "^10.1.0",
+    "@types/mocha": "^7.0.2",
+    "@types/node": "12",
+    "@typescript-eslint/eslint-plugin": "^2.27.0",
+    "@typescript-eslint/parser": "^2.27.0",
+    "cross-env": "^5.1.4",
+    "eslint": "^6.8.0",
+    "node-abi": "^3.71.0",
+    "mocha": "10",
+    "node-gyp": "=10.1.0",
     "prebuild": "^13.0.1",
     "prebuildify": "^5.0.1",
-    "ps-list": "=7.2.0",
-    "typescript": "^5.4.5"
+    "ps-list": "^6.0.0",
+    "typescript": "^3.8.3"
   }
 }

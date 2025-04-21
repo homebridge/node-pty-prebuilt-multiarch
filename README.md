@@ -21,9 +21,6 @@ Inspired by [daviwil/node-pty-prebuilt](https://github.com/daviwil/node-pty-preb
 Thanks to the excellent [`prebuild`](https://github.com/prebuild/prebuild), [`prebuild-install`](https://github.com/prebuild/prebuild) modules, and [`prebuildify`](https://github.com/prebuild/prebuildify) using this module is extremely easy.
 You merely have to change your `node-pty` dependency to `@homebridge/node-pty-prebuilt-multiarch` and then change any `require` statements in your code from `require('node-pty')` to `require('@homebridge/node-pty-prebuilt-multiarch')`.
 
-> **NOTE**: We started shipping prebuilds as of node-pty version 0.8.1, no prior versions are provided!
-> If you were using an earlier version of `node-pty` you will need to update your code to account for any API changes that may have occurred.
-
 ## How It Works
 
 We maintain a parallel fork of the `node-pty` codebase that will be updated as new releases are shipped.
@@ -37,11 +34,11 @@ If a corresponding prebuilt package is not found, `node-gyp` is invoked to build
 | OS            | Architectures             |
 |---------------|---------------------------|
 | macOS         | x64, arm64                |
-| Linux (glibc) | ia32, x64, armv6, aarch64 |
-| Linux (musl)  | x64, armv6, aarch64       |
+| Linux (glibc) | ia32, x64, aarch64 |
+| Linux (musl)  | x64, aarch64       |
 | Windows       | ia32, x64                 |
 
-We only provide prebuilt binaries for Node.js 16 and Electron 16.0.0 or higher.  Pls note that prebuilds for Electron 28 are not supplied due to build issues.
+We only provide prebuilt binaries for Node.js 17 and Electron 17.0.0 or higher.  Pls note that prebuilds for Electron 28 are not supplied due to build issues.
 
 ## Build / Package
 
