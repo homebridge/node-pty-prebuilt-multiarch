@@ -192,14 +192,14 @@ jobs:
             COUNT: 7
             NPMCOUNT: 3
 
-          - name: linux-arm64-older # Ok
-            os: ubuntu-latest
-            BASE_IMAGE: arm64v8/debian:9.6-slim
-            DOCKERFILE: Dockerfile.oldDebian
-            QEMU_ARCH: aarch64
-            CMD: BuildOldCMD
-            COUNT: 7
-            NPMCOUNT: 3
+#          - name: linux-arm64-older # Ok
+#            os: ubuntu-latest
+#            BASE_IMAGE: arm64v8/debian:9.6-slim
+#            DOCKERFILE: Dockerfile.oldDebian
+#            QEMU_ARCH: aarch64
+#            CMD: BuildOldCMD
+#            COUNT: 7
+#            NPMCOUNT: 3
 
           # Other OS's
 
