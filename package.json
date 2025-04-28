@@ -4,7 +4,7 @@
   "author": {
     "name": "Microsoft Corporation"
   },
-  "version": "0.12.1",
+  "version": "0.12.1-beta.0",
   "license": "MIT",
   "main": "./lib/index.js",
   "types": "./typings/node-pty.d.ts",
@@ -51,7 +51,8 @@
   },
   "dependencies": {
     "node-addon-api": "^7.1.0",
-    "prebuild-install": "^7.1.2"
+    "prebuild-install": "^7.1.2",
+    "semver": "^7.7.1"
   },
   "devDependencies": {
     "@types/mocha": "^7.0.2",
@@ -60,8 +61,8 @@
     "@typescript-eslint/parser": "^2.27.0",
     "cross-env": "^5.1.4",
     "eslint": "^6.8.0",
-    "node-abi": "^3.71.0",
     "mocha": "10",
+    "node-abi": "^3.71.0",
     "node-gyp": "=10.1.0",
     "prebuild": "^13.0.1",
     "prebuildify": "^5.0.1",
