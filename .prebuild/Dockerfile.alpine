@@ -6,7 +6,7 @@ ENV QEMU_ARCH=${QEMU_ARCH:-x86_64}
 
 COPY .prebuild/qemu/qemu-${QEMU_ARCH}-static /usr/bin/
 
-RUN apk add curl git gcc g++ make python3 paxctl
+RUN apk add curl git gcc g++ make python3 paxctl git
 
 RUN mkdir /node-pty
 WORKDIR /node-pty
