@@ -2,8 +2,6 @@ name: Stage 2 - Validate NPM Package contents
 run-name: Stage 2 - Validate against ${{ github.ref_name }}
 
 on:
-  push:
-    branches: [latest, beta-*.*.*, beta, alpha-*.*.*, alpha]
   pull_request:
     branches: [latest, beta-*.*.*, beta]
     types: [review_requested, ready_for_review]
