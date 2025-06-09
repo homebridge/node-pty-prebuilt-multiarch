@@ -63,7 +63,7 @@
     "mocha": "10",
     "node-abi": "^3.75.0",
     "node-gyp": "=10.1.0",
-    "prebuild": "^13.0.1",
+    "prebuild": "^7.2.2",
     "prebuildify": "^5.0.1",
     "ps-list": "^6.0.0",
     "typescript": "^3.8.3"
