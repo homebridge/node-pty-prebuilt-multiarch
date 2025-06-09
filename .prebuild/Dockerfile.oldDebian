@@ -11,7 +11,7 @@ RUN sed -i.bak 's/security.debian.org/archive.debian.org/g' /etc/apt/sources.lis
 RUN sed -i.bak 's/deb.debian.org/archive.debian.org/g' /etc/apt/sources.list
 RUN sed -i.bak '/stretch-updates/d' /etc/apt/sources.list
 RUN apt-get update \
-  && apt-get install -y gcc g++ make curl wget zlib1g-dev git
+  && apt-get install -y gcc g++ make curl wget zlib1g-dev
 
 RUN [ "$(uname -m)" = "x86_64" ] && apt-get install -y g++-multilib gcc-multilib || echo "ok"
 
