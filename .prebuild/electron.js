@@ -9,7 +9,7 @@ const prebuildPkgPath = path.dirname(require.resolve('prebuild'));
 const nodeAbiPkgPath = path.dirname(require.resolve('node-abi'));
 const prebuildPath = path.resolve(prebuildPkgPath, 'bin.js');
 const abiRegistryJsonPath = path.resolve(nodeAbiPkgPath, 'abi_registry.json');
-const sourceAbiRegistryPath = path.resolve(__dirname, 'abi_registry.json');
+const sourceAbiRegistryPath = path.resolve(__dirname, '../abi_registry.json');
 
 if (fs.existsSync(sourceAbiRegistryPath)) {
   console.log('Overwriting abi_registry.json with the corrected version. v3.75.0 has an incorrect version for Node.js 24.x 134 rather than 137.')
