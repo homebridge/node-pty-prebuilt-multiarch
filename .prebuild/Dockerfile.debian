@@ -12,14 +12,14 @@ RUN [ "$(uname -m)" = "x86_64" ] && apt-get install -y g++-multilib gcc-multilib
 
 ## Linux 32 bit support was dropped with NodeJS 18.4.0
 
-ENV NODE_VERSION=18.18.2
+ENV NODE_VERSION=22.12.0
 
 RUN case "${QEMU_ARCH}" in \
-    x86_64) NODE_ARCH='x64';; \
-    arm) NODE_ARCH='armv7l';; \
-    aarch64) NODE_ARCH='arm64';; \
-    i386) NODE_ARCH='x86'; NODE_VERSION='18.4.0';; \
-    *) echo "unsupported architecture"; exit 1 ;; \
+  x86_64) NODE_ARCH='x64';; \
+  arm) NODE_ARCH='armv7l';; \
+  aarch64) NODE_ARCH='arm64';; \
+  i386) NODE_ARCH='x86'; NODE_VERSION='18.4.0';; \
+  *) echo "unsupported architecture"; exit 1 ;; \
   esac \
   && set -x \
   && [ "$NODE_ARCH" = "armv6l" -o "$NODE_ARCH" = "x86" ] && curl -k -SLO  "https://unofficial-builds.nodejs.org/download/release/v$NODE_VERSION/node-v$NODE_VERSION-linux-$NODE_ARCH.tar.gz" || curl -SLO "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-$NODE_ARCH.tar.gz" \
@@ -27,7 +27,7 @@ RUN case "${QEMU_ARCH}" in \
   && tar -xzf "node-v$NODE_VERSION-linux-$NODE_ARCH.tar.gz" -C /usr/local --strip-components=1 --no-same-owner \
   && rm "node-v$NODE_VERSION-linux-$NODE_ARCH.tar.gz" \
   && ln -s /usr/local/bin/node /usr/local/bin/nodejs
-  
+
 RUN npm set prefix /usr/local
 
 RUN mkdir /node-pty
