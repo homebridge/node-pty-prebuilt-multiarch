@@ -48,6 +48,8 @@ echo
 docker build -f .prebuild/$DOCKERFILE --build-arg QEMU_ARCH=${QEMU_ARCH} -t multiarch-build .
 docker run --rm -v $(pwd):/node-pty multiarch-build bash -c "$CMD"
 
+exit 1
+
 #docker run -v $(pwd):/node-pty multiarch-build ./.prebuild/build.sh .prebuild/prebuild.js ${nodeBuildTargets}
 #docker run --rm -v $(pwd):/node-pty multiarch-build ./.prebuild/build.sh .prebuild/prebuildify.js ${nodeBuildTargets}
 # Older
