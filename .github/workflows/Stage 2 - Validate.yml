@@ -8,12 +8,19 @@ on:
     branches: [latest, beta-*.*.*, beta]
     types: [review_requested, ready_for_review]
   workflow_dispatch:
+  workflow_run:
+    workflows: ["Stage 1 - Run prebuild's and Create GitHub and NPM release"]
+    types:
+      - completed
+    branches: [latest, beta-*.*.*, beta, alpha-*.*.*, alpha]
 
 jobs:
   # Validate that node-pty can be installed and ran across all platforms
   determine_tag:
     name: Determine Tag
     runs-on: ubuntu-latest
+    # Only run if the Stage 1 workflow succeeded (for workflow_run) or always for other triggers
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     outputs:
       tag: ${{ steps.tag.outputs.tag }}
     steps:
@@ -68,4 +75,3 @@ jobs:
 
       - run: |
           echo "::notice::Successfully tested ${{ github.ref_name }} on ${{ matrix.os }} with Node.js ${{ matrix.node-version }}"
-     
