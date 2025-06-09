@@ -92,9 +92,7 @@ jobs:
             darwin-x64,
             darwin-arm64,
             linux-ia32,
-            linux-ia32-older,
             linux-x64,
-            linux-x64-older,
             linux-arm,
             linux-arm64,
 #            linux-arm64-older,   
@@ -173,24 +171,6 @@ jobs:
             NPMCOUNT: 4
 
           # Builds for NodeJS 18 or lower
-
-          - name: linux-x64-older # Ok
-            os: ubuntu-latest
-            BASE_IMAGE: library/debian:9.6-slim
-            DOCKERFILE: Dockerfile.oldDebian
-            QEMU_ARCH: x86_64
-            CMD: BuildOldCMD
-            COUNT: 7
-            NPMCOUNT: 3
-
-          - name: linux-ia32-older # Ok
-            os: ubuntu-latest
-            BASE_IMAGE: i386/debian:9.6-slim
-            DOCKERFILE: Dockerfile.oldDebian
-            QEMU_ARCH: i386
-            CMD: BuildOldCMD
-            COUNT: 7
-            NPMCOUNT: 3
 
 #          - name: linux-arm64-older # Ok
 #            os: ubuntu-latest
