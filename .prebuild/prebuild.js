@@ -9,7 +9,7 @@ const prebuildPkgPath = path.dirname(require.resolve('prebuild'));
 const nodeAbiPkgPath = path.dirname(require.resolve('node-abi'));
 const prebuildPath = path.resolve(prebuildPkgPath, 'bin.js');
 const abiRegistryJsonPath = path.resolve(nodeAbiPkgPath, 'abi_registry.json');
-const sourceAbiRegistryPath = path.resolve(__dirname, 'abi_registry.json');
+const sourceAbiRegistryPath = path.resolve(__dirname, '../abi_registry.json');
 
 console.log('Prebuild Path:', prebuildPath);
 console.log('ABI Registry Path:', abiRegistryJsonPath);
