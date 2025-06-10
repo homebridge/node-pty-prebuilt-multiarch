@@ -286,13 +286,13 @@ jobs:
         if: ${{ (runner.os == 'Windows') }}
         shell: bash
         run: |
+          npm ci --ignore-scripts
           node .prebuild/updateAbiRegistry.js
 
       - name: Windows ia32 - Prebuild Binaries
         if: ${{ (runner.os == 'Windows') && (matrix.arch == 'ia32') }}
         shell: bash
-        run: |
-          npm ci --ignore-scripts
+        run: |          
           env JOBS=max node_modules/.bin/prebuild ${winIA32nodeBuildTargets}  --include-regex "\.(node|exe|dll|pdb)" --arch ${{ matrix.arch }}
           env JOBS=max node_modules/.bin/prebuild ${winIA32electronBuildTargets}  ${oldElectronBuildTargets} --include-regex "\.(node|exe|dll|pdb)" -r electron -a ${{ matrix.arch }}
 
@@ -300,7 +300,6 @@ jobs:
         if: ${{ (runner.os == 'Windows') && (matrix.arch == 'x64') }}
         shell: bash
         run: |
-          npm ci --ignore-scripts
           env JOBS=max node_modules/.bin/prebuild ${currentNodeBuildTargets} ${oldNodeBuildTargets} --include-regex "\.(node|exe|dll|pdb)" --arch ${{ matrix.arch }}
           env JOBS=max node_modules/.bin/prebuild ${electronBuildTargets} ${oldElectronBuildTargets} --include-regex "\.(node|exe|dll|pdb)" -r electron --arch ${{ matrix.arch }}
 
