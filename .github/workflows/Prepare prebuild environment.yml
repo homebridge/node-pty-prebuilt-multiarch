@@ -282,6 +282,12 @@ jobs:
 
       # Windows
 
+      - name: Windows ia32 - Update ABI Registry
+        if: ${{ (runner.os == 'Windows') }}
+        shell: bash
+        run: |
+          node .prebuild/updateAbiRegistry.js
+
       - name: Windows ia32 - Prebuild Binaries
         if: ${{ (runner.os == 'Windows') && (matrix.arch == 'ia32') }}
         shell: bash
