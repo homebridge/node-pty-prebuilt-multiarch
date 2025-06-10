@@ -23,4 +23,9 @@ function updateAbiRegistry(sourcePath = path.resolve(__dirname, '../abi_registry
   }
 }
 
+// Execute the function if run directly
+if (require.main === module) {
+  updateAbiRegistry();
+}
+
 module.exports = updateAbiRegistry;
