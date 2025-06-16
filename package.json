@@ -53,6 +53,9 @@
     "node-addon-api": "^7.1.0",
     "prebuild-install": "^7.1.2"
   },
+  "engines": {
+    "node": ">=18.0.0 <25.0.0"
+  },
   "devDependencies": {
     "@types/mocha": "^7.0.2",
     "@types/node": "12",
