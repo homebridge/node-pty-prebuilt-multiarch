@@ -194,13 +194,13 @@ jobs:
             NPMCOUNT: 0
 
           - name: win32-ia32 # Ok
-            os: windows-2019
+            os: windows-2025
             arch: ia32
             COUNT: 14
             NPMCOUNT: 0
 
           - name: win32-x64 # Ok
-            os: windows-2019
+            os: windows-2025
             arch: x64
             COUNT: 19
             NPMCOUNT: 0
