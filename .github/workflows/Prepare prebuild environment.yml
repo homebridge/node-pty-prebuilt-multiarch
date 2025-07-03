@@ -101,6 +101,7 @@ jobs:
             linuxmusl-x64,
             win32-ia32,
             win32-x64,
+            win-arm64
           ]
         #  buster -> bullseye -> bookworm
         include:
@@ -189,19 +190,25 @@ jobs:
             NPMCOUNT: 0
 
           - name: darwin-arm64 # Ok
-            os: macOS-14
+            os: macOS-latest
             COUNT: 19
             NPMCOUNT: 0
 
           - name: win32-ia32 # Ok
-            os: windows-2025
+            os: windows-latest
             arch: ia32
             COUNT: 14
             NPMCOUNT: 0
 
           - name: win32-x64 # Ok
-            os: windows-2025
+            os: windows-latest
             arch: x64
+            COUNT: 19
+            NPMCOUNT: 0
+  
+          - name: win-arm64 # Ok
+            os: windows-11-arm
+            arch: arm64
             COUNT: 19
             NPMCOUNT: 0
 
@@ -296,8 +303,15 @@ jobs:
           env JOBS=max node_modules/.bin/prebuild ${winIA32nodeBuildTargets}  --include-regex "\.(node|exe|dll|pdb)" --arch ${{ matrix.arch }}
           env JOBS=max node_modules/.bin/prebuild ${winIA32electronBuildTargets}  ${oldElectronBuildTargets} --include-regex "\.(node|exe|dll|pdb)" -r electron -a ${{ matrix.arch }}
 
-      - name: Windows x64 - Prebuild Binaries
+      - name: Windows ${{matrix.arch}} - Prebuild Binaries
         if: ${{ (runner.os == 'Windows') && (matrix.arch == 'x64') }}
+        shell: bash
+        run: |
+          env JOBS=max node_modules/.bin/prebuild ${currentNodeBuildTargets} ${oldNodeBuildTargets} --include-regex "\.(node|exe|dll|pdb)" --arch ${{ matrix.arch }}
+          env JOBS=max node_modules/.bin/prebuild ${electronBuildTargets} ${oldElectronBuildTargets} --include-regex "\.(node|exe|dll|pdb)" -r electron --arch ${{ matrix.arch }}
+
+      - name: Windows ${{matrix.arch}} - Prebuild Binaries
+        if: ${{ (runner.os == 'Windows') && (matrix.arch == 'arm64') }}
         shell: bash
         run: |
           env JOBS=max node_modules/.bin/prebuild ${currentNodeBuildTargets} ${oldNodeBuildTargets} --include-regex "\.(node|exe|dll|pdb)" --arch ${{ matrix.arch }}
