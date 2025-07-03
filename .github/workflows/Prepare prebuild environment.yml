@@ -16,8 +16,10 @@ on:
 env:
   # Order reversed so newer versions are built first - Add new versions to the front (fail fast)
   # electronBuildTargets version 28 has an issue
-  oldNodeBuildTargets: -t 17.0.1 
-  currentNodeBuildTargets: -t 24.0.0 -t 23.0.0 -t 22.0.0 -t 21.0.0 -t 20.0.0 -t 19.0.0 -t 18.0.0 
+  # oldNodeBuildTargets are versions that are no longer supported by NodeJS, that still build successfully
+  # currentNodeBuildTargets are versions that are still supported by NodeJS in either Maintenance, Active or Current
+  oldNodeBuildTargets: -t 19.0.0 -t 18.0.0
+  currentNodeBuildTargets: -t 24.0.0 -t 23.0.0 -t 22.0.0 -t 21.0.0 -t 20.0.0  
   oldElectronBuildTargets: -t 19.0.0 -t 18.0.0 -t 17.0.0 
   electronBuildTargets: -t 29.0.0 -t 27.0.0 -t 26.0.0 -t 25.0.0 -t 24.0.0 -t 23.0.0 -t 22.0.0 -t 21.0.0 -t 20.0.0
   winIA32nodeBuildTargets: -t 17.0.1 
@@ -139,7 +141,7 @@ jobs:
             BASE_IMAGE: library/debian:bullseye-slim
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: x86_64
-            CMD: BuildNewCMD
+            CMD: BuildAllCMD
             COUNT: 12
             NPMCOUNT: 4
 
@@ -148,7 +150,7 @@ jobs:
             BASE_IMAGE: i386/debian:bullseye-slim
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: i386
-            CMD: BuildNewCMD
+            CMD: BuildAllCMD
             COUNT: 12
             NPMCOUNT: 4
 
@@ -167,7 +169,7 @@ jobs:
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: aarch64
             PLATFORM: --platform=linux/arm64
-            CMD: BuildNewCMD
+            CMD: BuildAllCMD
             COUNT: 12
             NPMCOUNT: 4
 
@@ -314,8 +316,7 @@ jobs:
         if: ${{ (runner.os == 'Windows') && (matrix.arch == 'arm64') }}
         shell: bash
         run: |
-          env JOBS=max node_modules/.bin/prebuild ${currentNodeBuildTargets} ${oldNodeBuildTargets} --include-regex "\.(node|exe|dll|pdb)" --arch ${{ matrix.arch }}
-          env JOBS=max node_modules/.bin/prebuild ${electronBuildTargets} ${oldElectronBuildTargets} --include-regex "\.(node|exe|dll|pdb)" -r electron --arch ${{ matrix.arch }}
+          env JOBS=max node_modules/.bin/prebuild ${currentNodeBuildTargets} --include-regex "\.(node|exe|dll|pdb)" --arch ${{ matrix.arch }}
 
       # Start of Checks
 
