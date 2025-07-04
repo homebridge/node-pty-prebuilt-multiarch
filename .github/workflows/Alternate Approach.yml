@@ -65,7 +65,7 @@ jobs:
 
   prebuild:
     needs: Prepare_prebuild_environment
-    name: ${{ matrix.name }} - Prebuild NPM and GitHub Release artifacts
+    name: ${{ matrix.name }} - ${{ matrix.node-version }} = Prebuild NPM and GitHub Release artifacts
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -210,28 +210,6 @@ jobs:
           sudo apt-get --yes --no-install-recommends install binfmt-support qemu-user-static
           docker run --rm --privileged multiarch/qemu-user-static:register --reset
 
-      # Hackery to setup builds
-
-      - name: Setup Build Commands
-        if: runner.os == 'Linux'
-        run: |
-          echo "BuildOldCMD=\"./.prebuild/build.sh .prebuild/prebuild.js ${oldNodeBuildTargets} && \
-            ./.prebuild/build.sh .prebuild/prebuildify.js ${oldNodeBuildTargets} && \
-            ./.prebuild/build.sh .prebuild/electron.js ${oldElectronBuildTargets}\"" >> $GITHUB_ENV
-          echo "BuildNewCMD=\"./.prebuild/build.sh .prebuild/prebuild.js ${currentNodeBuildTargets} && \
-            ./.prebuild/build.sh .prebuild/prebuildify.js ${currentNodeBuildTargets} && \
-            ./.prebuild/build.sh .prebuild/electron.js ${electronBuildTargets}\"" >> $GITHUB_ENV
-          echo "BuildAllCMD=\"./.prebuild/build.sh .prebuild/prebuild.js ${currentNodeBuildTargets} ${oldNodeBuildTargets} && \
-            ./.prebuild/build.sh .prebuild/prebuildify.js ${currentNodeBuildTargets} ${oldNodeBuildTargets} && \
-            ./.prebuild/build.sh .prebuild/electron.js ${electronBuildTargets} ${oldElectronBuildTargets}\"" >> $GITHUB_ENV
-          echo "CMD=${{ matrix.CMD }}" >> $GITHUB_ENV
-
-      - name: Linux - Prep Build EXECCMD = ${{ env.CMD }}
-        if: runner.os == 'Linux'
-        run: |
-          echo "${{ env.CMD }}"
-          echo "EXECCMD=${!CMD}" >> $GITHUB_ENV
-
       # Linux builds
 
       - name: Linux - Build Docker Image ${{ matrix.DOCKERFILE }} - ${{ matrix.BASE_IMAGE }} - ${{ matrix.QEMU_ARCH }}
@@ -299,12 +277,12 @@ jobs:
       - name: Create Archive of prebuilds Unix
         if: ${{ (runner.os == 'macOS') || (runner.os	 == 'Linux') }}
         run: |
-          tar -cvzf archive.${{ matrix.name }}.tar.gz prebuilds/
+          tar -cvzf archive.${{ matrix.name }}-${{ matrix.node-version}}.tar.gz prebuilds/
 
       - name: Create Archive of prebuilds Windows
         if: ${{ runner.os == 'Windows' }}
         run: |
-          tar -cvzf archive.${{ matrix.name }}.tar.gz prebuilds
+          tar -cvzf archive.${{ matrix.name }}-${{ matrix.node-version}}.tar.gz prebuilds
 
       - uses: actions/upload-artifact@v4
         with:
