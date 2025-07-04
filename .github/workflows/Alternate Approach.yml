@@ -32,18 +32,6 @@ jobs:
     outputs:
       releaseTag: ${{ steps.package-version.outputs.current-version }}
     steps:
-      - name: Delete pr-* branches
-        uses: homebridge/action-delete-branch@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branches: "release-candidate"
-
-      - uses: actions/checkout@v4
-      - name: Create Branch
-        uses: peterjgrainger/action-create-branch@v3.0.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - uses: actions/setup-node@v4
         with:
           node-version: lts/*
@@ -66,15 +54,6 @@ jobs:
 
       - name: Allow prebuilds to be stored on github
         run: sed -i.bak '/prebuilds/d' .gitignore
-
-      - name: Commit & Push changes
-        uses: actions-js/push@master
-        with:
-          author_name: ${{ github.actor }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: "release-candidate"
-          message: "Prepare prebuild environment ${{ github.ref_name }}"
-          rebase: true
 
       - name: get-npm-version
         id: package-version
