@@ -11,13 +11,5 @@ RUN apk add curl git gcc g++ make python3 paxctl
 RUN mkdir /node-pty
 WORKDIR /node-pty
 
-# Add swap to prevent linker crashes
-RUN apk add --no-cache dpkg && \
-    dpkg --add-architecture arm64 && \
-    fallocate -l 2G /swapfile && \
-    chmod 600 /swapfile && \
-    mkswap /swapfile && \
-    swapon /swapfile
-
 # Limit parallel jobs to reduce memory pressure
 ENV JOBS=1
