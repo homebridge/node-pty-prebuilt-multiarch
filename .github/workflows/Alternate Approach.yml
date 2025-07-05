@@ -170,12 +170,8 @@ jobs:
         # Exclude builds for NodeJS 19 and lower on Windows ARM64
         exclude:
           - name: win-arm64
-            github-action-runner: windows-11-arm
-            arch: arm64
             node-version: 19
           - name: win-arm64
-            github-action-runner: windows-11-arm
-            arch: arm64
             node-version: 18
 
     steps:
