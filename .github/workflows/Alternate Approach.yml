@@ -217,10 +217,10 @@ jobs:
         run: |
           docker build -f .prebuild/${{ matrix.DOCKERFILE }} --build-arg BASE_IMAGE=${{ matrix.BASE_IMAGE }} --build-arg QEMU_ARCH=${{ matrix.QEMU_ARCH }} -t multiarch-build ${{ matrix.PLATFORM }} .
 
-      - name: Linux - Prebuild Binaries - ${{ env.EXECCMD }}
+      - name: Linux - Prebuild Binaries - ${{ matrix.node-version }}
         if: runner.os == 'Linux'
         run: |
-          docker run --rm -v $(pwd):/node-pty multiarch-build sh -c ${{ env.EXECCMD }}
+          docker run --rm -v $(pwd):/node-pty multiarch-build sh -c "./.prebuild/build.sh .prebuild/prebuild.js -t ${{ matrix.node-version}}.0.0 &&  ./.prebuild/build.sh .prebuild/prebuildify.js -t ${{ matrix.node-version}}.0.0"
 
       # Mac OS
 
