@@ -229,17 +229,11 @@ jobs:
           npm ci --ignore-scripts
           node .prebuild/updateAbiRegistry.js
 
-      - name: Windows ${{matrix.arch}} - Prebuild Binaries - ${{ runner.arch }} - NodeJS ${{ matrix.node-version }}
-        if: ${{ (runner.os == 'Windows') && (runner.arch == 'x64') }}
+      - name: Windows ${{runner.arch}} - Prebuild Binaries - ${{ runner.arch }} - NodeJS ${{ matrix.node-version }}
+        if: ${{ (runner.os == 'Windows') }}
         shell: bash
         run: |
-          env JOBS=max node_modules/.bin/prebuild -t ${{ matrix.node-version}}.0.0  --include-regex "\.(node|exe|dll|pdb)" --arch ${{ matrix.arch }}
-
-      - name: Windows ${{matrix.arch}} - Prebuild Binaries - ${{ runner.arch }} - NodeJS ${{ matrix.node-version }}
-        if: ${{ (runner.os == 'Windows') && (runner.arch == 'arm64') }}
-        shell: bash
-        run: |
-          env JOBS=max node_modules/.bin/prebuild -t ${{ matrix.node-version}}.0.0  --include-regex "\.(node|exe|dll|pdb)" --arch ${{ matrix.arch }}
+          env JOBS=max node_modules/.bin/prebuild -t ${{ matrix.node-version}}.0.0  --include-regex "\.(node|exe|dll|pdb)" --arch ${{ runner.arch }}
 
       # Start of Checks
 
@@ -265,7 +259,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.name }}-${{ matrix.node-version}}
+          name: ${{ matrix.name }} - NodeJS ${{ matrix.node-version}}
           retention-days: 7
           if-no-files-found: warn
           path: |
