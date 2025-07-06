@@ -14,7 +14,63 @@ on:
         type: boolean
         
 jobs:
+
+  Prepare_prebuild_environment:
+    name: Prepare prebuild environment ${{ github.ref_name }}
+    runs-on: ubuntu-latest
+    outputs:
+      releaseTag: ${{ steps.package-version.outputs.current-version }}
+    steps:
+      - name: Delete pr-* branches
+        uses: homebridge/action-delete-branch@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branches: "release-candidate"
+
+      - uses: actions/checkout@v4
+      - name: Create Branch
+        uses: peterjgrainger/action-create-branch@v3.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      - name: Fetch Adjust version script
+        if: ${{ inputs.Beta }}
+        run: wget https://raw.githubusercontent.com/homebridge/.github/latest/.github/npm-version-script.js
+        working-directory: .github
+
+      - if: ${{ inputs.Beta }}
+        run: npm install semver
+
+      - name: Adjust version
+        if: ${{ inputs.Beta }}
+        run: node .github/npm-version-script.js ${{ github.ref }} beta
+
+      - name: npm version (without git commit)
+        if: ${{ inputs.Beta }}
+        run: npm version pre --preid=beta --no-git-tag-version
+
+      - name: Allow prebuilds to be stored on github
+        run: sed -i.bak '/prebuilds/d' .gitignore
+
+      - name: Commit & Push changes
+        uses: actions-js/push@master
+        with:
+          author_name: ${{ github.actor }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: "release-candidate"
+          message: "Prepare prebuild environment ${{ github.ref_name }}"
+          rebase: true
+
+      - name: get-npm-version
+        id: package-version
+        uses: martinbeentjes/npm-get-version-action@v1.3.1
+
   prebuild:
+    needs: Prepare_prebuild_environment
     name: ${{ matrix.name }} - ${{ matrix.node-version }} - Prebuild and Prebuildify
     runs-on: ${{ matrix.github-action-runner }}
     strategy:
@@ -101,6 +157,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: "release-candidate"
 
       - uses: actions/setup-node@v4
         with:
@@ -196,7 +254,7 @@ jobs:
 
   publish:
     name: Publish GitHub and NPM Release
-    needs: [prebuild]
+    needs: [prebuild, Prepare_prebuild_environment]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -204,8 +262,9 @@ jobs:
       repository-projects: write
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: "release-candidate"
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -213,26 +272,6 @@ jobs:
           node-version: lts/*
           registry-url: "https://registry.npmjs.org"
           cache: "npm"
-
-      - name: Fetch Adjust version script
-        if: ${{ inputs.Beta }}
-        run: wget https://raw.githubusercontent.com/homebridge/.github/latest/.github/npm-version-script.js
-        working-directory: .github
-
-      - if: ${{ inputs.Beta }}
-        run: npm install semver
-
-      - name: Adjust version
-        if: ${{ inputs.Beta }}
-        run: node .github/npm-version-script.js ${{ github.ref }} beta
-
-      - name: npm version (without git commit)
-        if: ${{ inputs.Beta }}
-        run: npm version pre --preid=beta --no-git-tag-version
-
-      - name: get-npm-version
-        id: package-version
-        uses: martinbeentjes/npm-get-version-action@v1.3.1
 
       - uses: actions/download-artifact@v4
         with:
@@ -273,8 +312,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v${{ steps.package-version.outputs.current-version }}
-          release_name: Release v${{ steps.package-version.outputs.current-version }}
+          tag_name: v${{ needs.Prepare_prebuild_environment.outputs.releaseTag }}
+          release_name: Release v${{ needs.Prepare_prebuild_environment.outputs.releaseTag }}
           body: |
             Changes in this Release
             - First Change
@@ -283,22 +322,22 @@ jobs:
           prerelease: true
 
       - uses: AButler/upload-release-assets@v2.0
-        name: Upload Prebuild Artifacts to ${{ steps.package-version.outputs.current-version }}
+        name: Upload Prebuild Artifacts to ${{ needs.Prepare_prebuild_environment.outputs.releaseTag }}
         with:
           files: "prebuilds/*/node-pty*tar.gz"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-          release-tag: v${{ steps.package-version.outputs.current-version }}
+          release-tag: v${{ needs.Prepare_prebuild_environment.outputs.releaseTag }}
 
       - name: NPM Pack Release
         run: |
           npm pack
 
       - uses: AButler/upload-release-assets@v2.0
-        name: Upload NPM Release to ${{ steps.package-version.outputs.current-version }}
+        name: Upload NPM Release to ${{ needs.Prepare_prebuild_environment.outputs.releaseTag }}
         with:
           files: "*node-pty-prebuilt-multiarch*.tgz"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-          release-tag: v${{ steps.package-version.outputs.current-version }}
+          release-tag: v${{ needs.Prepare_prebuild_environment.outputs.releaseTag }}
 
       - name: "Check file existence"
         id: check_files
@@ -327,4 +366,4 @@ jobs:
       - name: "Output Results"
         run: |
           echo "::notice:: GitHub run_id: ${{ github.run_id }}"
-          echo "::notice:: Release Version: ${{ steps.package-version.outputs.current-version }}"
+          echo "::notice:: Release Version: ${{ needs.Prepare_prebuild_environment.outputs.releaseTag }}"
