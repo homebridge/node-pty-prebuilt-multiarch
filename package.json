@@ -16,8 +16,6 @@
     "binding.gyp",
     "lib/",
     "scripts/",
-    "src/",
-    "deps/",
     "typings/",
     "prebuilds/linux-x64",
     "prebuilds/linux-ia32",
