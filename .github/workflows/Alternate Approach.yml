@@ -173,14 +173,14 @@ jobs:
           node-version: lts/*
 
       - name: Linux - Setup Dependencies - With QEMU
-        if: runner.os == 'Linux' && matrix.QEMU_ARCH
+        if: runner.os == 'Linux' && runner.arch == 'X64'
         run: |
           sudo apt-get update
           sudo apt-get --yes --no-install-recommends install binfmt-support qemu-user-static
           docker run --rm --privileged multiarch/qemu-user-static:register --reset
 
       - name: Linux - Setup Dependencies - Without QEMU
-        if: runner.os == 'Linux' && ! matrix.QEMU_ARCH
+        if: runner.os == 'Linux' && runner.arch == 'ARM64'
         run: |
           sudo apt-get update
           sudo apt-get --yes --no-install-recommends install binfmt-support
