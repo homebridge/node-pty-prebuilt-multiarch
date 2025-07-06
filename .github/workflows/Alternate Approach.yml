@@ -130,6 +130,7 @@ jobs:
             github-action-runner: ubuntu-24.04-arm
             BASE_IMAGE: arm64v8/debian:bullseye
             DOCKERFILE: Dockerfile.noQemu
+            QEMU_ARCH: aarch64
             PLATFORM: --platform=linux/arm64
             COUNT: 12
             NPMCOUNT: 4
