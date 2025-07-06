@@ -72,16 +72,19 @@ jobs:
       matrix:
         name:
           [
-            darwin-x64,
-            darwin-arm64,
-            linux-x64,
-            linux-arm,
-            linux-arm64,
             linux-musl-arm,
             linux-musl-arm64,
             linux-musl-x64,
+
+            linux-arm,
+            linux-arm64,
+            linux-x64,
+
+            win-arm64,
             win-x64,
-            win-arm64
+
+            darwin-arm64,
+            darwin-x64,
           ]
         node-version: [24, 23, 22, 21, 20, 19, 18]
         #  buster -> bullseye -> bookworm
@@ -95,7 +98,7 @@ jobs:
             NPMCOUNT: 7
 
           - name: linux-musl-arm  
-            github-action-runner: ubuntu-latest
+            github-action-runner: ubuntu-24.04-arm
             BASE_IMAGE: arm32v6/node:16-alpine
             DOCKERFILE: Dockerfile.alpine
             QEMU_ARCH: arm
