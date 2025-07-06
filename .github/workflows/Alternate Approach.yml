@@ -129,9 +129,8 @@ jobs:
           - name: linux-arm64
             github-action-runner: ubuntu-24.04-arm
             BASE_IMAGE: arm64v8/debian:bullseye
-            DOCKERFILE: Dockerfile.noQemu
+            DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: aarch64
-            PLATFORM: --platform=linux/arm64
             COUNT: 12
             NPMCOUNT: 4
 
@@ -190,7 +189,7 @@ jobs:
       - name: Linux - Build Docker Image ${{ matrix.DOCKERFILE }} - ${{ matrix.BASE_IMAGE }} - ${{ matrix.QEMU_ARCH }}
         if: runner.os == 'Linux'
         run: |
-          docker build -f .prebuild/${{ matrix.DOCKERFILE }} --build-arg BASE_IMAGE=${{ matrix.BASE_IMAGE }} --build-arg QEMU_ARCH=${{ matrix.QEMU_ARCH }} -t multiarch-build ${{ matrix.PLATFORM }} .
+          docker build -f .prebuild/${{ matrix.DOCKERFILE }} --build-arg BASE_IMAGE=${{ matrix.BASE_IMAGE }} --build-arg QEMU_ARCH=${{ matrix.QEMU_ARCH }} -t multiarch-build .
 
       - name: Linux - Prebuild Binaries - NodeJS ${{ matrix.node-version }}
         if: runner.os == 'Linux'
