@@ -134,7 +134,7 @@ jobs:
           - name: linux-arm64
             github-action-runner: ubuntu-24.04-arm
             BASE_IMAGE: arm64v8/debian:bullseye
-            DOCKERFILE: Dockerfile.debian
+            DOCKERFILE: Dockerfile.noQemu
             QEMU_ARCH: aarch64
             PLATFORM: --platform=linux/arm64
             CMD: BuildAllCMD
@@ -155,13 +155,11 @@ jobs:
 
           - name: win-x64 
             github-action-runner: windows-latest
-            arch: x64
             COUNT: 19
             NPMCOUNT: 0
   
           - name: win-arm64 
             github-action-runner: windows-11-arm
-            arch: arm64
             COUNT: 19
             NPMCOUNT: 0
 
@@ -179,13 +177,18 @@ jobs:
         with:
           node-version: lts/*
 
-      - name: Linux - Setup Dependencies
-        if: runner.os == 'Linux'
+      - name: Linux - Setup Dependencies - ${{ runner.arch }}
+        if: runner.os == 'Linux' && runner.arch != 'X64'
         run: |
           sudo apt-get update
           sudo apt-get --yes --no-install-recommends install binfmt-support qemu-user-static
-          docker run --rm --privileged multiarch/qemu-user-static:register --reset --platform ${{ matrix.PLATFORM }}
+          docker run --rm --privileged multiarch/qemu-user-static:register --reset
 
+      - name: Linux - Setup Dependencies - ${{ runner.arch }}
+        if: runner.os == 'Linux' && runner.arch == 'ARM64'
+        run: |
+          sudo apt-get update
+          sudo apt-get --yes --no-install-recommends install binfmt-support
       # Linux builds
 
       - name: Linux - Build Docker Image ${{ matrix.DOCKERFILE }} - ${{ matrix.BASE_IMAGE }} - ${{ matrix.QEMU_ARCH }}
@@ -193,21 +196,21 @@ jobs:
         run: |
           docker build -f .prebuild/${{ matrix.DOCKERFILE }} --build-arg BASE_IMAGE=${{ matrix.BASE_IMAGE }} --build-arg QEMU_ARCH=${{ matrix.QEMU_ARCH }} -t multiarch-build ${{ matrix.PLATFORM }} .
 
-      - name: Linux - Prebuild Binaries - ${{ matrix.node-version }}
+      - name: Linux - Prebuild Binaries - NodeJS ${{ matrix.node-version }}
         if: runner.os == 'Linux'
         run: |
           docker run --rm -v $(pwd):/node-pty multiarch-build sh -c "./.prebuild/build.sh .prebuild/prebuild.js -t ${{ matrix.node-version}}.0.0 &&  ./.prebuild/build.sh .prebuild/prebuildify.js -t ${{ matrix.node-version}}.0.0"
 
       # Mac OS
 
-      - name: macOS - Prebuild Binaries X64
+      - name: macOS - Prebuild Binaries - ${{ runner.arch }} - NodeJS ${{ matrix.node-version }}
         if: ${{ (runner.os == 'macOS') && (runner.arch	 == 'X64') }}
         run: |
           python3 -m pip install packaging setuptools
           npm ci --ignore-scripts
           env JOBS=max node .prebuild/prebuild.js -t ${{ matrix.node-version}}.0.0  
 
-      - name: macOS - Prebuild Binaries ARM64
+      - name: macOS - Prebuild Binaries - ${{ runner.arch }} - NodeJS ${{ matrix.node-version }}
         if: ${{ (runner.os == 'macOS') && (runner.arch	 == 'ARM64') }}
         run: |
           python3 -m venv build
@@ -226,14 +229,14 @@ jobs:
           npm ci --ignore-scripts
           node .prebuild/updateAbiRegistry.js
 
-      - name: Windows ${{matrix.arch}} - Prebuild Binaries
-        if: ${{ (runner.os == 'Windows') && (matrix.arch == 'x64') }}
+      - name: Windows ${{matrix.arch}} - Prebuild Binaries - ${{ runner.arch }} - NodeJS ${{ matrix.node-version }}
+        if: ${{ (runner.os == 'Windows') && (runner.arch == 'x64') }}
         shell: bash
         run: |
           env JOBS=max node_modules/.bin/prebuild -t ${{ matrix.node-version}}.0.0  --include-regex "\.(node|exe|dll|pdb)" --arch ${{ matrix.arch }}
 
-      - name: Windows ${{matrix.arch}} - Prebuild Binaries
-        if: ${{ (runner.os == 'Windows') && (matrix.arch == 'arm64') }}
+      - name: Windows ${{matrix.arch}} - Prebuild Binaries - ${{ runner.arch }} - NodeJS ${{ matrix.node-version }}
+        if: ${{ (runner.os == 'Windows') && (runner.arch == 'arm64') }}
         shell: bash
         run: |
           env JOBS=max node_modules/.bin/prebuild -t ${{ matrix.node-version}}.0.0  --include-regex "\.(node|exe|dll|pdb)" --arch ${{ matrix.arch }}
