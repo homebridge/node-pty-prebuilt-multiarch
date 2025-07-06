@@ -13,58 +13,8 @@ on:
         default: true
         type: boolean
         
-env:
-  # Order reversed so newer versions are built first - Add new versions to the front (fail fast)
-  # electronBuildTargets version 28 has an issue
-  # oldNodeBuildTargets are versions that are no longer supported by NodeJS, that still build successfully
-  # currentNodeBuildTargets are versions that are still supported by NodeJS in either Maintenance, Active or Current
-  oldNodeBuildTargets: -t 19.0.0 -t 18.0.0
-  currentNodeBuildTargets: -t 24.0.0 -t 23.0.0 -t 22.0.0 -t 21.0.0 -t 20.0.0  
-  oldElectronBuildTargets: -t 19.0.0 -t 18.0.0 -t 17.0.0 
-  electronBuildTargets: -t 29.0.0 -t 27.0.0 -t 26.0.0 -t 25.0.0 -t 24.0.0 -t 23.0.0 -t 22.0.0 -t 21.0.0 -t 20.0.0
-  winIA32nodeBuildTargets: -t 17.0.1 
-  winIA32electronBuildTargets: -t 29.0.0 -t 27.0.0 -t 26.0.0 -t 25.0.0 -t 24.0.0 -t 23.0.0 -t 22.0.0 -t 21.0.0 -t 20.0.0
-  ReleasePrebuildCount: 192
-  ReleasePrebuildifyCount: 49
-
 jobs:
-  Prepare_prebuild_environment:
-    name: Prepare prebuild environment ${{ github.ref_name }}
-    runs-on: ubuntu-latest
-    outputs:
-      releaseTag: ${{ steps.package-version.outputs.current-version }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: lts/*
-
-      - name: Fetch Adjust version script
-        if: ${{ inputs.Beta }}
-        run: wget https://raw.githubusercontent.com/homebridge/.github/latest/.github/npm-version-script.js
-        working-directory: .github
-
-      - if: ${{ inputs.Beta }}
-        run: npm install semver
-
-      - name: Adjust version
-        if: ${{ inputs.Beta }}
-        run: node .github/npm-version-script.js ${{ github.ref }} beta
-
-      - name: npm version (without git commit)
-        if: ${{ inputs.Beta }}
-        run: npm version pre --preid=beta --no-git-tag-version
-
-      - name: Allow prebuilds to be stored on github
-        run: sed -i.bak '/prebuilds/d' .gitignore
-
-      - name: get-npm-version
-        id: package-version
-        uses: martinbeentjes/npm-get-version-action@v1.3.1
-
   prebuild:
-    needs: Prepare_prebuild_environment
     name: ${{ matrix.name }} - ${{ matrix.node-version }} - Prebuild and Prebuildify
     runs-on: ${{ matrix.github-action-runner }}
     strategy:
@@ -94,16 +44,12 @@ jobs:
             BASE_IMAGE: library/node:16-alpine
             DOCKERFILE: Dockerfile.alpine
             QEMU_ARCH: x86_64
-            COUNT: 19
-            NPMCOUNT: 7
 
           - name: linux-musl-arm  
             github-action-runner: ubuntu-24.04-arm
             BASE_IMAGE: arm32v6/node:16-alpine
             DOCKERFILE: Dockerfile.alpine
             QEMU_ARCH: arm
-            COUNT: 19
-            NPMCOUNT: 7
 
           - name: linux-musl-arm64 
             github-action-runner: ubuntu-24.04-arm
@@ -111,56 +57,40 @@ jobs:
             DOCKERFILE: Dockerfile.alpine
             QEMU_ARCH: aarch64
             PLATFORM: --platform=linux/arm64
-            COUNT: 19
-            NPMCOUNT: 7
 
           - name: linux-x64
             github-action-runner: ubuntu-latest
             BASE_IMAGE: library/debian:bullseye-slim
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: x86_64
-            COUNT: 12
-            NPMCOUNT: 4
 
           - name: linux-arm
             github-action-runner: ubuntu-24.04-arm
             BASE_IMAGE: balenalib/raspberrypi3-debian:bullseye
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: arm
-            COUNT: 19
-            NPMCOUNT: 7
 
           - name: linux-arm64
             github-action-runner: ubuntu-24.04-arm
             BASE_IMAGE: arm64v8/debian:bullseye
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: aarch64
-            COUNT: 12
-            NPMCOUNT: 4
 
           # Other OS's
 
           - name: darwin-x64  
             github-action-runner: macOS-13
-            COUNT: 19
-            NPMCOUNT: 0
 
           - name: darwin-arm64 
             github-action-runner: macOS-latest
-            COUNT: 19
-            NPMCOUNT: 0
 
           - name: win-x64 
             github-action-runner: windows-latest
             arch: x64
-            COUNT: 19
-            NPMCOUNT: 0
   
           - name: win-arm64 
             github-action-runner: windows-11-arm
             arch: arm64
-            COUNT: 19
-            NPMCOUNT: 0
 
         # Exclude builds for NodeJS 19 and lower on Windows ARM64
         exclude:
@@ -266,7 +196,7 @@ jobs:
 
   publish:
     name: Publish GitHub and NPM Release
-    needs: [prebuild, Prepare_prebuild_environment]
+    needs: [prebuild]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -283,7 +213,27 @@ jobs:
           node-version: lts/*
           registry-url: "https://registry.npmjs.org"
           cache: "npm"
-  
+
+      - name: Fetch Adjust version script
+        if: ${{ inputs.Beta }}
+        run: wget https://raw.githubusercontent.com/homebridge/.github/latest/.github/npm-version-script.js
+        working-directory: .github
+
+      - if: ${{ inputs.Beta }}
+        run: npm install semver
+
+      - name: Adjust version
+        if: ${{ inputs.Beta }}
+        run: node .github/npm-version-script.js ${{ github.ref }} beta
+
+      - name: npm version (without git commit)
+        if: ${{ inputs.Beta }}
+        run: npm version pre --preid=beta --no-git-tag-version
+
+      - name: get-npm-version
+        id: package-version
+        uses: martinbeentjes/npm-get-version-action@v1.3.1
+
       - uses: actions/download-artifact@v4
         with:
           merge-multiple: true
@@ -310,8 +260,6 @@ jobs:
           echo "Release Prebuild count ${fileCount}"
           echo "::notice::Release Prebuild count ${fileCount}"
 
-        # if [ "$fileCount" -ne ${ReleasePrebuildCount} ]; then echo "::error::Release Prebuild count ${fileCount}, expected ${ReleasePrebuildCount}"; exit 1; else echo "::notice::Release Prebuild count ${fileCount}, expected ${ReleasePrebuildCount}"; fi
-
       - name: Check Release prebuildify`s exist
         shell: bash
         run: |
@@ -319,16 +267,14 @@ jobs:
           echo "Release prebuildify count ${fileCount}"
           echo "::notice::Release prebuildify count ${fileCount}"
 
-        # if [ "$fileCount" -ne ${ReleasePrebuildifyCount} ]; then echo "::error::Release Prebuildify count ${fileCount}, expected ${ReleasePrebuildifyCount}"; exit 1; else echo "::notice::Release Prebuildify count ${fileCount}, expected ${ReleasePrebuildifyCount}"; fi
-
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v${{ needs.Prepare_prebuild_environment.outputs.releaseTag}}
-          release_name: Release v${{ needs.Prepare_prebuild_environment.outputs.releaseTag}}
+          tag_name: v${{ steps.package-version.outputs.current-version }}
+          release_name: Release v${{ steps.package-version.outputs.current-version }}
           body: |
             Changes in this Release
             - First Change
@@ -337,22 +283,22 @@ jobs:
           prerelease: true
 
       - uses: AButler/upload-release-assets@v2.0
-        name: Upload Prebuild Artifacts to ${{ needs.Prepare_prebuild_environment.outputs.releaseTag}}
+        name: Upload Prebuild Artifacts to ${{ steps.package-version.outputs.current-version }}
         with:
           files: "prebuilds/*/node-pty*tar.gz"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-          release-tag: v${{ needs.Prepare_prebuild_environment.outputs.releaseTag}}
+          release-tag: v${{ steps.package-version.outputs.current-version }}
 
       - name: NPM Pack Release
         run: |
           npm pack
 
       - uses: AButler/upload-release-assets@v2.0
-        name: Upload NPM Release to ${{ needs.Prepare_prebuild_environment.outputs.releaseTag}}
+        name: Upload NPM Release to ${{ steps.package-version.outputs.current-version }}
         with:
           files: "*node-pty-prebuilt-multiarch*.tgz"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-          release-tag: v${{ needs.Prepare_prebuild_environment.outputs.releaseTag}}
+          release-tag: v${{ steps.package-version.outputs.current-version }}
 
       - name: "Check file existence"
         id: check_files
@@ -381,4 +327,4 @@ jobs:
       - name: "Output Results"
         run: |
           echo "::notice:: GitHub run_id: ${{ github.run_id }}"
-          echo "::notice:: Release Version: ${{ needs.Prepare_prebuild_environment.outputs.releaseTag }}"
+          echo "::notice:: Release Version: ${{ steps.package-version.outputs.current-version }}"
