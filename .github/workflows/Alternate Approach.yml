@@ -155,11 +155,13 @@ jobs:
 
           - name: win-x64 
             github-action-runner: windows-latest
+            arch: x64
             COUNT: 19
             NPMCOUNT: 0
   
           - name: win-arm64 
             github-action-runner: windows-11-arm
+            arch: arm64
             COUNT: 19
             NPMCOUNT: 0
 
@@ -229,11 +231,11 @@ jobs:
           npm ci --ignore-scripts
           node .prebuild/updateAbiRegistry.js
 
-      - name: Windows ${{runner.arch}} - Prebuild Binaries - ${{ runner.arch }} - NodeJS ${{ matrix.node-version }}
+      - name: Windows ${{runner.arch}} - Prebuild Binaries - ${{ matrix.arch }} - NodeJS ${{ matrix.node-version }}
         if: ${{ (runner.os == 'Windows') }}
         shell: bash
         run: |
-          env JOBS=max node_modules/.bin/prebuild -t ${{ matrix.node-version}}.0.0  --include-regex "\.(node|exe|dll|pdb)" --arch ${{ runner.arch }}
+          env JOBS=max node_modules/.bin/prebuild -t ${{ matrix.node-version}}.0.0  --include-regex "\.(node|exe|dll|pdb)" --arch ${{ matrix.arch }}
 
       # Start of Checks
 
