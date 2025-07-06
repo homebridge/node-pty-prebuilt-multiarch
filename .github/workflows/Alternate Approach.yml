@@ -77,16 +77,16 @@ jobs:
             linux-x64,
             linux-arm,
             linux-arm64,
-            linuxmusl-arm,
-            linuxmusl-arm64,
-            linuxmusl-x64,
+            linux-musl-arm,
+            linux-musl-arm64,
+            linux-musl-x64,
             win-x64,
             win-arm64
           ]
         node-version: [24, 23, 22, 21, 20, 19, 18]
         #  buster -> bullseye -> bookworm
         include:
-          - name: linuxmusl-x64 
+          - name: linux-musl-x64 
             github-action-runner: ubuntu-latest
             BASE_IMAGE: library/node:16-alpine
             DOCKERFILE: Dockerfile.alpine
@@ -94,7 +94,7 @@ jobs:
             COUNT: 19
             NPMCOUNT: 7
 
-          - name: linuxmusl-arm  
+          - name: linux-musl-arm  
             github-action-runner: ubuntu-latest
             BASE_IMAGE: arm32v6/node:16-alpine
             DOCKERFILE: Dockerfile.alpine
@@ -102,11 +102,12 @@ jobs:
             COUNT: 19
             NPMCOUNT: 7
 
-          - name: linuxmusl-arm64 
-            github-action-runner: ubuntu-latest
+          - name: linux-musl-arm64 
+            github-action-runner: ubuntu-24.04-arm
             BASE_IMAGE: arm64v8/node:16-alpine
             DOCKERFILE: Dockerfile.alpine
             QEMU_ARCH: aarch64
+            PLATFORM: --platform=linux/arm64
             COUNT: 19
             NPMCOUNT: 7
 
