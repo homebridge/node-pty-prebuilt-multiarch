@@ -91,7 +91,6 @@ jobs:
             BASE_IMAGE: library/node:16-alpine
             DOCKERFILE: Dockerfile.alpine
             QEMU_ARCH: x86_64
-            CMD: BuildAllCMD
             COUNT: 19
             NPMCOUNT: 7
 
@@ -100,7 +99,6 @@ jobs:
             BASE_IMAGE: arm32v6/node:16-alpine
             DOCKERFILE: Dockerfile.alpine
             QEMU_ARCH: arm
-            CMD: BuildAllCMD
             COUNT: 19
             NPMCOUNT: 7
 
@@ -109,7 +107,6 @@ jobs:
             BASE_IMAGE: arm64v8/node:16-alpine
             DOCKERFILE: Dockerfile.alpine
             QEMU_ARCH: aarch64
-            CMD: BuildAllCMD
             COUNT: 19
             NPMCOUNT: 7
 
@@ -118,7 +115,6 @@ jobs:
             BASE_IMAGE: library/debian:bullseye-slim
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: x86_64
-            CMD: BuildAllCMD
             COUNT: 12
             NPMCOUNT: 4
 
@@ -127,7 +123,6 @@ jobs:
             BASE_IMAGE: balenalib/raspberrypi3-debian:bullseye
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: arm
-            CMD: BuildAllCMD
             COUNT: 19
             NPMCOUNT: 7
 
@@ -135,9 +130,7 @@ jobs:
             github-action-runner: ubuntu-24.04-arm
             BASE_IMAGE: arm64v8/debian:bullseye
             DOCKERFILE: Dockerfile.noQemu
-            QEMU_ARCH: aarch64
             PLATFORM: --platform=linux/arm64
-            CMD: BuildAllCMD
             COUNT: 12
             NPMCOUNT: 4
 
@@ -179,15 +172,15 @@ jobs:
         with:
           node-version: lts/*
 
-      - name: Linux - Setup Dependencies - ${{ runner.arch }}
-        if: runner.os == 'Linux' && runner.arch == 'X64'
+      - name: Linux - Setup Dependencies - With QEMU
+        if: runner.os == 'Linux' && matrix.QEMU_ARCH
         run: |
           sudo apt-get update
           sudo apt-get --yes --no-install-recommends install binfmt-support qemu-user-static
           docker run --rm --privileged multiarch/qemu-user-static:register --reset
 
-      - name: Linux - Setup Dependencies - ${{ runner.arch }}
-        if: runner.os == 'Linux' && runner.arch == 'ARM64'
+      - name: Linux - Setup Dependencies - Without QEMU
+        if: runner.os == 'Linux' && ! matrix.QEMU_ARCH
         run: |
           sudo apt-get update
           sudo apt-get --yes --no-install-recommends install binfmt-support
