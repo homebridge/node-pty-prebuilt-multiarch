@@ -135,7 +135,7 @@ jobs:
           # Other OS's
 
           - name: darwin-x64  
-            github-action-runner: macOS-13
+            github-action-runner: macos-15-intel
 
           - name: darwin-arm64 
             github-action-runner: macOS-latest
