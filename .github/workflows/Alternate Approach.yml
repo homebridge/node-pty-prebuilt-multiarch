@@ -92,7 +92,7 @@ jobs:
             darwin-arm64,
             darwin-x64,
           ]
-        node-version: [24, 23, 22, 21, 20, 19, 18]
+        node-version: [25, 24, 23, 22, 21, 20, 19, 18]
         #  buster -> bullseye -> bookworm
         include:
           - name: linux-musl-x64 
@@ -135,7 +135,7 @@ jobs:
           # Other OS's
 
           - name: darwin-x64  
-            github-action-runner: macOS-13
+            github-action-runner: macos-15-intel
 
           - name: darwin-arm64 
             github-action-runner: macOS-latest
