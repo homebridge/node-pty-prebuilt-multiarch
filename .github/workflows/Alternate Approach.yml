@@ -92,7 +92,7 @@ jobs:
             darwin-arm64,
             darwin-x64,
           ]
-        node-version: [24, 23, 22, 21, 20, 19, 18]
+        node-version: [25, 24, 23, 22, 21, 20, 19, 18]
         #  buster -> bullseye -> bookworm
         include:
           - name: linux-musl-x64 
