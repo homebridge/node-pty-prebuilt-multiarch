@@ -269,7 +269,10 @@ jobs:
       - name: macOS - Prebuild Binaries X64
         if: ${{ (runner.os == 'macOS') && (runner.arch	 == 'X64') }}
         run: |
+          python3 -m venv build
+          source build/bin/activate
           python3 -m pip install packaging setuptools
+          brew install python-setuptools
           npm ci --ignore-scripts
           env JOBS=max node .prebuild/prebuild.js ${currentNodeBuildTargets}  ${oldNodeBuildTargets}
           env JOBS=max node .prebuild/electron.js ${electronBuildTargets} ${oldElectronBuildTargets} 
