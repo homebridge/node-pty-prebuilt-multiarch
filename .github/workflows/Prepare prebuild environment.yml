@@ -40,13 +40,13 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           branches: "release-candidate"
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Create Branch
-        uses: peterjgrainger/action-create-branch@v3.0.0
+        uses: peterjgrainger/action-create-branch@v4.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: lts/*
 
@@ -117,7 +117,7 @@ jobs:
             NPMCOUNT: 7
 
           - name: linuxmusl-arm  # Ok
-            os: ubuntu-24.04-arm
+            os: ubuntu-latest
             BASE_IMAGE: arm32v6/node:16-alpine
             DOCKERFILE: Dockerfile.alpine
             QEMU_ARCH: arm
@@ -155,7 +155,7 @@ jobs:
             NPMCOUNT: 4
 
           - name: linux-arm
-            os: ubuntu-24.04-arm
+            os: ubuntu-latest
             BASE_IMAGE: balenalib/raspberrypi3-debian:bullseye
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: arm
@@ -215,11 +215,11 @@ jobs:
             NPMCOUNT: 0
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           ref: "release-candidate"
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: lts/*
 
@@ -362,12 +362,12 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: "release-candidate"
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: lts/*
           registry-url: "https://registry.npmjs.org"
