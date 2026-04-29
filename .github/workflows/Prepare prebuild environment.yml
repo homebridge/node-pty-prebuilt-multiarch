@@ -343,7 +343,7 @@ jobs:
         run: |
           tar -cvzf archive.${{ matrix.name }}.tar.gz prebuilds
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.name }}
           retention-days: 7
@@ -359,6 +359,7 @@ jobs:
       contents: write
       pull-requests: write
       repository-projects: write
+      id-token: write  # Required for OIDC
 
     steps:
       - name: Checkout Code
@@ -457,13 +458,13 @@ jobs:
 
       - name: npm publish beta
         if: ${{ github.repository == 'homebridge/node-pty-prebuilt-multiarch' && inputs.Beta }}
-        run: npm publish --access public --tag=beta
+        run: npm publish --access public --tag=beta --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: npm publish production
         if: ${{ github.repository == 'homebridge/node-pty-prebuilt-multiarch' && ! inputs.Beta }}
-        run: npm publish --access public
+        run: npm publish --access public --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
