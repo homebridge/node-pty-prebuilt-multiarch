@@ -6,17 +6,6 @@ ENV QEMU_ARCH=${QEMU_ARCH:-x86_64}
 
 COPY .prebuild/qemu/qemu-${QEMU_ARCH}-static /usr/bin/
 
-# Ensure qemu is not installed or enabled when the container's runtime architecture is ARM/AArch64.
-# Use uname -m at runtime to decide whether to remove the copied qemu binary or make it executable.
-RUN arch="$(uname -m)" && case "$arch" in \
-  arm*|aarch64) \
-  echo "Container arch $arch -> skipping QEMU (removing copied qemu binary)"; \
-  rm -f /usr/bin/qemu-${QEMU_ARCH}-static || true ;; \
-  *) \
-  echo "Container arch $arch -> enabling QEMU (ensure executable)"; \
-  chmod +x /usr/bin/qemu-${QEMU_ARCH}-static || true ;; \
-  esac
-
 RUN apt-get update && apt-get install -y gcc g++ make python3 curl
 
 RUN [ "$(uname -m)" = "x86_64" ] && apt-get install -y g++-multilib gcc-multilib || echo "ok"

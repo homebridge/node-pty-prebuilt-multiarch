@@ -18,7 +18,7 @@ env:
   # electronBuildTargets version 28 has an issue
   # oldNodeBuildTargets are versions that are no longer supported by NodeJS, that still build successfully
   # currentNodeBuildTargets are versions that are still supported by NodeJS in either Maintenance, Active or Current
-  oldNodeBuildTargets: -t 19.0.0 -t 18.0.0
+  oldNodeBuildTargets: -t 19.0.0
   currentNodeBuildTargets: -t 25.0.0 -t 24.0.0 -t 23.0.0 -t 22.0.0 -t 21.0.0 -t 20.0.0  
   oldElectronBuildTargets: -t 19.0.0 -t 18.0.0 -t 17.0.0 
   electronBuildTargets: -t 29.0.0 -t 27.0.0 -t 26.0.0 -t 25.0.0 -t 24.0.0 -t 23.0.0 -t 22.0.0 -t 21.0.0 -t 20.0.0
@@ -35,7 +35,7 @@ jobs:
       releaseTag: ${{ steps.package-version.outputs.current-version }}
     steps:
       - name: Delete pr-* branches
-        uses: homebridge/action-delete-branch@v4
+        uses: homebridge/action-delete-branch@v5
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           branches: "release-candidate"
@@ -126,7 +126,7 @@ jobs:
             NPMCOUNT: 7
 
           - name: linuxmusl-arm64 # Ok
-            os: ubuntu-24.04-arm
+            os: ubuntu-latest
             BASE_IMAGE: arm64v8/node:16-alpine
             DOCKERFILE: Dockerfile.alpine
             QEMU_ARCH: aarch64
@@ -164,7 +164,7 @@ jobs:
             NPMCOUNT: 7
 
           - name: linux-arm64
-            os: ubuntu-24.04-arm
+            os: ubuntu-latest
             BASE_IMAGE: arm64v8/debian:bullseye
             DOCKERFILE: Dockerfile.debian
             QEMU_ARCH: aarch64
