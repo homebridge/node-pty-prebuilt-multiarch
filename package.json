@@ -59,10 +59,10 @@
   "devDependencies": {
     "@types/mocha": "^7.0.2",
     "@types/node": "^12.20.55",
-    "@typescript-eslint/eslint-plugin": "^2.34.0",
-    "@typescript-eslint/parser": "^2.34.0",
+    "@typescript-eslint/eslint-plugin": "^8.64.0",
+    "@typescript-eslint/parser": "^8.64.0",
     "cross-env": "^5.2.1",
-    "eslint": "^6.8.0",
+    "eslint": "^10.7.0",
     "mocha": "^10.8.2",
     "node-abi": "^3.94.0",
     "node-gyp": "^10.3.1",
