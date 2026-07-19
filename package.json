@@ -61,18 +61,18 @@
   "devDependencies": {
     "@types/mocha": "^7.0.2",
     "@types/node": "^12.20.55",
-    "@typescript-eslint/eslint-plugin": "^8.0.0",
-    "@typescript-eslint/parser": "^8.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.64.0",
+    "@typescript-eslint/parser": "^8.64.0",
     "cross-env": "^5.2.1",
-    "eslint": "^10.4.0",
+    "eslint": "^10.7.0",
     "globals": "^14.0.0",
     "mocha": "^10.8.2",
     "node-abi": "^3.94.0",
-    "node-gyp": "^11.4.2",
+    "node-gyp": "^11.5.0",
     "prebuild": "^13.0.1",
     "prebuildify": "^5.0.1",
     "ps-list": "^6.3.0",
-    "typescript": "^5.0.0"
+    "typescript": "^5.9.3"
   },
   "overrides": {
     "prebuild": {
