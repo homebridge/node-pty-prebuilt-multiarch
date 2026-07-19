@@ -75,5 +75,9 @@
     "prebuild": {
       "node-abi": "^3.94.0"
     }
+  },
+  "allowScripts": {
+    "fsevents@2.3.3": true,
+    "es5-ext": false
   }
 }
