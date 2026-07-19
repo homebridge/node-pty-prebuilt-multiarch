@@ -35,9 +35,9 @@ jobs:
         else
           BRANCH="${{ github.ref_name }}"
         fi
-        if [[ "$BRANCH" == *"beta"* ]]; then
+        if [[ "$BRANCH" == beta-* || "$BRANCH" == "beta" ]]; then
           TAG="beta"
-        elif [[ "$BRANCH" == *"alpha"* ]]; then
+        elif [[ "$BRANCH" == alpha-* || "$BRANCH" == "alpha" ]]; then
           TAG="alpha"
         else
           TAG="latest"

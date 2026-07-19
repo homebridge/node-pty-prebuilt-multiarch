@@ -35,11 +35,15 @@ jobs:
     steps:
       - name: Determine pre-release npm tag
         id: preid
+        if: ${{ inputs.PreRelease }}
         run: |
-          if [[ "${{ github.ref_name }}" == alpha-* ]]; then
+          if [[ "${{ github.ref_name }}" =~ ^alpha-[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             TAG="alpha"
-          else
+          elif [[ "${{ github.ref_name }}" =~ ^beta-[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             TAG="beta"
+          else
+            echo "::error::Pre-release runs must be started from a beta-x.y.z or alpha-x.y.z branch (got: ${{ github.ref_name }})"
+            exit 1
           fi
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "::notice::Pre-release npm tag: $TAG"
