@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       Beta:
-        description: "Beta Release"
+        description: "Pre-release (npm tag beta or alpha, from the branch name)"
         required: true
         default: true
         type: boolean
@@ -31,7 +31,18 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       releaseTag: ${{ steps.package-version.outputs.current-version }}
+      npmTag: ${{ steps.preid.outputs.tag }}
     steps:
+      - name: Determine pre-release npm tag
+        id: preid
+        run: |
+          if [[ "${{ github.ref_name }}" == alpha-* || "${{ github.ref_name }}" == "alpha" ]]; then
+            TAG="alpha"
+          else
+            TAG="beta"
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "::notice::Pre-release npm tag: $TAG"
       - name: Delete pr-* branches
         uses: homebridge/action-delete-branch@v4
         with:
@@ -58,11 +69,11 @@ jobs:
 
       - name: Adjust version
         if: ${{ inputs.Beta }}
-        run: node .github/npm-version-script.js ${{ github.ref }} beta
+        run: node .github/npm-version-script.js ${{ github.ref }} ${{ steps.preid.outputs.tag }}
 
       - name: npm version (without git commit)
         if: ${{ inputs.Beta }}
-        run: npm version pre --preid=beta --no-git-tag-version
+        run: npm version pre --preid=${{ steps.preid.outputs.tag }} --no-git-tag-version
 
       - name: Allow prebuilds to be stored on github
         run: sed -i.bak '/prebuilds/d' .gitignore
@@ -437,9 +448,9 @@ jobs:
           echo "::error::Missing MacOS ARM prebuilds, please correct, and rerun"
           exit 1
 
-      - name: npm publish beta
+      - name: npm publish pre-release (beta / alpha)
         if: ${{ github.repository == 'homebridge/node-pty-prebuilt-multiarch' && inputs.Beta }}
-        run: npm publish --access public --tag=beta
+        run: npm publish --access public --tag=${{ needs.Prepare_prebuild_environment.outputs.npmTag }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 

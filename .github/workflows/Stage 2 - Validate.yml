@@ -3,7 +3,7 @@ run-name: Stage 2 - Validate against ${{ github.ref_name }}
 
 on:
   pull_request:
-    branches: [latest, beta-*.*.*, beta]
+    branches: [latest, beta-*.*.*, beta, alpha-*.*.*, alpha]
     types: [review_requested, ready_for_review]
   workflow_dispatch:
   workflow_run:
@@ -27,6 +27,8 @@ jobs:
       run: |
         if [[ ${{ github.ref_name }} == *"beta"* ]]; then
           TAG="beta"
+        elif [[ ${{ github.ref_name }} == *"alpha"* ]]; then
+          TAG="alpha"
         else
           TAG="latest"
         fi
