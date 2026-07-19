@@ -73,6 +73,20 @@ jobs:
           ARCH: ${{ steps.arch.outputs.arch }}
           npm_config_arch: ${{ steps.arch.outputs.arch }}
 
+      # During npm ci, prebuild-install downloads the prebuild published for
+      # the current package version, which is built from older source. Rebuild
+      # from source so the glibc check and tests exercise this checkout. The
+      # rebuild wipes build/, so re-run post-install afterwards to restore the
+      # conpty payload it copies there on Windows.
+      - name: Rebuild native module from source
+        shell: bash
+        run: |
+          npx node-gyp rebuild
+          node scripts/post-install.js
+        env:
+          ARCH: ${{ steps.arch.outputs.arch }}
+          npm_config_arch: ${{ steps.arch.outputs.arch }}
+
       - name: Verify GLIBC requirements
         if: runner.os == 'Linux'
         run: |
