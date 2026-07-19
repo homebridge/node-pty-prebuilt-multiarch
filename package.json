@@ -14,16 +14,17 @@
   },
   "files": [
     "binding.gyp",
-    "lib/",
+    "lib/**/*.js",
+    "!lib/**/*.test.js",
     "scripts/",
-    "src/",
-    "deps/",
+    "src/**/*.{cc,h}",
+    "src/tsconfig.json",
     "typings/",
     "prebuilds/linux-x64",
     "prebuilds/linux-ia32",
     "prebuilds/linux-arm",
     "prebuilds/linux-arm64",
-    "third_party/conpty"
+    "third_party/"
   ],
   "homepage": "https://github.com/homebridge/node-pty-prebuilt-multiarch",
   "bugs": {
@@ -40,10 +41,11 @@
   "scripts": {
     "build": "tsc -b ./src/tsconfig.json",
     "watch": "tsc -b -w ./src/tsconfig.json",
-    "lint": "eslint -c .eslintrc.js --ext .ts src/",
+    "lint": "eslint src/",
     "install": "node scripts/check-prebuild.js || prebuild-install --verbose || node scripts/install.js",
     "validate": "node scripts/check-prebuild.js || prebuild-install --verbose",
     "postinstall": "node scripts/post-install.js",
+    "compileCommands": "node scripts/gen-compile-commands.js",
     "test": "cross-env NODE_ENV=test mocha -R spec --exit lib/*.test.js",
     "posttest": "npm run lint",
     "prepare": "npm run build",
@@ -59,17 +61,18 @@
   "devDependencies": {
     "@types/mocha": "^7.0.2",
     "@types/node": "^12.20.55",
-    "@typescript-eslint/eslint-plugin": "^2.34.0",
-    "@typescript-eslint/parser": "^2.34.0",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
     "cross-env": "^5.2.1",
-    "eslint": "^6.8.0",
+    "eslint": "^10.4.0",
+    "globals": "^14.0.0",
     "mocha": "^10.8.2",
     "node-abi": "^3.94.0",
-    "node-gyp": "^10.3.1",
+    "node-gyp": "^11.4.2",
     "prebuild": "^13.0.1",
     "prebuildify": "^5.0.1",
     "ps-list": "^6.3.0",
-    "typescript": "^3.9.10"
+    "typescript": "^5.0.0"
   },
   "overrides": {
     "prebuild": {
