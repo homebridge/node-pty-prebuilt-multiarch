@@ -10,7 +10,6 @@ echo
 echo "Building for $(uname -m)... ->" $*
 
 echo
-#npm config set unsafe-perm true
 #npm cache clean
 #npm ci --ignore-scripts --no-bin-links
 npm ci --ignore-scripts

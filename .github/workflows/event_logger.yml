@@ -4,7 +4,7 @@ on:
   release:
   workflow_run:
     workflows: ["Stage 2 - Validate", "Stage 1 - Run prebuild's and Create GitHub and NPM release"]
-    types: 
+    types:
       - completed
       - requested
       - in_progress
