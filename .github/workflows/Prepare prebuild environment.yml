@@ -22,6 +22,10 @@ env:
   ReleasePrebuildCount: 203
   ReleasePrebuildifyCount: 56
 
+concurrency:
+  group: create_prebuilds
+  cancel-in-progress: true
+
 jobs:
   Prepare_prebuild_environment:
     name: Prepare prebuild environment ${{ github.ref_name }}
@@ -265,12 +269,14 @@ jobs:
         if: ${{ (runner.os == 'Windows') && (matrix.arch == 'x64') }}
         shell: bash
         run: |
+          npm ci --ignore-scripts
           env JOBS=max node_modules/.bin/prebuild ${currentNodeBuildTargets} ${oldNodeBuildTargets} --include-regex "\.(node|exe|dll|pdb)" --arch ${{ matrix.arch }}
 
       - name: Windows ${{matrix.arch}} - Prebuild Binaries
         if: ${{ (runner.os == 'Windows') && (matrix.arch == 'arm64') }}
         shell: bash
         run: |
+          npm ci --ignore-scripts
           env JOBS=max node_modules/.bin/prebuild ${currentNodeBuildTargets} --include-regex "\.(node|exe|dll|pdb)" --arch ${{ matrix.arch }}
 
       # Start of Checks

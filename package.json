@@ -38,7 +38,7 @@
   "scripts": {
     "build": "tsc -b ./src/tsconfig.json",
     "watch": "tsc -b -w ./src/tsconfig.json",
-    "lint": "eslint -c .eslintrc.js --ext .ts src/",
+    "lint": "eslint -c eslint.config.js --ext .ts src/",
     "install": "node scripts/check-prebuild.js || prebuild-install --verbose || node scripts/install.js",
     "validate": "node scripts/check-prebuild.js || prebuild-install --verbose",
     "postinstall": "node scripts/post-install.js",
@@ -61,6 +61,7 @@
     "@typescript-eslint/parser": "^8.64.0",
     "cross-env": "^10.1.0",
     "eslint": "^10.7.0",
+    "globals": "^17.7.0",
     "mocha": "^11.7.6",
     "node-abi": "^4.33.0",
     "node-gyp": "^11.2.0",
