@@ -187,7 +187,7 @@ jobs:
           # Other OS's
 
           - name: darwin-x64  # Ok
-            os: macos-15-intel
+            os: macos-26-intel
             COUNT: 19
             NPMCOUNT: 0
 
