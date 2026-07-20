@@ -22,6 +22,26 @@ export BuildAllCMD="./.prebuild/build.sh .prebuild/prebuild.js ${oldNodeBuildTar
 ./.prebuild/build.sh .prebuild/prebuildify.js ${oldNodeBuildTargets} ${nodeBuildTargets} && \
 ./.prebuild/build.sh .prebuild/electron.js ${electronBuildTargets}"
 
+# 
+export          name=linux-ia32
+#            os: ubuntu-latest
+export PLATFORM=linux/386
+export            BASE_IMAGE=debian:bullseye-slim
+export            DOCKERFILE=Dockerfile.debian
+export            QEMU_ARCH=i386
+export            CMD=$BuildAllCMD
+#            COUNT: 12
+#            NPMCOUNT: 4
+
+echo
+echo "--------------------------- $name - $QEMU_ARCH - $DOCKERFILE -------------------------------"
+echo
+
+docker build --platform $PLATFORM -f .prebuild/$DOCKERFILE --build-arg BASE_IMAGE=${BASE_IMAGE} --build-arg QEMU_ARCH=${QEMU_ARCH} -t multiarch-build .
+docker run --rm -v $(pwd):/node-pty multiarch-build bash -c "$CMD"
+
+
+
 # Older
 export QEMU_ARCH=x86_64
 export DOCKERFILE="Dockerfile.oldDebian"

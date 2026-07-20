@@ -18,7 +18,7 @@ RUN case "${QEMU_ARCH}" in \
   x86_64) NODE_ARCH='x64';; \
   arm) NODE_ARCH='armv7l';; \
   aarch64) NODE_ARCH='arm64';; \
-  i386) NODE_ARCH='x86'; NODE_VERSION='18.4.0';; \
+  i386) NODE_ARCH='x86'; NODE_VERSION='20.20.2';; \
   *) echo "unsupported architecture"; exit 1 ;; \
   esac \
   && set -x \

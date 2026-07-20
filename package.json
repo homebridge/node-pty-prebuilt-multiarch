@@ -63,7 +63,7 @@
     "eslint": "^10.7.0",
     "mocha": "^11.7.6",
     "node-abi": "^4.33.0",
-    "node-gyp": "^13.0.1",
+    "node-gyp": "^11.2.0",
     "prebuild": "^13.0.1",
     "prebuildify": "^5.0.1",
     "ps-list": "^9.0.0",
