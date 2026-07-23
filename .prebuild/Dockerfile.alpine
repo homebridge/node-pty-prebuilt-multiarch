@@ -11,4 +11,6 @@ RUN apk add curl git gcc g++ make python3 paxctl
 RUN mkdir /node-pty
 WORKDIR /node-pty
 
-#CMD /bin/bash -c "$CMD"
+# Configure the number of parallel jobs. Default is 1 to reduce memory pressure.
+ARG JOBS=1
+ENV JOBS=${JOBS}
