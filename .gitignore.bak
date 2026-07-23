@@ -11,6 +11,7 @@ npm-debug.log
 fixtures/space folder/
 .vscode/settings.json
 
+prebuilds
 .vscode/ipch/
 .idea
 yarn.lock
