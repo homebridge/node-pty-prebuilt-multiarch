@@ -7,8 +7,8 @@ run-name: Package against ${{ github.ref_name }}
 on:
   workflow_dispatch:
     inputs:
-      Beta:
-        description: "Beta Release"
+      PreRelease:
+        description: "Pre-release (npm tag beta or alpha, from the branch name)"
         required: true
         default: true
         type: boolean
@@ -32,7 +32,22 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       releaseTag: ${{ steps.package-version.outputs.current-version }}
+      npmTag: ${{ steps.preid.outputs.tag }}
     steps:
+      - name: Determine pre-release npm tag
+        id: preid
+        if: ${{ inputs.PreRelease }}
+        run: |
+          if [[ "${{ github.ref_name }}" =~ ^alpha-[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            TAG="alpha"
+          elif [[ "${{ github.ref_name }}" =~ ^beta-[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            TAG="beta"
+          else
+            echo "::error::Pre-release runs must be started from a beta-x.y.z or alpha-x.y.z branch (got: ${{ github.ref_name }})"
+            exit 1
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "::notice::Pre-release npm tag: $TAG"
       - name: Delete pr-* branches
         uses: homebridge/action-delete-branch@v5
         with:
@@ -50,20 +65,20 @@ jobs:
           node-version: lts/*
 
       - name: Fetch Adjust version script
-        if: ${{ inputs.Beta }}
+        if: ${{ inputs.PreRelease }}
         run: wget https://raw.githubusercontent.com/homebridge/.github/latest/.github/npm-version-script.js
         working-directory: .github
 
-      - if: ${{ inputs.Beta }}
+      - if: ${{ inputs.PreRelease }}
         run: npm install semver
 
       - name: Adjust version
-        if: ${{ inputs.Beta }}
-        run: node .github/npm-version-script.js ${{ github.ref }} beta
+        if: ${{ inputs.PreRelease }}
+        run: node .github/npm-version-script.js ${{ github.ref }} ${{ steps.preid.outputs.tag }}
 
       - name: npm version (without git commit)
-        if: ${{ inputs.Beta }}
-        run: npm version pre --preid=beta --no-git-tag-version
+        if: ${{ inputs.PreRelease }}
+        run: npm version pre --preid=${{ steps.preid.outputs.tag }} --no-git-tag-version
 
       - name: Allow prebuilds to be stored on github
         run: sed -i.bak '/prebuilds/d' .gitignore
@@ -414,15 +429,15 @@ jobs:
           echo "::error::Missing MacOS ARM prebuilds, please correct, and rerun"
           exit 1
 
-      - name: npm publish beta
-        if: ${{ github.repository == 'homebridge/node-pty-prebuilt-multiarch' && inputs.Beta }}
-        run: npm publish --access public --tag=beta --provenance
+      - name: npm publish pre-release (beta / alpha)
+        if: ${{ github.repository == 'homebridge/node-pty-prebuilt-multiarch' && inputs.PreRelease }}
+        run: npm publish --access public --tag=${{ needs.Prepare_prebuild_environment.outputs.npmTag }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: npm publish production
-        if: ${{ github.repository == 'homebridge/node-pty-prebuilt-multiarch' && ! inputs.Beta }}
-        run: npm publish --access public --provenance
+        if: ${{ github.repository == 'homebridge/node-pty-prebuilt-multiarch' && ! inputs.PreRelease }}
+        run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
