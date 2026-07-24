@@ -3,11 +3,11 @@
  * Copyright (c) 2018, Microsoft Corporation (MIT License).
  */
 
-import * as fs from 'fs';
 import * as assert from 'assert';
-import { WindowsTerminal } from './windowsTerminal';
+import * as fs from 'fs';
 import * as path from 'path';
-import * as psList from 'ps-list';
+import psList from 'ps-list';
+import { WindowsTerminal } from './windowsTerminal';
 
 interface IProcessState {
   // Whether the PID must exist or must not exist
@@ -180,7 +180,7 @@ if (process.platform === 'win32') {
       describe('env', () => {
         it('should set environment variables of the shell', function (done) {
           this.timeout(10000);
-          const term = new WindowsTerminal('cmd.exe', '/C echo %FOO%', { useConpty, useConptyDll, env: { FOO: 'BAR' }});
+          const term = new WindowsTerminal('cmd.exe', '/C echo %FOO%', { useConpty, useConptyDll, env: { FOO: 'BAR' } });
           let result = '';
           term.on('data', (data) => {
             result += data;
