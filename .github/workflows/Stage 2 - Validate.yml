@@ -3,7 +3,7 @@ run-name: Stage 2 - Validate against ${{ github.ref_name }}
 
 on:
   pull_request:
-    branches: [main, beta-*.*.*, beta]
+    branches: [latest, beta-*.*.*, beta, alpha-*.*.*, alpha]
     types: [review_requested, ready_for_review]
   workflow_dispatch:
   workflow_run:
@@ -29,8 +29,20 @@ jobs:
     - name: Tag
       id: tag
       run: |
-        if [[ ${{ github.ref_name }} == *"beta"* ]]; then
+        # github.ref_name is not the release branch on every event: on
+        # pull_request it is the merge ref (e.g. 91/merge) and on workflow_run
+        # it is the default branch, so resolve the real branch first
+        if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+          BRANCH="${{ github.base_ref }}"
+        elif [[ "${{ github.event_name }}" == "workflow_run" ]]; then
+          BRANCH="${{ github.event.workflow_run.head_branch }}"
+        else
+          BRANCH="${{ github.ref_name }}"
+        fi
+        if [[ "$BRANCH" == beta-* || "$BRANCH" == "beta" ]]; then
           TAG="beta"
+        elif [[ "$BRANCH" == alpha-* || "$BRANCH" == "alpha" ]]; then
+          TAG="alpha"
         else
           TAG="latest"
         fi
