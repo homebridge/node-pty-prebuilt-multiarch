@@ -19,8 +19,16 @@ interface IWindowsProcessTreeResult {
   pid: number;
 }
 
+// ps-list refuses to enumerate processes on Windows ARM64 - it throws
+// "Windows ARM64 is not supported yet" rather than shelling out to its bundled
+// fastlist binary, which it only ships for x64 and x86. The tests that inspect
+// the process tree therefore cannot run there; every other test in this file
+// still does. (ps-list 6 had no such guard and ran the x64 binary under
+// emulation, which is why this only began failing after the bump to 9.)
+const canListProcesses = !(process.platform === 'win32' && process.arch === 'arm64');
+
 function pollForProcessState(desiredState: IProcessState, intervalMs: number = 100, timeoutMs: number = 2000): Promise<void> {
-  return new Promise<void>(resolve => {
+  return new Promise<void>((resolve, reject) => {
     let tries = 0;
     const interval = setInterval(() => {
       psList({ all: true }).then(ps => {
@@ -52,13 +60,16 @@ function pollForProcessState(desiredState: IProcessState, intervalMs: number = 1
           assert.fail(`Bad process state, expected:\n${processListing}`);
           resolve();
         }
+      }).catch(err => {
+        clearInterval(interval);
+        reject(err);
       });
     }, intervalMs);
   });
 }
 
 function pollForProcessTreeSize(pid: number, size: number, intervalMs: number = 100, timeoutMs: number = 2000): Promise<IWindowsProcessTreeResult[]> {
-  return new Promise<IWindowsProcessTreeResult[]>(resolve => {
+  return new Promise<IWindowsProcessTreeResult[]>((resolve, reject) => {
     let tries = 0;
     const interval = setInterval(() => {
       psList({ all: true }).then(ps => {
@@ -86,6 +97,9 @@ function pollForProcessTreeSize(pid: number, size: number, intervalMs: number = 
           clearInterval(interval);
           assert.fail(`Bad process state, expected: ${size}, actual: ${list.length}`);
         }
+      }).catch(err => {
+        clearInterval(interval);
+        reject(err);
       });
     }, intervalMs);
   });
@@ -101,7 +115,7 @@ if (process.platform === 'win32') {
           term.on('exit', () => done());
           term.kill();
         });
-        it('should kill the process tree', function (done: Mocha.Done): void {
+        (canListProcesses ? it : it.skip)('should kill the process tree', function (done: Mocha.Done): void {
           this.timeout(20000);
           const term = new WindowsTerminal('cmd.exe', [], { useConptyDll });
           const socket = (term as any)._socket;
