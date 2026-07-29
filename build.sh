@@ -6,7 +6,7 @@
 set -e
 
 export oldNodeBuildTargets='-t 17.0.1 -t 18.0.0'
-export nodeBuildTargets='-t 24.0.0 -t 23.0.0 -t 19.0.0 -t 20.0.0 -t 21.0.0 -t 22.0.0'
+export nodeBuildTargets='-t 26.0.0 -t 25.0.0 -t 24.0.0 -t 23.0.0 -t 19.0.0 -t 20.0.0 -t 21.0.0 -t 22.0.0'
 
 export oldElectronBuildTargets='-t 17.0.0 -t 18.0.0 -t 19.0.0'
 export electronBuildTargets='-t 20.0.0 -t 21.0.0 -t 22.0.0 -t 23.0.0 -t 24.0.0 -t 25.0.0 -t 26.0.0 -t 27.0.0 -t 28.0.0'
@@ -21,6 +21,26 @@ export RunCMD="./.prebuild/build.sh .prebuild/prebuild.js ${nodeBuildTargets} &&
 export BuildAllCMD="./.prebuild/build.sh .prebuild/prebuild.js ${oldNodeBuildTargets} ${nodeBuildTargets} && \
 ./.prebuild/build.sh .prebuild/prebuildify.js ${oldNodeBuildTargets} ${nodeBuildTargets} && \
 ./.prebuild/build.sh .prebuild/electron.js ${electronBuildTargets}"
+
+# 
+export          name=linux-ia32
+#            os: ubuntu-latest
+export PLATFORM=linux/386
+export            BASE_IMAGE=debian:bullseye-slim
+export            DOCKERFILE=Dockerfile.debian
+export            QEMU_ARCH=i386
+export            CMD=$BuildAllCMD
+#            COUNT: 12
+#            NPMCOUNT: 4
+
+echo
+echo "--------------------------- $name - $QEMU_ARCH - $DOCKERFILE -------------------------------"
+echo
+
+docker build --platform $PLATFORM -f .prebuild/$DOCKERFILE --build-arg BASE_IMAGE=${BASE_IMAGE} --build-arg QEMU_ARCH=${QEMU_ARCH} -t multiarch-build .
+docker run --rm -v $(pwd):/node-pty multiarch-build bash -c "$CMD"
+
+
 
 # Older
 export QEMU_ARCH=x86_64
@@ -45,10 +65,10 @@ export CMD="./.prebuild/build.sh .prebuild/prebuild.js ${nodeBuildTargets}"
 echo
 echo "--------------------------- $QEMU_ARCH - $DOCKERFILE -------------------------------"
 echo
-docker build -f .prebuild/$DOCKERFILE --build-arg QEMU_ARCH=${QEMU_ARCH} -t multiarch-build .
-docker run --rm -v $(pwd):/node-pty multiarch-build bash -c "$CMD"
+#docker build -f .prebuild/$DOCKERFILE --build-arg QEMU_ARCH=${QEMU_ARCH} -t multiarch-build .
+#docker run --rm -v $(pwd):/node-pty multiarch-build bash -c "$CMD"
 
-exit 1
+
 
 #docker run -v $(pwd):/node-pty multiarch-build ./.prebuild/build.sh .prebuild/prebuild.js ${nodeBuildTargets}
 #docker run --rm -v $(pwd):/node-pty multiarch-build ./.prebuild/build.sh .prebuild/prebuildify.js ${nodeBuildTargets}
@@ -61,9 +81,9 @@ export CMD=$BuildAllCMD
 echo
 echo "--------------------------- $QEMU_ARCH - $DOCKERFILE -------------------------------"
 echo
-docker build -f .prebuild/$DOCKERFILE --build-arg BASE_IMAGE=${BASE_IMAGE} --build-arg QEMU_ARCH=${QEMU_ARCH} -t multiarch-build .
+#docker build -f .prebuild/$DOCKERFILE --build-arg BASE_IMAGE=${BASE_IMAGE} --build-arg QEMU_ARCH=${QEMU_ARCH} -t multiarch-build .
 # docker run --rm -v $(pwd):/node-pty multiarch-build bash -c "$CMD"
-docker run  -v $(pwd):/node-pty multiarch-build bash -c bash
+#docker run  -v $(pwd):/node-pty multiarch-build bash -c bash
 # docker run --rm -it --entrypoint /bin/bash 82cef23ea419
 
 # export BASE_IMAGE=balenalib/raspberrypi3-debian:bookworm
@@ -123,8 +143,8 @@ export CMD=$RunCMD
 echo
 echo "--------------------------- $QEMU_ARCH - $DOCKERFILE -------------------------------"
 echo
-# docker build -f .prebuild/$DOCKERFILE --build-arg BASE_IMAGE=${BASE_IMAGE} --build-arg QEMU_ARCH=${QEMU_ARCH} -t multiarch-build .
-# docker run --rm -v $(pwd):/node-pty multiarch-build bash -c "$CMD"
+docker build -f .prebuild/$DOCKERFILE --build-arg BASE_IMAGE=${BASE_IMAGE} --build-arg QEMU_ARCH=${QEMU_ARCH} -t multiarch-build .
+docker run --rm -v $(pwd):/node-pty multiarch-build bash -c "$CMD"
 
 # Not Impacted
 

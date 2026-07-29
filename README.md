@@ -12,7 +12,7 @@
 
 </span>
 
-This project is a parallel fork of [`node-pty`](https://github.com/Microsoft/node-pty) providing prebuilt packages for certain Node.js and Electron versions.
+This project is a parallel fork of [`node-pty`](https://github.com/Microsoft/node-pty) providing prebuilt packages for certain Node.js versions.
 
 Inspired by [daviwil/node-pty-prebuilt](https://github.com/daviwil/node-pty-prebuilt).
 
@@ -24,7 +24,7 @@ You merely have to change your `node-pty` dependency to `@homebridge/node-pty-pr
 ## How It Works
 
 We maintain a parallel fork of the `node-pty` codebase that will be updated as new releases are shipped.
-When we merge new updates to the code into the `prebuilt-multiarch` branch, new prebuilt packages for our supported Node.js and Electron versions are updated to the corresponding [GitHub release](https://github.com/homebridge/node-pty-prebuilt-multiarch/releases).
+When we merge new updates to the code into the `prebuilt-multiarch` branch, new prebuilt packages for our supported Node.js versions are updated to the corresponding [GitHub release](https://github.com/homebridge/node-pty-prebuilt-multiarch/releases).
 
 When `@homebridge/node-pty-prebuilt-multiarch` is installed as a package dependency, the installation script checks to see if there's a prebuilt package on this repo for the OS, ABI version, and architecture of the current process and then downloads it, extracting it into the module path.
 If a corresponding prebuilt package is not found, `node-gyp` is invoked to build the package for the current platform.
@@ -36,9 +36,9 @@ If a corresponding prebuilt package is not found, `node-gyp` is invoked to build
 | macOS         | x64, arm64                |
 | Linux (glibc) | ia32, x64, aarch64 |
 | Linux (musl)  | x64, aarch64       |
-| Windows       | ia32, x64                 |
+| Windows       | x64, arm64                 |
 
-We only provide prebuilt binaries for Node.js 18 and Electron 17.0.0 or higher.  Pls note that prebuilds for Electron 28 are not supplied due to build issues.
+We only provide prebuilt binaries for Node.js 20 and higher.
 
 ## Build / Package
 

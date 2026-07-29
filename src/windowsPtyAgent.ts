@@ -29,7 +29,10 @@ export class WindowsPtyAgent {
   private _inSocket: Socket;
   private _outSocket: Socket;
   private _innerPid: number = 0;
-  private _closeTimeout: NodeJS.Timer | undefined;
+  // NodeJS.Timer and NodeJS.Timeout diverged in @types/node; only Timeout is
+  // accepted by clearTimeout. Upstream still declares Timer because it builds
+  // against @types/node 12, where the two were interchangeable.
+  private _closeTimeout: NodeJS.Timeout | undefined;
   private _exitCode: number | undefined;
   private _conoutSocketWorker: ConoutConnection;
 
@@ -193,7 +196,10 @@ export class WindowsPtyAgent {
       const agent = fork(path.join(__dirname, 'conpty_console_list_agent'), [ this._innerPid.toString() ]);
       agent.on('message', message => {
         clearTimeout(timeout);
-        resolve(message.consoleProcessList);
+        // `message` is typed as Serializable from @types/node 20 onwards, so the
+        // agent's payload shape has to be asserted. conpty_console_list_agent
+        // always sends exactly this object.
+        resolve((message as { consoleProcessList: number[] }).consoleProcessList);
       });
       const timeout = setTimeout(() => {
         // Something went wrong, just send back the shell PID
