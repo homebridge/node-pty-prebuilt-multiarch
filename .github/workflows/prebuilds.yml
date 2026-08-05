@@ -267,7 +267,7 @@ jobs:
             -e npm_config_arch=${{ matrix.arch }} \
             node:22-alpine sh -c "
               set -e
-              apk add --no-cache python3 make g++ linux-headers
+              apk add --no-cache python3 make g++ linux-headers bash file procps
               npm ci --ignore-scripts
               npm run build
               npm test
