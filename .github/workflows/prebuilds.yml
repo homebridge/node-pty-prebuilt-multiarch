@@ -168,10 +168,43 @@ jobs:
         include:
           - platform: win32-x64
             runner: windows-2022
+            arch: x64
+          - platform: win32-arm64
+            runner: windows-11-arm
+            arch: arm64
+          - platform: darwin-x64
+            runner: macos-15-intel
+            arch: x64
           - platform: darwin-arm64
-            runner: macos-14
+            runner: macos-15
+            arch: arm64
           - platform: linux-x64
             runner: ubuntu-22.04
+            arch: x64
+          - platform: linux-arm64
+            runner: ubuntu-22.04-arm
+            arch: arm64
+          - platform: linux-arm
+            runner: ubuntu-22.04
+            arch: arm
+            crossCompile: true
+          - platform: linux-ia32
+            runner: ubuntu-22.04
+            arch: ia32
+            crossCompile: true
+          - platform: linux-musl-x64
+            runner: ubuntu-22.04
+            arch: x64
+            musl: true
+          - platform: linux-musl-arm64
+            runner: ubuntu-22.04
+            arch: arm64
+            musl: true
+          - platform: linux-musl-arm
+            runner: ubuntu-22.04
+            arch: arm
+            musl: true
+            
     steps:
       - name: Checkout
         uses: actions/checkout@v6
