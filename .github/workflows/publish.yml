@@ -1,0 +1,116 @@
+name: Publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      quality:
+        description: 'Release quality'
+        required: true
+        type: choice
+        options:
+          - alpha
+          - beta
+          - stable
+        default: alpha
+      publishPackage:
+        description: '🚀 Publish to npm'
+        required: true
+        type: boolean
+        default: false
+
+jobs:
+  publish:
+    name: Publish to npm
+    runs-on: ubuntu-22.04
+    environment: ${{ inputs.quality == 'stable' && 'npm-publish-stable' || 'npm-publish-test' }}
+    permissions:
+      contents: write   # Required to create tags/releases
+      id-token: write   # Required for OIDC publishing to npm
+      actions: read     # Required to download artifacts from another workflow
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: true   # Needed so git push can authenticate
+          fetch-depth: 0              # Full history so tag/push works cleanly
+
+      - name: Use Node.js 24.x
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24.x'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Download prebuilds artifact from prebuilds workflow
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          workflow: prebuilds.yml
+          commit: ${{ github.sha }}
+          name: prebuilds-${{ github.sha }}
+          path: prebuilds/
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Make spawn-helper executable
+        run: chmod +x prebuilds/darwin-*/spawn-helper || true
+
+      - name: Install dependencies (skip native build)
+        run: npm ci --ignore-scripts
+
+      - name: Build TypeScript
+        run: npm run build
+
+      - name: Increment version
+        run: node scripts/increment-version.js
+
+      - name: Show version to be published
+        run: node -p "require('./package.json').version"
+
+      - name: Publish to npm (test)
+        if: inputs.publishPackage && inputs.quality != 'stable'
+        run: npm publish --tag ${{ inputs.quality}} --provenance --access public
+
+      - name: Publish to npm (stable)
+        if: inputs.publishPackage && inputs.quality == 'stable'
+        run: npm publish --tag latest --provenance --access public
+
+      - name: Dry run (publishPackage=false)
+        if: '!inputs.publishPackage'
+        run: npm publish --tag ${{ inputs.quality == 'stable' && 'latest' || inputs.quality }} --provenance --dry-run
+
+      - name: Get published version from npm
+        if: inputs.publishPackage
+        id: version
+        run: |
+          PKG_NAME=$(node -p "require('./package.json').name")
+          NPM_TAG="${{ inputs.quality == 'stable' && 'latest' || inputs.quality }}"
+          VERSION=$(npm view "$PKG_NAME@$NPM_TAG" version)
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Create and push git tag
+        if: inputs.publishPackage
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "v${{ steps.version.outputs.version }}"
+          git push origin "v${{ steps.version.outputs.version }}"
+
+      - name: Archive prebuilds per platform
+        if: inputs.publishPackage
+        run: |
+          cd prebuilds
+          for dir in */; do
+            platform="${dir%/}"
+            tar -czf "../prebuilds-${platform}.tar.gz" "$platform"
+          done
+          cd ..
+          ls -la prebuilds-*.tar.gz
+
+      - name: Create GitHub Release
+        if: inputs.publishPackage
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: v${{ steps.version.outputs.version }}
+          generate_release_notes: true
+          prerelease: ${{ inputs.quality != 'stable' }}
+          files: |
+            prebuilds-*.tar.gz
