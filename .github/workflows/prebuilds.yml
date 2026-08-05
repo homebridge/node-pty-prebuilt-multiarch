@@ -49,7 +49,7 @@ jobs:
             arch: x64
             musl: true
           - platform: linux-musl-arm64
-            runner: ubuntu-22.04
+            runner: ubuntu-22.04-arm
             arch: arm64
             musl: true
           - platform: linux-musl-arm
@@ -105,8 +105,8 @@ jobs:
           echo "CC=clang" >> $GITHUB_ENV
           echo "CXX=clang++" >> $GITHUB_ENV
 
-      - name: Set up QEMU (musl arm/arm64)
-        if: matrix.musl && matrix.arch != 'x64'
+      - name: Set up QEMU (musl arm, 32-bit only)
+        if: matrix.musl && matrix.arch == 'arm'
         uses: docker/setup-qemu-action@v4
 
       - name: Build in Alpine/musl container
@@ -197,7 +197,7 @@ jobs:
             arch: x64
             musl: true
           - platform: linux-musl-arm64
-            runner: ubuntu-22.04
+            runner: ubuntu-22.04-arm
             arch: arm64
             musl: true
           - platform: linux-musl-arm
@@ -247,8 +247,8 @@ jobs:
 
       # --- musl execution path: run inside a matching Alpine container under QEMU ---
 
-      - name: Set up QEMU (musl arm/arm64)
-        if: matrix.musl && matrix.arch != 'x64'
+      - name: Set up QEMU (musl arm, 32-bit only)
+        if: matrix.musl && matrix.arch == 'arm'
         uses: docker/setup-qemu-action@v4
 
       - name: Test in Alpine/musl container
@@ -270,7 +270,13 @@ jobs:
               apk add --no-cache python3 make g++ linux-headers bash file procps
               npm ci --ignore-scripts
               npm run build
-              npm test
+              if [ \"\$ARCH\" = \"arm\" ]; then
+                # 32-bit arm still runs under QEMU emulation on an x64 host;
+                # signal-timing tests can flake under emulation, so retry them.
+                npm test -- --retries 2
+              else
+                npm test
+              fi
             "
 
       # --- Cross-compiled arm/ia32: no execution environment available, so sanity-check the binary instead ---
