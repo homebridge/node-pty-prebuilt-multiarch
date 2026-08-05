@@ -272,8 +272,11 @@ jobs:
               npm run build
               if [ \"\$ARCH\" = \"arm\" ]; then
                 # 32-bit arm still runs under QEMU emulation on an x64 host;
-                # signal-timing tests can flake under emulation, so retry them.
-                npm test -- --retries 2
+                # signal round-trips take longer under emulation and can exceed
+                # mocha's 2000ms default timeout. Widen it rather than retrying -
+                # these tests share pty/signal state, so a retry after a timeout
+                # leaves dirty state that hangs every test after it.
+                npm test -- --timeout 15000
               else
                 npm test
               fi
@@ -298,9 +301,10 @@ jobs:
               apt-get install -y --no-install-recommends python3 make g++ file procps
               npm ci --ignore-scripts
               npm run build
-              # 32-bit arm runs under QEMU emulation on an x64 host;
-              # signal-timing tests can flake under emulation, so retry them.
-              npm test -- --retries 2
+              # 32-bit arm runs under QEMU emulation on an x64 host; signal
+              # round-trips take longer under emulation and can exceed mocha's
+              # 2000ms default timeout, so widen it rather than retrying.
+              npm test -- --timeout 15000
             "
 
       # --- Cross-compiled linux-ia32: no runtime exists to execute against ---
