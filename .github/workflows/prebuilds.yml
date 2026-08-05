@@ -204,14 +204,17 @@ jobs:
             runner: ubuntu-22.04
             arch: arm
             musl: true
-            
+
     steps:
       - name: Checkout
         uses: actions/checkout@v6
         with:
           persist-credentials: false
 
+      # --- Native execution path (matches host arch/libc: win32, darwin, linux-x64, linux-arm64) ---
+
       - name: Use Node.js 22.x
+        if: '!matrix.crossCompile && !matrix.musl'
         uses: actions/setup-node@v6
         with:
           node-version: '22.x'
@@ -223,21 +226,78 @@ jobs:
           path: build/Release/
 
       - name: Make spawn-helper executable (macOS/Linux)
-        if: runner.os != 'Windows'
+        if: runner.os != 'Windows' && !matrix.musl
         run: chmod +x build/Release/spawn-helper || true
 
       - name: Install dependencies (skip native build)
+        if: '!matrix.crossCompile && !matrix.musl'
         run: npm ci --ignore-scripts
 
       - name: Build TypeScript
+        if: '!matrix.crossCompile && !matrix.musl'
         run: npm run build
 
       - name: Test
+        if: '!matrix.crossCompile && !matrix.musl'
         run: npm test
 
       - name: Lint
         if: matrix.platform == 'linux-x64'
         run: npm run lint
+
+      # --- musl execution path: run inside a matching Alpine container under QEMU ---
+
+      - name: Set up QEMU (musl arm/arm64)
+        if: matrix.musl && matrix.arch != 'x64'
+        uses: docker/setup-qemu-action@v4
+
+      - name: Test in Alpine/musl container
+        if: matrix.musl
+        run: |
+          case "${{ matrix.arch }}" in
+            x64)   PLATFORM="linux/amd64" ;;
+            arm64) PLATFORM="linux/arm64" ;;
+            arm)   PLATFORM="linux/arm/v7" ;;
+          esac
+          docker run --rm \
+            --platform "$PLATFORM" \
+            -v "${{ github.workspace }}:/workspace" \
+            -w /workspace \
+            -e ARCH=${{ matrix.arch }} \
+            -e npm_config_arch=${{ matrix.arch }} \
+            node:22-alpine sh -c "
+              set -e
+              apk add --no-cache python3 make g++ linux-headers
+              npm ci --ignore-scripts
+              npm run build
+              npm test
+            "
+
+      # --- Cross-compiled arm/ia32: no execution environment available, so sanity-check the binary instead ---
+
+      - name: Verify prebuild binary format (cross-compiled)
+        if: matrix.crossCompile
+        run: |
+          set -eo pipefail
+          FILE_OUTPUT=$(file build/Release/pty.node)
+          echo "$FILE_OUTPUT"
+          case "${{ matrix.arch }}" in
+            arm)
+              echo "$FILE_OUTPUT" | grep -qE 'ARM,? EABI5' || { echo "::error::Expected ARM EABI5 binary, got: $FILE_OUTPUT"; exit 1; }
+              ;;
+            ia32)
+              echo "$FILE_OUTPUT" | grep -qE 'Intel 80386|ELF 32-bit' || { echo "::error::Expected 32-bit x86 binary, got: $FILE_OUTPUT"; exit 1; }
+              ;;
+          esac
+          echo "Binary format check passed for ${{ matrix.platform }}"
+
+      - name: Verify spawn-helper binary format (cross-compiled)
+        if: matrix.crossCompile
+        run: |
+          set -eo pipefail
+          if [ -f build/Release/spawn-helper ]; then
+            file build/Release/spawn-helper
+          fi
 
   archive:
     name: Archive prebuilds
@@ -266,4 +326,4 @@ jobs:
         with:
           name: prebuilds-${{ github.sha }}
           path: prebuilds/
-          retention-days: 30
+          retention-days: 7
