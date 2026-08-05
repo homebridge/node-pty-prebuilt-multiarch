@@ -279,7 +279,38 @@ jobs:
               fi
             "
 
-      # --- Cross-compiled arm/ia32: no execution environment available, so sanity-check the binary instead ---
+      # --- Cross-compiled linux-arm: run inside a matching glibc/arm container under QEMU (same pattern as musl-arm) ---
+
+      - name: Set up QEMU (linux-arm cross-compiled)
+        if: matrix.crossCompile && matrix.arch == 'arm'
+        uses: docker/setup-qemu-action@v4
+
+      - name: Test in arm/v7 container
+        if: matrix.crossCompile && matrix.arch == 'arm'
+        run: |
+          docker run --rm \
+            --platform linux/arm/v7 \
+            -v "${{ github.workspace }}:/workspace" \
+            -w /workspace \
+            node:22-bookworm-slim sh -c "
+              set -e
+              apt-get update -qq
+              apt-get install -y --no-install-recommends python3 make g++ file procps
+              npm ci --ignore-scripts
+              npm run build
+              # 32-bit arm runs under QEMU emulation on an x64 host;
+              # signal-timing tests can flake under emulation, so retry them.
+              npm test -- --retries 2
+            "
+
+      # --- Cross-compiled linux-ia32: no runtime exists to execute against ---
+      #
+      # x86 CPUs can run 32-bit instructions natively (no emulation needed), but
+      # Node.js has not shipped official Linux ia32 binaries since around Node 10 -
+      # current 22.x releases only provide linux-x64/arm64/armv7l/ppc64le/s390x.
+      # There is no Node runtime available anywhere to actually load a 32-bit
+      # x86 .node addon on Linux, so functional testing isn't possible without
+      # building Node from source for ia32. We fall back to a structural check.
 
       - name: Verify prebuild binary format (cross-compiled)
         if: matrix.crossCompile
