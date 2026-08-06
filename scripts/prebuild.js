@@ -25,9 +25,9 @@ if (process.env.npm_config_build_from_source === 'true') {
 }
 
 // Check whether the correct prebuilt files exist
-console.log(`\x1b[32m> Checking for prebuilds in directory ${PREBUILD_DIR}\x1b[0m`);
+console.error(`\x1b[32m> Checking for prebuilds in directory ${PREBUILD_DIR}\x1b[0m`);
 if (!fs.existsSync(PREBUILD_DIR)) {
-  console.log(`\x1b[33m> Rebuilding because directory ${PREBUILD_DIR} does not exist\x1b[0m`);
+  console.error(`\x1b[33m> Rebuilding because directory ${PREBUILD_DIR} does not exist\x1b[0m`);
   process.exit(1);
 }
 
