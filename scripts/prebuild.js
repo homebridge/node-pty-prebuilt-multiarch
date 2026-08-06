@@ -19,13 +19,13 @@ const PREBUILD_DIR = path.join(__dirname, '..', 'prebuilds', `${process.platform
 
 // Do not use prebuilds when npm_config_build_from_source is set
 if (process.env.npm_config_build_from_source === 'true') {
-  console.log('\x1b[33m> Removing prebuilds and rebuilding because npm_config_build_from_source is set\x1b[0m');
+  console.log(`\x1b[33m> Removing prebuilds from ${PREBUILDS_ROOT} and rebuilding because npm_config_build_from_source is set\x1b[0m`);
   fs.rmSync(PREBUILDS_ROOT, { recursive: true, force: true });
   process.exit(1);
 }
 
 // Check whether the correct prebuilt files exist
-console.log('\x1b[32m> Checking prebuilds...\x1b[0m');
+console.log(`\x1b[32m> Checking for prebuilds in directory ${PREBUILD_DIR}\x1b[0m`);
 if (!fs.existsSync(PREBUILD_DIR)) {
   console.log(`\x1b[33m> Rebuilding because directory ${PREBUILD_DIR} does not exist\x1b[0m`);
   process.exit(1);
