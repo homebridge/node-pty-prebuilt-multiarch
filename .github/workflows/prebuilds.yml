@@ -121,8 +121,8 @@ jobs:
           echo "CC=clang" >> $GITHUB_ENV
           echo "CXX=clang++" >> $GITHUB_ENV
 
-      - name: Set up QEMU (musl arm/arm64)
-        if: matrix.musl && matrix.arch != 'x64'
+      - name: Set up QEMU (arm container builds)
+        if: (matrix.musl && matrix.arch != 'x64') || (matrix.crossCompile && matrix.arch == 'arm')
         uses: docker/setup-qemu-action@v4
 
       - name: Build in Alpine/musl container
@@ -145,8 +145,24 @@ jobs:
               npm ci
             "
 
+      - name: Build linux-arm in Debian Bullseye container
+        if: matrix.crossCompile && matrix.arch == 'arm'
+        run: |
+          docker run --rm \
+            --platform linux/arm/v7 \
+            -v "${{ github.workspace }}:/workspace" \
+            -w /workspace \
+            -e ARCH=${{ matrix.arch }} \
+            -e npm_config_arch=${{ matrix.arch }} \
+            node:22-bullseye sh -c "
+              set -e
+              apt-get update
+              apt-get install -y python3 make g++
+              npm ci
+            "
+
       - name: Install dependencies and build
-        if: '!matrix.musl'
+        if: '!matrix.musl && !(matrix.crossCompile && matrix.arch == ''arm'')'
         run: npm ci
         env:
           ARCH: ${{ matrix.arch }}
@@ -154,6 +170,14 @@ jobs:
           CC: ${{ env.CC }}
           CXX: ${{ env.CXX }}
           SYSROOT_PATH: ${{ env.SYSROOT_PATH }}
+
+      - name: Verify GLIBC requirements (Linux arm)
+        if: matrix.crossCompile && matrix.arch == 'arm'
+        run: |
+          if readelf -V build/Release/pty.node | grep -E 'GLIBC_2\.(3[2-9]|[4-9][0-9])'; then
+            echo "Error: linux-arm prebuild requires glibc newer than Bullseye (2.31)"
+            exit 1
+          fi
 
       - name: Verify GLIBC requirements (Linux)
         if: runner.os == 'Linux' && !matrix.crossCompile && !matrix.musl

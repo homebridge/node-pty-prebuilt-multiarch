@@ -34,8 +34,8 @@ If a corresponding prebuilt package is not found, `node-gyp` is invoked to build
 | OS            | Architectures             |
 |---------------|---------------------------|
 | macOS         | x64, arm64                |
-| Linux (glibc) | ia32, x64, aarch64 |
-| Linux (musl)  | x64, aarch64       |
+| Linux (glibc) | ia32, arm, x64, aarch64 |
+| Linux (musl)  | arm, x64, aarch64       |
 | Windows       | x64, arm64                 |
 
 We only provide prebuilt binaries for Node.js 20 and higher.
