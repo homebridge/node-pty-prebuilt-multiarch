@@ -392,6 +392,16 @@ jobs:
           VERSION=$(node -p "require('./package.json').version")
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
+      - name: Add publish versions to job summary
+        if: steps.release.outputs.publish == 'true'
+        run: |
+          echo "## Published versions" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Target | Version / tag |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| --- | --- |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| npm package version | \`${{ steps.version.outputs.version }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| npm dist-tag | \`${{ steps.release.outputs.branch == 'main' && 'latest' || steps.release.outputs.branch }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| GitHub tag | \`v${{ steps.version.outputs.version }}\` |" >> "$GITHUB_STEP_SUMMARY"
+
       - name: Create and push git tag
         if: steps.release.outputs.publish == 'true'
         run: |
