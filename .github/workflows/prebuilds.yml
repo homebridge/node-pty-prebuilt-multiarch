@@ -56,10 +56,10 @@ jobs:
             runner: ubuntu-22.04
             arch: arm
             crossCompile: true
-        #  - platform: linux-ia32
-        #    runner: ubuntu-22.04
-        #    arch: ia32
-        #    crossCompile: true
+          - platform: linux-ia32
+            runner: ubuntu-22.04
+            arch: ia32
+            crossCompile: true
           - platform: linux-musl-x64
             runner: ubuntu-22.04
             arch: x64
@@ -84,14 +84,18 @@ jobs:
         with:
           node-version: '22.x'
 
-      # NOTE: sysroot pinning now covers the cross-compile targets too
-      # (linux-arm, linux-ia32), not just native x64/arm64. This is what
+      # NOTE: sysroot pinning covers the native x64/arm64 and cross-compiled
+      # linux-arm targets. linux-ia32 is built separately in a native i386
+      # Debian bullseye container because the VS Code sysroot release does
+      # not publish an i686 toolchain.
+      #
+      # This is what
       # keeps the resulting binaries linked against an old-enough glibc
       # (Debian 11/bullseye baseline) to run on Raspberry Pi OS bullseye
       # and similar older armhf/ia32 hosts, instead of whatever glibc the
       # ubuntu-22.04 runner's default cross-toolchain ships with.
-      - name: Install sysroot (Linux x64/arm64/arm/ia32)
-        if: runner.os == 'Linux' && !matrix.musl
+      - name: Install sysroot (Linux x64/arm64/arm)
+        if: runner.os == 'Linux' && !matrix.musl && matrix.arch != 'ia32'
         run: |
           set -eo pipefail
           sudo apt-get update -qq
@@ -142,34 +146,40 @@ jobs:
           echo "--- resolved search dirs WITHOUT our flags (baseline) ---"
           arm-linux-gnueabihf-g++ -print-search-dirs
 
-      # NOTE: install-sysroot.js has no sysroot for ia32 (Microsoft's
-      # vscode-linux-build-agent release does not publish an i686 sysroot -
-      # VS Code itself dropped 32-bit Linux support). Until that's resolved
-      # (either sourcing a sysroot elsewhere, e.g. debootstrap, or dropping
-      # linux-ia32 from the build matrix if no users need it), this step
-      # will still install a cross-compiler but the sysroot install step
-      # upstream will fail first with "Unsupported architecture: ia32".
-      - name: Install cross-compiler (Linux ia32)
-        if: matrix.crossCompile && matrix.arch == 'ia32'
-        run: |
-          set -eo pipefail
-          sudo apt-get update -qq
-          sudo apt-get install -y gcc-multilib g++-multilib
-          echo "CC=gcc" >> $GITHUB_ENV
-          echo "CXX=g++" >> $GITHUB_ENV
-          echo "CFLAGS=--sysroot=${{ env.SYSROOT_PATH }}" >> $GITHUB_ENV
-          echo "CXXFLAGS=--sysroot=${{ env.SYSROOT_PATH }}" >> $GITHUB_ENV
-          echo "LDFLAGS=--sysroot=${{ env.SYSROOT_PATH }}" >> $GITHUB_ENV
-
       - name: Configure compiler (macOS)
         if: runner.os == 'macOS'
         run: |
           echo "CC=clang" >> $GITHUB_ENV
           echo "CXX=clang++" >> $GITHUB_ENV
 
-      - name: Set up QEMU (musl arm/arm64)
-        if: matrix.musl && matrix.arch != 'x64'
+      - name: Set up QEMU (musl arm/arm64 and Linux ia32)
+        if: (matrix.musl && matrix.arch != 'x64') || matrix.arch == 'ia32'
         uses: docker/setup-qemu-action@v4
+
+      # Official Node.js Linux ia32 binaries are no longer published. This
+      # reproduces the project's known-good ia32 build environment: native
+      # i386 Debian bullseye under QEMU with the last suitable unofficial
+      # x86 Node.js runtime. The produced addon uses Node-API, so the runtime
+      # is only the build host; the artifact is packaged once per architecture.
+      - name: Build in Debian bullseye/i386 container
+        if: matrix.arch == 'ia32'
+        run: |
+          docker run --rm \
+            --platform linux/386 \
+            -v "${{ github.workspace }}:/workspace" \
+            -w /workspace \
+            -e ARCH=ia32 \
+            -e npm_config_arch=ia32 \
+            i386/debian:bullseye-slim sh -c '
+              set -e
+              apt-get update
+              apt-get install -y --no-install-recommends ca-certificates curl python3 make g++
+              curl -fsSLO https://unofficial-builds.nodejs.org/download/release/v18.4.0/node-v18.4.0-linux-x86.tar.gz
+              echo "76062287b938d02f839fe82e60829703b852eefc692b4254982f8d2d18dd5532  node-v18.4.0-linux-x86.tar.gz" | sha256sum -c -
+              tar -xzf node-v18.4.0-linux-x86.tar.gz -C /usr/local --strip-components=1 --no-same-owner
+              rm node-v18.4.0-linux-x86.tar.gz
+              npm ci --verbose
+            '
 
       - name: Build in Alpine/musl container
         if: matrix.musl
@@ -197,7 +207,7 @@ jobs:
       # pty.node - not just the intermediate compile steps. Remove once the
       # GLIBC_2.34 mismatch is resolved; this is diagnostic-only.
       - name: Install dependencies and build
-        if: '!matrix.musl'
+        if: '!matrix.musl && matrix.arch != ''ia32'''
         run: npm ci --verbose
         env:
           ARCH: ${{ matrix.arch }}

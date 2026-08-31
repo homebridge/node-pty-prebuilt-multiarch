@@ -16,6 +16,7 @@ const path = require('path');
 
 const PREBUILDS_ROOT = path.join(__dirname, '..', 'prebuilds');
 const PREBUILD_DIR = path.join(__dirname, '..', 'prebuilds', `${process.platform}-${process.arch}`);
+const PREBUILD_FILE = path.join(PREBUILD_DIR, 'pty.node');
 
 // Do not use prebuilds when npm_config_build_from_source is set
 if (process.env.npm_config_build_from_source === 'true') {
@@ -26,8 +27,22 @@ if (process.env.npm_config_build_from_source === 'true') {
 
 // Check whether the correct prebuilt files exist
 console.error(`\x1b[32m> Checking for prebuilds in directory ${PREBUILD_DIR}\x1b[0m`);
-if (!fs.existsSync(PREBUILD_DIR)) {
-  console.error(`\x1b[33m> Rebuilding because directory ${PREBUILD_DIR} does not exist\x1b[0m`);
+if (!fs.existsSync(PREBUILD_FILE)) {
+  console.error(`\x1b[33m> Rebuilding because prebuild ${PREBUILD_FILE} does not exist\x1b[0m`);
+  process.exit(1);
+}
+
+// Loading the addon catches ABI and shared-library incompatibilities that a
+// file existence check cannot, such as a GLIBC version newer than the host
+// provides. Exiting non-zero triggers the node-gyp rebuild fallback from the
+// package install script. Runtime module loading prefers build/Release over
+// prebuilds, so the locally rebuilt addon will be selected afterwards.
+try {
+  require(PREBUILD_FILE);
+  console.error(`\x1b[32m> Successfully loaded prebuild ${PREBUILD_FILE}\x1b[0m`);
+} catch (error) {
+  console.error(`\x1b[33m> Rebuilding because prebuild ${PREBUILD_FILE} could not be loaded\x1b[0m`);
+  console.error(error);
   process.exit(1);
 }
 
