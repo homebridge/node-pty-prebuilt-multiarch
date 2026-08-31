@@ -107,7 +107,7 @@ export class UnixTerminal extends Terminal {
 
     this._socket = new tty.ReadStream(term.fd);
     if (encoding !== null) {
-      this._socket.setEncoding(encoding as BufferEncoding);
+      this._socket.setEncoding(encoding);
     }
     this._writeStream = new CustomWriteStream(term.fd, (encoding || undefined) as BufferEncoding);
 
@@ -198,13 +198,13 @@ export class UnixTerminal extends Terminal {
 
     self._master = new tty.ReadStream(term.master);
     if (encoding !== null) {
-      self._master.setEncoding(encoding as BufferEncoding);
+      self._master.setEncoding(encoding);
     }
     self._master.resume();
 
     self._slave = new tty.ReadStream(term.slave);
     if (encoding !== null) {
-      self._slave.setEncoding(encoding as BufferEncoding);
+      self._slave.setEncoding(encoding);
     }
     self._slave.resume();
 
