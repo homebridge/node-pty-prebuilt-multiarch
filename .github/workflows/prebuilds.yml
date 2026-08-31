@@ -56,10 +56,10 @@ jobs:
             runner: ubuntu-22.04
             arch: arm
             crossCompile: true
-          - platform: linux-ia32
-            runner: ubuntu-22.04
-            arch: ia32
-            crossCompile: true
+        #  - platform: linux-ia32
+        #    runner: ubuntu-22.04
+        #    arch: ia32
+        #    crossCompile: true
           - platform: linux-musl-x64
             runner: ubuntu-22.04
             arch: x64
