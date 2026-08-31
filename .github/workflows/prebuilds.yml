@@ -180,6 +180,7 @@ jobs:
               rm node-v18.4.0-linux-x86.tar.gz
               npm ci --ignore-scripts --verbose
               ./node_modules/.bin/node-gyp rebuild --verbose
+              node scripts/post-install.js
             '
 
       - name: Build in Alpine/musl container
@@ -381,13 +382,14 @@ jobs:
 
       # ---- Tag + Release only happen on a real publish ----
 
-      - name: Get published version from npm
+      # Use the exact local version passed to npm publish. Looking up the
+      # dist-tag immediately after publishing can briefly return its previous
+      # value while registry metadata propagates.
+      - name: Get package version
         if: steps.release.outputs.publish == 'true'
         id: version
         run: |
-          PKG_NAME=$(node -p "require('./package.json').name")
-          NPM_TAG="${{ steps.release.outputs.branch == 'main' && 'latest' || steps.release.outputs.branch }}"
-          VERSION=$(npm view "$PKG_NAME@$NPM_TAG" version)
+          VERSION=$(node -p "require('./package.json').version")
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Create and push git tag
