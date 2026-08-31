@@ -252,46 +252,22 @@ jobs:
         if: matrix.platform == 'linux-x64'
         run: npm run lint
 
+      - name: Stage platform prebuild
+        shell: bash
+        run: |
+          node -e "require('fs').cpSync('build/Release', 'prebuilds/${{ matrix.platform }}', { recursive: true })"
+
       - name: Upload platform artifact
         uses: actions/upload-artifact@v7
         with:
           name: prebuild-${{ matrix.platform }}
-          path: build/Release/
-          retention-days: 7
-
-  archive:
-    name: Archive prebuilds
-    needs: build
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Download all platform artifacts
-        uses: actions/download-artifact@v7
-        with:
-          pattern: prebuild-*
-          path: prebuilds-staging
-
-      - name: Restructure into prebuilds/ layout
-        run: |
-          mkdir -p prebuilds
-          for dir in prebuilds-staging/prebuild-*/; do
-            platform=$(basename "$dir" | sed 's/^prebuild-//')
-            mkdir -p "prebuilds/$platform"
-            cp -r "$dir"* "prebuilds/$platform/"
-          done
-          echo "Prebuild contents:"
-          find prebuilds -type f
-
-      - name: Upload combined prebuilds artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: prebuilds
           path: prebuilds/
-          retention-days: 30
+          retention-days: 7
 
   publish:
     name: Publish to npm
     if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
-    needs: archive
+    needs: build
     runs-on: ubuntu-22.04
     environment: ${{ (github.event_name == 'workflow_dispatch' && inputs.branch == 'main') && 'npm-publish-stable' || 'npm-publish-test' }}
     permissions:
@@ -327,11 +303,15 @@ jobs:
           node-version: '24.x'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Download combined prebuilds artifact
+      - name: Download and merge platform prebuilds
         uses: actions/download-artifact@v7
         with:
-          name: prebuilds
+          pattern: prebuild-*
           path: prebuilds/
+          merge-multiple: true
+
+      - name: Show merged prebuilds
+        run: find prebuilds -type f -print
 
       - name: Make spawn-helper executable
         run: chmod +x prebuilds/darwin-*/spawn-helper || true

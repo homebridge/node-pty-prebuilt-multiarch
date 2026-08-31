@@ -18,7 +18,7 @@ on:
           - alpha
         default: auto
   workflow_run:
-    workflows: ["Stage 1 - Run prebuild's and Create GitHub and NPM release"]
+    workflows: ["Stage 1 - Prebuilds & Publish"]
     types:
       - completed
     branches: [main, beta-*.*.*, beta, alpha-*.*.*, alpha]
@@ -130,12 +130,14 @@ jobs:
       - if: runner.os == 'macOS'
         run: sw_vers
 
-      - run: npm install ${{ needs.determine_tag.outputs.package_name }}@${{ needs.determine_tag.outputs.tag }}
+      - name: Install published package without build fallback
+        run: npm install --ignore-scripts ${{ needs.determine_tag.outputs.package_name }}@${{ needs.determine_tag.outputs.tag }}
 
       - name: Display structure of downloaded files
         run: ls -R
 
-      - run: |
+      - name: Validate packaged native prebuild
+        run: |
           cd ./node_modules/${{ needs.determine_tag.outputs.package_name }}
           npm run validate
 
