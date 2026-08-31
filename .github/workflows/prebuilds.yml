@@ -178,7 +178,8 @@ jobs:
               echo "76062287b938d02f839fe82e60829703b852eefc692b4254982f8d2d18dd5532  node-v18.4.0-linux-x86.tar.gz" | sha256sum -c -
               tar -xzf node-v18.4.0-linux-x86.tar.gz -C /usr/local --strip-components=1 --no-same-owner
               rm node-v18.4.0-linux-x86.tar.gz
-              npm ci --verbose
+              npm ci --ignore-scripts --verbose
+              ./node_modules/.bin/node-gyp rebuild --verbose
             '
 
       - name: Build in Alpine/musl container
