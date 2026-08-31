@@ -1,18 +1,34 @@
-name: Prebuilds
+name: Stage 1 - Prebuilds & Publish
 
 on:
   push:
     branches:
-      - main
+      - 'beta-*.*.*'
+      - 'alpha-*.*.*'
   workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Release branch'
+        required: true
+        type: choice
+        options:
+          - main
+          - beta
+          - alpha
+        default: alpha
+      publishPackage:
+        description: '🚀 Publish to npm and GitHub'
+        required: true
+        type: boolean
+        default: false
 
 concurrency:
-  group: prebuilds
+  group: prebuilds-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   build:
-    name: Build (${{ matrix.platform }})
+    name: Build and Test(${{ matrix.platform }})
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
@@ -68,8 +84,18 @@ jobs:
         with:
           node-version: '22.x'
 
-      - name: Install sysroot (Linux x64/arm64)
-        if: runner.os == 'Linux' && !matrix.crossCompile && !matrix.musl
+      # NOTE: sysroot pinning covers the native x64/arm64 and cross-compiled
+      # linux-arm targets. linux-ia32 is built separately in a native i386
+      # Debian bullseye container because the VS Code sysroot release does
+      # not publish an i686 toolchain.
+      #
+      # This is what
+      # keeps the resulting binaries linked against an old-enough glibc
+      # (Debian 11/bullseye baseline) to run on Raspberry Pi OS bullseye
+      # and similar older armhf/ia32 hosts, instead of whatever glibc the
+      # ubuntu-22.04 runner's default cross-toolchain ships with.
+      - name: Install sysroot (Linux x64/arm64/arm)
+        if: runner.os == 'Linux' && !matrix.musl && matrix.arch != 'ia32'
         run: |
           set -eo pipefail
           sudo apt-get update -qq
@@ -81,6 +107,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # NOTE: this sysroot uses a *flat* (non-multiarch) layout - libc.so
+      # and libc.so.6 live directly under usr/lib and lib, not under the
+      # Debian-multiarch path usr/lib/arm-linux-gnueabihf that
+      # arm-linux-gnueabihf-g++ derives by default from --sysroot alone.
+      # That mismatch was letting the compiler's own bundled default
+      # sysroot (glibc 2.34 on the ubuntu-22.04 runner) silently win the
+      # library search - the link succeeded with no error, just against
+      # the wrong libc. Explicit -B/-L/-rpath-link flags force resolution
+      # against this sysroot's actual paths instead of relying on gcc's
+      # multiarch-based default derivation from --sysroot.
       - name: Install cross-compiler (Linux arm)
         if: matrix.crossCompile && matrix.arch == 'arm'
         run: |
@@ -89,15 +125,26 @@ jobs:
           sudo apt-get install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
           echo "CC=arm-linux-gnueabihf-gcc" >> $GITHUB_ENV
           echo "CXX=arm-linux-gnueabihf-g++" >> $GITHUB_ENV
+          SYSROOT_FLAGS="--sysroot=${{ env.SYSROOT_PATH }} -B${{ env.SYSROOT_PATH }}/usr/lib -B${{ env.SYSROOT_PATH }}/lib -L${{ env.SYSROOT_PATH }}/usr/lib -L${{ env.SYSROOT_PATH }}/lib"
+          echo "CFLAGS=$SYSROOT_FLAGS" >> $GITHUB_ENV
+          echo "CXXFLAGS=$SYSROOT_FLAGS" >> $GITHUB_ENV
+          echo "LDFLAGS=$SYSROOT_FLAGS -Wl,-rpath-link=${{ env.SYSROOT_PATH }}/lib:${{ env.SYSROOT_PATH }}/usr/lib" >> $GITHUB_ENV
 
-      - name: Install cross-compiler (Linux ia32)
-        if: matrix.crossCompile && matrix.arch == 'ia32'
+      # DIAGNOSTIC - remove once the GLIBC_2.34 mismatch is resolved.
+      # Moved to run AFTER cross-compiler install (previously ran before
+      # it in an earlier version of this workflow, so
+      # arm-linux-gnueabihf-g++ didn't exist yet and these commands
+      # silently failed with "command not found").
+      - name: Debug - inspect compiler search paths
+        if: matrix.crossCompile && matrix.arch == 'arm'
         run: |
-          set -eo pipefail
-          sudo apt-get update -qq
-          sudo apt-get install -y gcc-multilib g++-multilib
-          echo "CC=gcc" >> $GITHUB_ENV
-          echo "CXX=g++" >> $GITHUB_ENV
+          echo "--- what -print-sysroot / -print-multiarch report ---"
+          arm-linux-gnueabihf-g++ -print-sysroot
+          arm-linux-gnueabihf-g++ -print-multiarch
+          echo "--- resolved search dirs WITH our explicit flags ---"
+          arm-linux-gnueabihf-g++ ${{ env.CXXFLAGS }} -print-search-dirs
+          echo "--- resolved search dirs WITHOUT our flags (baseline) ---"
+          arm-linux-gnueabihf-g++ -print-search-dirs
 
       - name: Configure compiler (macOS)
         if: runner.os == 'macOS'
@@ -105,9 +152,36 @@ jobs:
           echo "CC=clang" >> $GITHUB_ENV
           echo "CXX=clang++" >> $GITHUB_ENV
 
-      - name: Set up QEMU (musl arm/arm64)
-        if: matrix.musl && matrix.arch != 'x64'
+      - name: Set up QEMU (musl arm/arm64 and Linux ia32)
+        if: (matrix.musl && matrix.arch != 'x64') || matrix.arch == 'ia32'
         uses: docker/setup-qemu-action@v4
+
+      # Official Node.js Linux ia32 binaries are no longer published. This
+      # reproduces the project's known-good ia32 build environment: native
+      # i386 Debian bullseye under QEMU with the last suitable unofficial
+      # x86 Node.js runtime. The produced addon uses Node-API, so the runtime
+      # is only the build host; the artifact is packaged once per architecture.
+      - name: Build in Debian bullseye/i386 container
+        if: matrix.arch == 'ia32'
+        run: |
+          docker run --rm \
+            --platform linux/386 \
+            -v "${{ github.workspace }}:/workspace" \
+            -w /workspace \
+            -e ARCH=ia32 \
+            -e npm_config_arch=ia32 \
+            i386/debian:bullseye-slim sh -c '
+              set -e
+              apt-get update
+              apt-get install -y --no-install-recommends ca-certificates curl python3 make g++
+              curl -fsSLO https://unofficial-builds.nodejs.org/download/release/v18.4.0/node-v18.4.0-linux-x86.tar.gz
+              echo "76062287b938d02f839fe82e60829703b852eefc692b4254982f8d2d18dd5532  node-v18.4.0-linux-x86.tar.gz" | sha256sum -c -
+              tar -xzf node-v18.4.0-linux-x86.tar.gz -C /usr/local --strip-components=1 --no-same-owner
+              rm node-v18.4.0-linux-x86.tar.gz
+              npm ci --ignore-scripts --verbose
+              ./node_modules/.bin/node-gyp rebuild --verbose
+              node scripts/post-install.js
+            '
 
       - name: Build in Alpine/musl container
         if: matrix.musl
@@ -129,18 +203,33 @@ jobs:
               npm ci
             "
 
+      # V=1 forces gyp's generated Makefiles to print the full compiler and
+      # linker invocations, so we can confirm whether --sysroot (via
+      # LDFLAGS) is actually reaching the final link command that produces
+      # pty.node - not just the intermediate compile steps. Remove once the
+      # GLIBC_2.34 mismatch is resolved; this is diagnostic-only.
       - name: Install dependencies and build
-        if: '!matrix.musl'
-        run: npm ci
+        if: '!matrix.musl && matrix.arch != ''ia32'''
+        run: npm ci --verbose
         env:
           ARCH: ${{ matrix.arch }}
           npm_config_arch: ${{ matrix.arch }}
           CC: ${{ env.CC }}
           CXX: ${{ env.CXX }}
           SYSROOT_PATH: ${{ env.SYSROOT_PATH }}
+          CFLAGS: ${{ env.CFLAGS }}
+          CXXFLAGS: ${{ env.CXXFLAGS }}
+          LDFLAGS: ${{ env.LDFLAGS }}
+          V: 1
 
+      # crossCompile targets are no longer excluded here - this is exactly
+      # the check that would have caught the GLIBC_2.34 mismatch before it
+      # ever reached npm. If install-sysroot.js's bullseye baseline isn't
+      # honored correctly by the cross-toolchain's --sysroot flag, this
+      # step is what will now fail the build instead of publishing broken
+      # binaries silently.
       - name: Verify GLIBC requirements (Linux)
-        if: runner.os == 'Linux' && !matrix.crossCompile && !matrix.musl
+        if: runner.os == 'Linux' && !matrix.musl
         run: |
           EXPECTED_GLIBC_VERSION="2.28" \
           EXPECTED_GLIBCXX_VERSION="3.4.25" \
@@ -151,47 +240,81 @@ jobs:
         if: runner.os != 'Windows' && !matrix.musl
         run: chmod +x build/Release/spawn-helper || true
 
+      - name: Build TypeScript
+        if: '!matrix.crossCompile && !matrix.musl'
+        run: npm run build
+
+      - name: Test
+        if: '!matrix.crossCompile && !matrix.musl'
+        run: npm test
+
+      - name: Lint
+        if: matrix.platform == 'linux-x64'
+        run: npm run lint
+
+      - name: Stage platform prebuild
+        shell: bash
+        run: |
+          node -e "require('fs').cpSync('build/Release', 'prebuilds/${{ matrix.platform }}', { recursive: true })"
+
       - name: Upload platform artifact
         uses: actions/upload-artifact@v7
         with:
           name: prebuild-${{ matrix.platform }}
-          path: build/Release/
+          path: prebuilds/
           retention-days: 7
 
-  test:
-    name: Test (${{ matrix.platform }})
+  publish:
+    name: Publish to npm
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
     needs: build
-    runs-on: ${{ matrix.runner }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - platform: win32-x64
-            runner: windows-2022
-          - platform: darwin-arm64
-            runner: macos-14
-          - platform: linux-x64
-            runner: ubuntu-22.04
+    runs-on: ubuntu-22.04
+    environment: ${{ (github.event_name == 'workflow_dispatch' && inputs.branch == 'main') && 'npm-publish-stable' || 'npm-publish-test' }}
+    permissions:
+      contents: write   # Required to create tags/releases
+      id-token: write   # Required for OIDC publishing to npm
     steps:
       - name: Checkout
         uses: actions/checkout@v6
         with:
-          persist-credentials: false
+          persist-credentials: true   # Needed so git push can authenticate
+          fetch-depth: 0              # Full history so tag/push works cleanly
 
-      - name: Use Node.js 22.x
+      # ---- Release parameters ----
+      # workflow_dispatch: driven by the `branch` and `publishPackage` inputs.
+      # push (to beta-*.*.* / alpha-*.*.*): branch tier is derived from the
+      # branch name itself, and is always a full publish (npm publish + tag + release).
+
+      - name: Determine release parameters
+        id: release
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "branch=${{ inputs.branch }}" >> "$GITHUB_OUTPUT"
+            echo "publish=${{ inputs.publishPackage }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "branch=${GITHUB_REF_NAME%%-*}" >> "$GITHUB_OUTPUT"
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          fi
+      # ---- end release parameters ----
+
+      - name: Use Node.js 24.x
         uses: actions/setup-node@v6
         with:
-          node-version: '22.x'
+          node-version: '24.x'
+          registry-url: 'https://registry.npmjs.org'
 
-      - name: Download prebuild for this platform
+      - name: Download and merge platform prebuilds
         uses: actions/download-artifact@v7
         with:
-          name: prebuild-${{ matrix.platform }}
-          path: build/Release/
+          pattern: prebuild-*
+          path: prebuilds/
+          merge-multiple: true
 
-      - name: Make spawn-helper executable (macOS/Linux)
-        if: runner.os != 'Windows'
-        run: chmod +x build/Release/spawn-helper || true
+      - name: Show merged prebuilds
+        run: find prebuilds -type f -print
+
+      - name: Make spawn-helper executable
+        run: chmod +x prebuilds/darwin-*/spawn-helper || true
 
       - name: Install dependencies (skip native build)
         run: npm ci --ignore-scripts
@@ -199,38 +322,92 @@ jobs:
       - name: Build TypeScript
         run: npm run build
 
-      - name: Test
-        run: npm test
+      # ---- Versioning logic ----
+      # Pre-release only: derive/adjust version from the shared homebridge script,
+      # then bump the prerelease counter. Stable (branch == main) releases publish
+      # whatever version is already committed in package.json.
 
-      - name: Lint
-        if: matrix.platform == 'linux-x64'
-        run: npm run lint
+      - name: Fetch shared version script
+        if: steps.release.outputs.branch != 'main'
+        run: wget https://raw.githubusercontent.com/homebridge/.github/latest/.github/npm-version-script.js
+        working-directory: .github
 
-  archive:
-    name: Archive prebuilds
-    needs: [build, test]
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Download all platform artifacts
-        uses: actions/download-artifact@v7
-        with:
-          pattern: prebuild-*
-          path: prebuilds-staging
+      - name: Install semver (dependency for shared version script)
+        if: steps.release.outputs.branch != 'main'
+        run: npm install semver
 
-      - name: Restructure into prebuilds/ layout
+      - name: Adjust version to latest published base + tag
+        if: steps.release.outputs.branch != 'main'
+        run: node .github/npm-version-script.js ${{ github.ref }} ${{ steps.release.outputs.branch }}
+
+      - name: Increment prerelease number
+        if: steps.release.outputs.branch != 'main'
+        run: npm version pre --preid=${{ steps.release.outputs.branch }} --no-git-tag-version
+
+      - name: Show version to be published
+        run: node -p "require('./package.json').version"
+      # ---- end versioning logic ----
+
+      - name: Publish to npm (test)
+        if: steps.release.outputs.publish == 'true' && steps.release.outputs.branch != 'main'
+        run: npm publish --tag ${{ steps.release.outputs.branch }} --provenance --access public
+
+      - name: Publish to npm (stable)
+        if: steps.release.outputs.publish == 'true' && steps.release.outputs.branch == 'main'
+        run: npm publish --tag latest --provenance --access public
+
+      - name: Dry run (publishPackage=false)
+        if: steps.release.outputs.publish != 'true'
+        run: npm publish --tag ${{ steps.release.outputs.branch == 'main' && 'latest' || steps.release.outputs.branch }} --provenance --dry-run
+
+      # ---- Tag + Release only happen on a real publish ----
+
+      # Use the exact local version passed to npm publish. Looking up the
+      # dist-tag immediately after publishing can briefly return its previous
+      # value while registry metadata propagates.
+      - name: Get package version
+        if: steps.release.outputs.publish == 'true'
+        id: version
         run: |
-          mkdir -p prebuilds
-          for dir in prebuilds-staging/prebuild-*/; do
-            platform=$(basename "$dir" | sed 's/^prebuild-//')
-            mkdir -p "prebuilds/$platform"
-            cp -r "$dir"* "prebuilds/$platform/"
-          done
-          echo "Prebuild contents:"
-          find prebuilds -type f
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
-      - name: Upload combined prebuilds artifact
-        uses: actions/upload-artifact@v7
+      - name: Add publish versions to job summary
+        if: steps.release.outputs.publish == 'true'
+        run: |
+          echo "## Published versions" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Target | Version / tag |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| --- | --- |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| npm package version | \`${{ steps.version.outputs.version }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| npm dist-tag | \`${{ steps.release.outputs.branch == 'main' && 'latest' || steps.release.outputs.branch }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| GitHub tag | \`v${{ steps.version.outputs.version }}\` |" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Create and push git tag
+        if: steps.release.outputs.publish == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "v${{ steps.version.outputs.version }}"
+          git push origin "v${{ steps.version.outputs.version }}"
+
+      - name: Archive prebuilds per platform
+        if: steps.release.outputs.publish == 'true'
+        run: |
+          cd prebuilds
+          for dir in */; do
+            platform="${dir%/}"
+            tar -czf "../prebuilds-${platform}.tar.gz" "$platform"
+          done
+          cd ..
+          ls -la prebuilds-*.tar.gz
+
+      - name: Create GitHub Release
+        if: steps.release.outputs.publish == 'true'
+        uses: softprops/action-gh-release@v3
         with:
-          name: prebuilds-${{ github.sha }}
-          path: prebuilds/
-          retention-days: 30
+          tag_name: v${{ steps.version.outputs.version }}
+          name: v${{ steps.version.outputs.version }}
+          generate_release_notes: true
+          prerelease: ${{ steps.release.outputs.branch != 'main' }}
+          files: |
+            prebuilds-*.tar.gz
