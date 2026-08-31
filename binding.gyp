@@ -1,5 +1,11 @@
 {
+  'variables': {
+    'openssl_fips': "",
+  },
   'target_defaults': {
+    'dependencies': [
+      "<!(node -p \"require('node-addon-api').targets\"):node_addon_api_except",
+    ],
     'dependencies': [
       "<!(node -p \"require('node-addon-api').targets\"):node_addon_api_except",
     ],
@@ -44,11 +50,34 @@
           'libraries': [
             '-lshlwapi'
           ],
+          'defines': [
+            'NOMINMAX'
+          ],
         },
         {
           'target_name': 'conpty_console_list',
           'sources' : [
             'src/win/conpty_console_list.cc'
+          ],
+        },
+        {
+          'target_name': 'pty',
+          'include_dirs' : [
+            '<!(node -e "require(\'nan\')")',
+            'deps/winpty/src/include',
+          ],
+          # Disabled due to winpty
+          'msvs_disabled_warnings': [ 4506, 4530 ],
+          'dependencies' : [
+            'deps/winpty/src/winpty.gyp:winpty-agent',
+            'deps/winpty/src/winpty.gyp:winpty',
+          ],
+          'sources' : [
+            'src/win/winpty.cc',
+            'src/win/path_util.cc'
+          ],
+          'libraries': [
+            'shlwapi.lib'
           ],
         }
       ]
@@ -141,7 +170,8 @@
             'src/unix/spawn-helper.cc',
           ],
           "xcode_settings": {
-            "MACOSX_DEPLOYMENT_TARGET":"10.7"
+            "MACOSX_DEPLOYMENT_TARGET":"10.7",
+            'CLANG_CXX_LANGUAGE_STANDARD':'c++17'
           }
         },
       ]

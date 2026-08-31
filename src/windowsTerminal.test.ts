@@ -3,11 +3,11 @@
  * Copyright (c) 2018, Microsoft Corporation (MIT License).
  */
 
-import * as fs from 'fs';
 import * as assert from 'assert';
-import { WindowsTerminal } from './windowsTerminal';
+import * as fs from 'fs';
 import * as path from 'path';
-import * as psList from 'ps-list';
+import psList from 'ps-list';
+import { WindowsTerminal } from './windowsTerminal';
 
 interface IProcessState {
   // Whether the PID must exist or must not exist

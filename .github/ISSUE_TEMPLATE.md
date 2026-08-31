@@ -5,4 +5,3 @@
 - node-pty version:
 
 ## Issue description
-

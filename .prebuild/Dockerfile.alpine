@@ -1,0 +1,16 @@
+ARG BASE_IMAGE
+FROM ${BASE_IMAGE:-library/node:15-alpine}
+
+ARG QEMU_ARCH
+ENV QEMU_ARCH=${QEMU_ARCH:-x86_64}
+
+COPY .prebuild/qemu/qemu-${QEMU_ARCH}-static /usr/bin/
+
+RUN apk add curl git gcc g++ make python3 paxctl
+
+RUN mkdir /node-pty
+WORKDIR /node-pty
+
+# Configure the number of parallel jobs. Default is 1 to reduce memory pressure.
+ARG JOBS=1
+ENV JOBS=${JOBS}

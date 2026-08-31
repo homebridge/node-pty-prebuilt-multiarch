@@ -1,0 +1,447 @@
+name: "Stage 1 - Run prebuild's and Create GitHub and NPM release"
+run-name: Package against ${{ github.ref_name }}
+
+# Create branch for release
+# update package.json for package version
+
+on:
+  workflow_dispatch:
+    inputs:
+      PreRelease:
+        description: "Pre-release (npm tag beta or alpha, from the branch name)"
+        required: true
+        default: true
+        type: boolean
+
+env:
+  # Order reversed so newer versions are built first - Add new versions to the front (fail fast)
+  # oldNodeBuildTargets are versions that are no longer supported by NodeJS, that still build successfully
+  # currentNodeBuildTargets are versions that are still supported by NodeJS in either Maintenance, Active or Current
+  oldNodeBuildTargets: -t 19.0.0
+  currentNodeBuildTargets: -t 26.0.0 -t 25.0.0 -t 24.0.0 -t 23.0.0 -t 22.0.0 -t 21.0.0 -t 20.0.0  
+  ReleasePrebuildCount: 203
+  ReleasePrebuildifyCount: 56
+
+concurrency:
+  group: create_prebuilds
+  cancel-in-progress: true
+
+jobs:
+  Prepare_prebuild_environment:
+    name: Prepare prebuild environment ${{ github.ref_name }}
+    runs-on: ubuntu-latest
+    outputs:
+      releaseTag: ${{ steps.package-version.outputs.current-version }}
+      npmTag: ${{ steps.preid.outputs.tag }}
+    steps:
+      - name: Determine pre-release npm tag
+        id: preid
+        if: ${{ inputs.PreRelease }}
+        run: |
+          if [[ "${{ github.ref_name }}" =~ ^alpha-[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            TAG="alpha"
+          elif [[ "${{ github.ref_name }}" =~ ^beta-[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            TAG="beta"
+          else
+            echo "::error::Pre-release runs must be started from a beta-x.y.z or alpha-x.y.z branch (got: ${{ github.ref_name }})"
+            exit 1
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "::notice::Pre-release npm tag: $TAG"
+      - name: Delete pr-* branches
+        uses: homebridge/action-delete-branch@v5
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branches: "release-candidate"
+
+      - uses: actions/checkout@v7
+      - name: Create Branch
+        uses: peterjgrainger/action-create-branch@v4.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+
+      - name: Fetch Adjust version script
+        if: ${{ inputs.PreRelease }}
+        run: wget https://raw.githubusercontent.com/homebridge/.github/latest/.github/npm-version-script.js
+        working-directory: .github
+
+      - if: ${{ inputs.PreRelease }}
+        run: npm install semver
+
+      - name: Adjust version
+        if: ${{ inputs.PreRelease }}
+        run: node .github/npm-version-script.js ${{ github.ref }} ${{ steps.preid.outputs.tag }}
+
+      - name: npm version (without git commit)
+        if: ${{ inputs.PreRelease }}
+        run: npm version pre --preid=${{ steps.preid.outputs.tag }} --no-git-tag-version
+
+      - name: Allow prebuilds to be stored on github
+        run: sed -i.bak '/prebuilds/d' .gitignore
+
+      - name: Commit & Push changes
+        uses: actions-js/push@master
+        with:
+          author_name: ${{ github.actor }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: "release-candidate"
+          message: "Prepare prebuild environment ${{ github.ref_name }}"
+          rebase: true
+
+      - name: get-npm-version
+        id: package-version
+        uses: martinbeentjes/npm-get-version-action@v1.3.1
+
+  prebuild:
+    needs: Prepare_prebuild_environment
+    name: ${{ matrix.name }} - Prebuild NPM and GitHub Release artifacts
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        name:
+          [
+            darwin-x64,
+            darwin-arm64,
+            linux-ia32,
+            linux-x64,
+            linux-arm,
+            linux-arm64,
+            linuxmusl-arm,
+            linuxmusl-arm64,
+            linuxmusl-x64,
+            win32-x64,
+            win-arm64
+          ]
+        #  buster -> bullseye -> bookworm
+        include:
+          - name: linuxmusl-x64 # Ok
+            os: ubuntu-latest
+            BASE_IMAGE: library/node:16-alpine
+            DOCKERFILE: Dockerfile.alpine
+            QEMU_ARCH: x86_64
+            CMD: BuildAllCMD
+            COUNT: 19
+            NPMCOUNT: 7
+
+          - name: linuxmusl-arm  # Ok
+            os: ubuntu-latest
+            BASE_IMAGE: arm32v6/node:16-alpine
+            DOCKERFILE: Dockerfile.alpine
+            QEMU_ARCH: arm
+            CMD: BuildAllCMD
+            COUNT: 19
+            NPMCOUNT: 7
+
+          - name: linuxmusl-arm64 # Ok
+            os: ubuntu-latest
+            BASE_IMAGE: arm64v8/node:16-alpine
+            DOCKERFILE: Dockerfile.alpine
+            QEMU_ARCH: aarch64
+            CMD: BuildAllCMD
+            COUNT: 19
+            NPMCOUNT: 7
+
+          # Builds for NodeJS 19+
+
+          - name: linux-x64
+            os: ubuntu-latest
+            BASE_IMAGE: library/debian:bullseye-slim
+            DOCKERFILE: Dockerfile.debian
+            QEMU_ARCH: x86_64
+            CMD: BuildAllCMD
+            COUNT: 12
+            NPMCOUNT: 4
+
+          - name: linux-ia32
+            os: ubuntu-latest
+            BASE_IMAGE: i386/debian:bullseye-slim
+            DOCKERFILE: Dockerfile.debian
+            QEMU_ARCH: i386
+            CMD: BuildAllCMD
+            COUNT: 12
+            NPMCOUNT: 4
+
+          - name: linux-arm
+            os: ubuntu-latest
+            BASE_IMAGE: balenalib/raspberrypi3-debian:bullseye
+            DOCKERFILE: Dockerfile.debian
+            QEMU_ARCH: arm
+            CMD: BuildAllCMD
+            COUNT: 19
+            NPMCOUNT: 7
+
+          - name: linux-arm64
+            os: ubuntu-latest
+            BASE_IMAGE: arm64v8/debian:bullseye
+            DOCKERFILE: Dockerfile.debian
+            QEMU_ARCH: aarch64
+            PLATFORM: --platform=linux/arm64
+            CMD: BuildAllCMD
+            COUNT: 12
+            NPMCOUNT: 4
+
+          # Other OS's
+
+          - name: darwin-x64  # Ok
+            os: macos-26-intel
+            COUNT: 19
+            NPMCOUNT: 0
+
+          - name: darwin-arm64 # Ok
+            os: macOS-latest
+            COUNT: 19
+            NPMCOUNT: 0
+
+          - name: win32-x64 # Ok
+            os: windows-2022 # Downgraded from latest to 2022 due to issues with https://github.com/prebuild/prebuild and not finding VSC
+            arch: x64
+            COUNT: 19
+            NPMCOUNT: 0
+  
+          - name: win-arm64 # Ok
+            os: windows-11-arm
+            arch: arm64
+            COUNT: 19
+            NPMCOUNT: 0
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: "release-candidate"
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+
+      - name: Linux - Setup Dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get --yes --no-install-recommends install binfmt-support qemu-user-static
+          docker run --rm --privileged multiarch/qemu-user-static:register --reset
+
+      # Hackery to setup builds
+
+      - name: Setup Build Commands
+        if: runner.os == 'Linux'
+        run: |
+          echo "BuildOldCMD=\"./.prebuild/build.sh .prebuild/prebuild.js ${oldNodeBuildTargets} && \
+            ./.prebuild/build.sh .prebuild/prebuildify.js ${oldNodeBuildTargets}\"" >> $GITHUB_ENV
+          echo "BuildNewCMD=\"./.prebuild/build.sh .prebuild/prebuild.js ${currentNodeBuildTargets} && \
+            ./.prebuild/build.sh .prebuild/prebuildify.js ${currentNodeBuildTargets}\"" >> $GITHUB_ENV
+          echo "BuildAllCMD=\"./.prebuild/build.sh .prebuild/prebuild.js ${currentNodeBuildTargets} ${oldNodeBuildTargets} && \
+            ./.prebuild/build.sh .prebuild/prebuildify.js ${currentNodeBuildTargets} ${oldNodeBuildTargets}\"" >> $GITHUB_ENV
+          echo "CMD=${{ matrix.CMD }}" >> $GITHUB_ENV
+
+      - name: Linux - Prep Build EXECCMD = ${{ env.CMD }}
+        if: runner.os == 'Linux'
+        run: |
+          echo "${{ env.CMD }}"
+          echo "EXECCMD=${!CMD}" >> $GITHUB_ENV
+
+      # Linux builds
+
+      - name: Linux - Build Docker Image ${{ matrix.DOCKERFILE }} - ${{ matrix.BASE_IMAGE }} - ${{ matrix.QEMU_ARCH }}
+        if: runner.os == 'Linux'
+        run: |
+          docker build -f .prebuild/${{ matrix.DOCKERFILE }} --build-arg BASE_IMAGE=${{ matrix.BASE_IMAGE }} --build-arg QEMU_ARCH=${{ matrix.QEMU_ARCH }} -t multiarch-build ${{ matrix.PLATFORM }} .
+
+      - name: Linux - Prebuild Binaries - ${{ env.EXECCMD }}
+        if: runner.os == 'Linux'
+        run: |
+          docker run --rm -v $(pwd):/node-pty multiarch-build sh -c ${{ env.EXECCMD }}
+
+      # Mac OS
+
+      - name: macOS - Prebuild Binaries X64
+        if: ${{ (runner.os == 'macOS') && (runner.arch	 == 'X64') }}
+        run: |
+          python3 -m venv build
+          source build/bin/activate
+          python3 -m pip install packaging setuptools
+          brew install python-setuptools
+          npm ci --ignore-scripts
+          env JOBS=max node .prebuild/prebuild.js ${currentNodeBuildTargets}  ${oldNodeBuildTargets}
+
+      - name: macOS - Prebuild Binaries ARM64
+        if: ${{ (runner.os == 'macOS') && (runner.arch	 == 'ARM64') }}
+        run: |
+          python3 -m venv build
+          source build/bin/activate
+          python3 -m pip install packaging setuptools
+          brew install python-setuptools
+          npm ci --ignore-scripts
+          env JOBS=max node .prebuild/prebuild.js ${currentNodeBuildTargets}  ${oldNodeBuildTargets}
+
+      # Windows
+
+      - name: Windows ${{matrix.arch}} - Prebuild Binaries
+        if: ${{ (runner.os == 'Windows') && (matrix.arch == 'x64') }}
+        shell: bash
+        run: |
+          npm ci --ignore-scripts
+          env JOBS=max node_modules/.bin/prebuild ${currentNodeBuildTargets} ${oldNodeBuildTargets} --include-regex "\.(node|exe|dll|pdb)" --arch ${{ matrix.arch }}
+
+      - name: Windows ${{matrix.arch}} - Prebuild Binaries
+        if: ${{ (runner.os == 'Windows') && (matrix.arch == 'arm64') }}
+        shell: bash
+        run: |
+          npm ci --ignore-scripts
+          env JOBS=max node_modules/.bin/prebuild ${currentNodeBuildTargets} --include-regex "\.(node|exe|dll|pdb)" --arch ${{ matrix.arch }}
+
+      # Start of Checks
+
+      - name: "Check file existence"
+        id: check_files
+        uses: andstor/file-existence-action@v3.1.0
+        with:
+          files: "prebuilds/*/node*node"
+
+      - name: What files were created unix
+        if: ${{ (runner.os == 'macOS') || (runner.os	 == 'Linux') }}
+        run: ls -R prebuilds
+
+      - name: Create Archive of prebuilds Unix
+        if: ${{ (runner.os == 'macOS') || (runner.os	 == 'Linux') }}
+        run: |
+          tar -cvzf archive.${{ matrix.name }}.tar.gz prebuilds/
+
+      - name: Create Archive of prebuilds Windows
+        if: ${{ runner.os == 'Windows' }}
+        run: |
+          tar -cvzf archive.${{ matrix.name }}.tar.gz prebuilds
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.name }}
+          retention-days: 7
+          if-no-files-found: warn
+          path: |
+            archive.${{ matrix.name }}.tar.gz
+
+  publish:
+    name: Publish GitHub and NPM Release
+    needs: [prebuild, Prepare_prebuild_environment]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      repository-projects: write
+      id-token: write  # Required for OIDC
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+        with:
+          ref: "release-candidate"
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+          registry-url: "https://registry.npmjs.org"
+          cache: "npm"
+
+      - uses: actions/download-artifact@v8
+        with:
+          merge-multiple: true
+          path: artifacts/
+
+      - name: Extract prebuilds
+        run: |
+          for file in artifacts/archive.*.tar.gz; do
+            tar -xzf "$file"
+          done
+
+      - name: Display structure of downloaded files
+        run: ls -R prebuilds
+
+      - name: NPM build
+        run: |
+          npm ci --ignore-scripts
+          npm run build
+
+      - name: Check Release prebuilds exist
+        shell: bash
+        run: |
+          fileCount=$(ls prebuilds/*/node-pty*tar.gz | wc -l)
+          echo "Release Prebuild count ${fileCount}"
+          echo "::notice::Release Prebuild count ${fileCount}"
+
+        # if [ "$fileCount" -ne ${ReleasePrebuildCount} ]; then echo "::error::Release Prebuild count ${fileCount}, expected ${ReleasePrebuildCount}"; exit 1; else echo "::notice::Release Prebuild count ${fileCount}, expected ${ReleasePrebuildCount}"; fi
+
+      - name: Check Release prebuildify`s exist
+        shell: bash
+        run: |
+          fileCount=$(ls prebuilds/*/*node | wc -l)
+          echo "Release prebuildify count ${fileCount}"
+          echo "::notice::Release prebuildify count ${fileCount}"
+
+        # if [ "$fileCount" -ne ${ReleasePrebuildifyCount} ]; then echo "::error::Release Prebuildify count ${fileCount}, expected ${ReleasePrebuildifyCount}"; exit 1; else echo "::notice::Release Prebuildify count ${fileCount}, expected ${ReleasePrebuildifyCount}"; fi
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ needs.Prepare_prebuild_environment.outputs.releaseTag}}
+          release_name: Release v${{ needs.Prepare_prebuild_environment.outputs.releaseTag}}
+          body: |
+            Changes in this Release
+            - First Change
+            - Second Change
+          draft: false
+          prerelease: true
+
+      - uses: AButler/upload-release-assets@v4.0.0
+        name: Upload Prebuild Artifacts to ${{ needs.Prepare_prebuild_environment.outputs.releaseTag}}
+        with:
+          files: "prebuilds/*/node-pty*tar.gz"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          release-tag: v${{ needs.Prepare_prebuild_environment.outputs.releaseTag}}
+
+      - name: NPM Pack Release
+        run: |
+          npm pack
+
+      - uses: AButler/upload-release-assets@v4.0.0
+        name: Upload NPM Release to ${{ needs.Prepare_prebuild_environment.outputs.releaseTag}}
+        with:
+          files: "*node-pty-prebuilt-multiarch*.tgz"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          release-tag: v${{ needs.Prepare_prebuild_environment.outputs.releaseTag}}
+
+      - name: "Check file existence"
+        id: check_files
+        uses: andstor/file-existence-action@v3.1.0
+        with:
+          files: "prebuilds/*/node-pty-prebuilt-multiarch-*-node-*-darwin-arm64.tar.gz"
+
+      - name: Check MacOS ARM prebuilds exist
+        if: steps.check_files.outputs.files_exists == 'false'
+        run: |
+          echo "::error::Missing MacOS ARM prebuilds, please correct, and rerun"
+          exit 1
+
+      - name: npm publish pre-release (beta / alpha)
+        if: ${{ github.repository == 'homebridge/node-pty-prebuilt-multiarch' && inputs.PreRelease }}
+        run: npm publish --access public --tag=${{ needs.Prepare_prebuild_environment.outputs.npmTag }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: npm publish production
+        if: ${{ github.repository == 'homebridge/node-pty-prebuilt-multiarch' && ! inputs.PreRelease }}
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: "Output Results"
+        run: |
+          echo "::notice:: GitHub run_id: ${{ github.run_id }}"
+          echo "::notice:: Release Version: ${{ needs.Prepare_prebuild_environment.outputs.releaseTag }}"
