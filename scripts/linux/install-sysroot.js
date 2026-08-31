@@ -104,6 +104,22 @@ async function getSysroot(arch) {
       expectedName = `aarch64-linux-gnu${prefix}.tar.gz`;
       triple = 'aarch64-linux-gnu';
       break;
+    // NOTE: 'arm-rpi-linux-gnueabihf' is the triple VS Code's own build
+    // pipeline uses for its Raspberry Pi / armhf sysroot in the same
+    // vscode-linux-build-agent release. Confirm the exact asset name
+    // against scripts/linux/checksums.txt before relying on this -
+    // if the release uses a different triple (e.g. plain
+    // 'arm-linux-gnueabihf'), update expectedName/triple to match.
+    case 'arm':
+      expectedName = `arm-rpi-linux-gnueabihf${prefix}.tar.gz`;
+      triple = 'arm-rpi-linux-gnueabihf';
+      break;
+    // NOTE: same caveat as 'arm' above - verify 'i686-linux-gnu' is the
+    // actual asset/triple name present in checksums.txt for this release.
+    case 'ia32':
+      expectedName = `i686-linux-gnu${prefix}.tar.gz`;
+      triple = 'i686-linux-gnu';
+      break;
     default:
       throw new Error(`Unsupported architecture: ${arch}`);
   }

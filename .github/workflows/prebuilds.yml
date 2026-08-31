@@ -84,8 +84,14 @@ jobs:
         with:
           node-version: '22.x'
 
-      - name: Install sysroot (Linux x64/arm64)
-        if: runner.os == 'Linux' && !matrix.crossCompile && !matrix.musl
+      # NOTE: sysroot pinning now covers the cross-compile targets too
+      # (linux-arm, linux-ia32), not just native x64/arm64. This is what
+      # keeps the resulting binaries linked against an old-enough glibc
+      # (Debian 11/bullseye baseline) to run on Raspberry Pi OS bullseye
+      # and similar older armhf/ia32 hosts, instead of whatever glibc the
+      # ubuntu-22.04 runner's default cross-toolchain ships with.
+      - name: Install sysroot (Linux x64/arm64/arm/ia32)
+        if: runner.os == 'Linux' && !matrix.musl
         run: |
           set -eo pipefail
           sudo apt-get update -qq
@@ -97,6 +103,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # NOTE: this sysroot uses a *flat* (non-multiarch) layout - libc.so
+      # and libc.so.6 live directly under usr/lib and lib, not under the
+      # Debian-multiarch path usr/lib/arm-linux-gnueabihf that
+      # arm-linux-gnueabihf-g++ derives by default from --sysroot alone.
+      # That mismatch was letting the compiler's own bundled default
+      # sysroot (glibc 2.34 on the ubuntu-22.04 runner) silently win the
+      # library search - the link succeeded with no error, just against
+      # the wrong libc. Explicit -B/-L/-rpath-link flags force resolution
+      # against this sysroot's actual paths instead of relying on gcc's
+      # multiarch-based default derivation from --sysroot.
       - name: Install cross-compiler (Linux arm)
         if: matrix.crossCompile && matrix.arch == 'arm'
         run: |
@@ -105,7 +121,34 @@ jobs:
           sudo apt-get install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
           echo "CC=arm-linux-gnueabihf-gcc" >> $GITHUB_ENV
           echo "CXX=arm-linux-gnueabihf-g++" >> $GITHUB_ENV
+          SYSROOT_FLAGS="--sysroot=${{ env.SYSROOT_PATH }} -B${{ env.SYSROOT_PATH }}/usr/lib -B${{ env.SYSROOT_PATH }}/lib -L${{ env.SYSROOT_PATH }}/usr/lib -L${{ env.SYSROOT_PATH }}/lib"
+          echo "CFLAGS=$SYSROOT_FLAGS" >> $GITHUB_ENV
+          echo "CXXFLAGS=$SYSROOT_FLAGS" >> $GITHUB_ENV
+          echo "LDFLAGS=$SYSROOT_FLAGS -Wl,-rpath-link=${{ env.SYSROOT_PATH }}/lib:${{ env.SYSROOT_PATH }}/usr/lib" >> $GITHUB_ENV
 
+      # DIAGNOSTIC - remove once the GLIBC_2.34 mismatch is resolved.
+      # Moved to run AFTER cross-compiler install (previously ran before
+      # it in an earlier version of this workflow, so
+      # arm-linux-gnueabihf-g++ didn't exist yet and these commands
+      # silently failed with "command not found").
+      - name: Debug - inspect compiler search paths
+        if: matrix.crossCompile && matrix.arch == 'arm'
+        run: |
+          echo "--- what -print-sysroot / -print-multiarch report ---"
+          arm-linux-gnueabihf-g++ -print-sysroot
+          arm-linux-gnueabihf-g++ -print-multiarch
+          echo "--- resolved search dirs WITH our explicit flags ---"
+          arm-linux-gnueabihf-g++ ${{ env.CXXFLAGS }} -print-search-dirs
+          echo "--- resolved search dirs WITHOUT our flags (baseline) ---"
+          arm-linux-gnueabihf-g++ -print-search-dirs
+
+      # NOTE: install-sysroot.js has no sysroot for ia32 (Microsoft's
+      # vscode-linux-build-agent release does not publish an i686 sysroot -
+      # VS Code itself dropped 32-bit Linux support). Until that's resolved
+      # (either sourcing a sysroot elsewhere, e.g. debootstrap, or dropping
+      # linux-ia32 from the build matrix if no users need it), this step
+      # will still install a cross-compiler but the sysroot install step
+      # upstream will fail first with "Unsupported architecture: ia32".
       - name: Install cross-compiler (Linux ia32)
         if: matrix.crossCompile && matrix.arch == 'ia32'
         run: |
@@ -114,6 +157,9 @@ jobs:
           sudo apt-get install -y gcc-multilib g++-multilib
           echo "CC=gcc" >> $GITHUB_ENV
           echo "CXX=g++" >> $GITHUB_ENV
+          echo "CFLAGS=--sysroot=${{ env.SYSROOT_PATH }}" >> $GITHUB_ENV
+          echo "CXXFLAGS=--sysroot=${{ env.SYSROOT_PATH }}" >> $GITHUB_ENV
+          echo "LDFLAGS=--sysroot=${{ env.SYSROOT_PATH }}" >> $GITHUB_ENV
 
       - name: Configure compiler (macOS)
         if: runner.os == 'macOS'
@@ -145,18 +191,33 @@ jobs:
               npm ci
             "
 
+      # V=1 forces gyp's generated Makefiles to print the full compiler and
+      # linker invocations, so we can confirm whether --sysroot (via
+      # LDFLAGS) is actually reaching the final link command that produces
+      # pty.node - not just the intermediate compile steps. Remove once the
+      # GLIBC_2.34 mismatch is resolved; this is diagnostic-only.
       - name: Install dependencies and build
         if: '!matrix.musl'
-        run: npm ci
+        run: npm ci --verbose
         env:
           ARCH: ${{ matrix.arch }}
           npm_config_arch: ${{ matrix.arch }}
           CC: ${{ env.CC }}
           CXX: ${{ env.CXX }}
           SYSROOT_PATH: ${{ env.SYSROOT_PATH }}
+          CFLAGS: ${{ env.CFLAGS }}
+          CXXFLAGS: ${{ env.CXXFLAGS }}
+          LDFLAGS: ${{ env.LDFLAGS }}
+          V: 1
 
+      # crossCompile targets are no longer excluded here - this is exactly
+      # the check that would have caught the GLIBC_2.34 mismatch before it
+      # ever reached npm. If install-sysroot.js's bullseye baseline isn't
+      # honored correctly by the cross-toolchain's --sysroot flag, this
+      # step is what will now fail the build instead of publishing broken
+      # binaries silently.
       - name: Verify GLIBC requirements (Linux)
-        if: runner.os == 'Linux' && !matrix.crossCompile && !matrix.musl
+        if: runner.os == 'Linux' && !matrix.musl
         run: |
           EXPECTED_GLIBC_VERSION="2.28" \
           EXPECTED_GLIBCXX_VERSION="3.4.25" \
