@@ -14,6 +14,8 @@
 #include <node_api.h>
 #include <assert.h>
 #include <Shlwapi.h> // PathCombine, PathIsRelative
+#include <atomic>
+#include <mutex>
 #include <sstream>
 #include <iostream>
 #include <string>
@@ -44,15 +46,18 @@ struct pty_baton {
   HANDLE hOut;
   HPCON hpc;
 
-  HANDLE hShell;
+  HANDLE hShell = nullptr;
 
   pty_baton(int _id, HANDLE _hIn, HANDLE _hOut, HPCON _hpc) : id(_id), hIn(_hIn), hOut(_hOut), hpc(_hpc) {};
 };
 
 static std::vector<std::unique_ptr<pty_baton>> ptyHandles;
-static volatile LONG ptyCounter;
+static std::mutex g_ptyHandlesMutex;
+static std::atomic<int> ptyCounter{0};
 
-static pty_baton* get_pty_baton(int id) {
+// The leading scoped-lock parameter encodes the precondition that the caller
+// holds g_ptyHandlesMutex.
+static pty_baton* get_pty_baton(const std::lock_guard<std::mutex>&, int id) {
   auto it = std::find_if(ptyHandles.begin(), ptyHandles.end(), [id](const auto& ptyHandle) {
     return ptyHandle->id == id;
   });
@@ -60,17 +65,6 @@ static pty_baton* get_pty_baton(int id) {
     return it->get();
   }
   return nullptr;
-}
-
-static bool remove_pty_baton(int id) {
-  auto it = std::remove_if(ptyHandles.begin(), ptyHandles.end(), [id](const auto& ptyHandle) {
-    return ptyHandle->id == id;
-  });
-  if (it != ptyHandles.end()) {
-    ptyHandles.erase(it);
-    return true;
-  }
-  return false;
 }
 
 struct ExitEvent {
@@ -99,11 +93,15 @@ void SetupExitCallback(Napi::Env env, Napi::Function cb, pty_baton* baton) {
     ExitEvent *exit_event = new ExitEvent;
     // Wait for process to complete.
     WaitForSingleObject(baton->hShell, INFINITE);
-    // Get process exit code.
-    GetExitCodeProcess(baton->hShell, (LPDWORD)(&exit_event->exit_code));
-    // Clean up handles
-    CloseHandle(baton->hShell);
-    assert(remove_pty_baton(baton->id));
+    {
+      std::lock_guard<std::mutex> lock(g_ptyHandlesMutex);
+      GetExitCodeProcess(baton->hShell, (LPDWORD)(&exit_event->exit_code));
+      CloseHandle(baton->hShell);
+      const int id = baton->id;
+      std::erase_if(ptyHandles, [id](const auto& ptyHandle) {
+        return ptyHandle->id == id;
+      });
+    }
 
     auto status = tsfn.BlockingCall(exit_event, callback); // In main thread
     switch (status) {
@@ -230,7 +228,6 @@ HRESULT CreateNamedPipesAndPseudoConsole(const Napi::CallbackInfo& info,
     {
       // Failed to find CreatePseudoConsole in kernel32. This is likely because
       //    the user is not running a build of Windows that supports that API.
-      //    We should fall back to winpty in this case.
       return HRESULT_FROM_WIN32(GetLastError());
     }
   } else {
@@ -238,7 +235,7 @@ HRESULT CreateNamedPipesAndPseudoConsole(const Napi::CallbackInfo& info,
   }
 
   // Failed to find  kernel32. This is realy unlikely - honestly no idea how
-  //    this is even possible to hit. But if it does happen, fall back to winpty.
+  //    this is even possible to hit.
   return HRESULT_FROM_WIN32(GetLastError());
 }
 
@@ -299,10 +296,13 @@ static Napi::Value PtyStartProcess(const Napi::CallbackInfo& info) {
 
   if (SUCCEEDED(hr)) {
     // We were able to instantiate a conpty
-    const int ptyId = InterlockedIncrement(&ptyCounter);
+    const int ptyId = ++ptyCounter;
     marshal.Set("pty", Napi::Number::New(env, ptyId));
-    ptyHandles.emplace_back(
-        std::make_unique<pty_baton>(ptyId, hIn, hOut, hpc));
+    {
+      std::lock_guard<std::mutex> lock(g_ptyHandlesMutex);
+      ptyHandles.emplace_back(
+          std::make_unique<pty_baton>(ptyId, hIn, hOut, hpc));
+    }
   } else {
     throw Napi::Error::New(env, "Cannot launch conpty");
   }
@@ -350,10 +350,13 @@ static Napi::Value PtyConnect(const Napi::CallbackInfo& info) {
   const bool useConptyDll = info[4].As<Napi::Boolean>().Value();
   Napi::Function exitCallback = info[5].As<Napi::Function>();
 
-  // Fetch pty handle from ID and start process
-  pty_baton* handle = get_pty_baton(id);
-  if (!handle) {
-    throw Napi::Error::New(env, "Invalid pty handle");
+  pty_baton* handle;
+  {
+    std::lock_guard<std::mutex> lock(g_ptyHandlesMutex);
+    handle = get_pty_baton(lock, id);
+    if (!handle) {
+      throw Napi::Error::New(env, "Invalid pty handle");
+    }
   }
 
   // Prepare command line
@@ -381,6 +384,14 @@ static Napi::Value PtyConnect(const Napi::CallbackInfo& info) {
   ConnectNamedPipe(handle->hIn, nullptr);
   ConnectNamedPipe(handle->hOut, nullptr);
 
+  // Close hIn/hOut on every exit so a throw doesn't leak the named-pipe server handles.
+  auto closePipeHandles = [handle]() {
+    CloseHandle(handle->hIn);
+    CloseHandle(handle->hOut);
+    handle->hIn = nullptr;
+    handle->hOut = nullptr;
+  };
+
   // Attach the pseudoconsole to the client application we're creating
   STARTUPINFOEXW siEx{0};
   siEx.StartupInfo.cb = sizeof(STARTUPINFOEXW);
@@ -391,12 +402,14 @@ static Napi::Value PtyConnect(const Napi::CallbackInfo& info) {
 
   SIZE_T size = 0;
   InitializeProcThreadAttributeList(NULL, 1, 0, &size);
-  BYTE *attrList = new BYTE[size];
-  siEx.lpAttributeList = reinterpret_cast<PPROC_THREAD_ATTRIBUTE_LIST>(attrList);
+  std::unique_ptr<BYTE[]> attrList = std::make_unique<BYTE[]>(size);
+  siEx.lpAttributeList = reinterpret_cast<PPROC_THREAD_ATTRIBUTE_LIST>(attrList.get());
 
   fSuccess = InitializeProcThreadAttributeList(siEx.lpAttributeList, 1, 0, &size);
   if (!fSuccess) {
-    throw errorWithCode(info, "InitializeProcThreadAttributeList failed");
+    Napi::Error error = errorWithCode(info, "InitializeProcThreadAttributeList failed");
+    closePipeHandles();
+    throw error;
   }
   fSuccess = UpdateProcThreadAttribute(siEx.lpAttributeList,
                                        0,
@@ -406,7 +419,10 @@ static Napi::Value PtyConnect(const Napi::CallbackInfo& info) {
                                        NULL,
                                        NULL);
   if (!fSuccess) {
-    throw errorWithCode(info, "UpdateProcThreadAttribute failed");
+    Napi::Error error = errorWithCode(info, "UpdateProcThreadAttribute failed");
+    DeleteProcThreadAttributeList(siEx.lpAttributeList);
+    closePipeHandles();
+    throw error;
   }
 
   PROCESS_INFORMATION piClient{};
@@ -423,8 +439,13 @@ static Napi::Value PtyConnect(const Napi::CallbackInfo& info) {
       &piClient                     // lpProcessInformation
   );
   if (!fSuccess) {
-    throw errorWithCode(info, "Cannot create process");
+    Napi::Error error = errorWithCode(info, "Cannot create process");
+    DeleteProcThreadAttributeList(siEx.lpAttributeList);
+    closePipeHandles();
+    throw error;
   }
+
+  DeleteProcThreadAttributeList(siEx.lpAttributeList);
 
   HANDLE hLibrary = LoadConptyDll(info, useConptyDll);
   bool fLoadedDll = hLibrary != nullptr;
@@ -444,8 +465,7 @@ static Napi::Value PtyConnect(const Napi::CallbackInfo& info) {
   // Close the thread handle to avoid resource leak
   CloseHandle(piClient.hThread);
   // Close the input read and output write handle of the pseudoconsole
-  CloseHandle(handle->hIn);
-  CloseHandle(handle->hOut);
+  closePipeHandles();
 
   SetupExitCallback(env, exitCallback, handle);
 
@@ -472,7 +492,8 @@ static Napi::Value PtyResize(const Napi::CallbackInfo& info) {
   SHORT rows = static_cast<SHORT>(info[2].As<Napi::Number>().Uint32Value());
   const bool useConptyDll = info[3].As<Napi::Boolean>().Value();
 
-  const pty_baton* handle = get_pty_baton(id);
+  std::lock_guard<std::mutex> lock(g_ptyHandlesMutex);
+  const pty_baton* handle = get_pty_baton(lock, id);
 
   if (handle != nullptr) {
     HANDLE hLibrary = LoadConptyDll(info, useConptyDll);
@@ -513,7 +534,8 @@ static Napi::Value PtyClear(const Napi::CallbackInfo& info) {
     return env.Undefined();
   }
 
-  const pty_baton* handle = get_pty_baton(id);
+  std::lock_guard<std::mutex> lock(g_ptyHandlesMutex);
+  const pty_baton* handle = get_pty_baton(lock, id);
 
   if (handle != nullptr) {
     HANDLE hLibrary = LoadConptyDll(info, useConptyDll);
@@ -544,7 +566,8 @@ static Napi::Value PtyKill(const Napi::CallbackInfo& info) {
   int id = info[0].As<Napi::Number>().Int32Value();
   const bool useConptyDll = info[1].As<Napi::Boolean>().Value();
 
-  const pty_baton* handle = get_pty_baton(id);
+  std::lock_guard<std::mutex> lock(g_ptyHandlesMutex);
+  pty_baton* handle = get_pty_baton(lock, id);
 
   if (handle != nullptr) {
     HANDLE hLibrary = LoadConptyDll(info, useConptyDll);
@@ -559,7 +582,17 @@ static Napi::Value PtyKill(const Napi::CallbackInfo& info) {
         pfnClosePseudoConsole(handle->hpc);
       }
     }
-    if (useConptyDll) {
+    // Defensive: if PtyConnect was never called (or failed before closing the
+    // pipe handles), release the named pipe server handles here.
+    if (handle->hIn != nullptr) {
+      CloseHandle(handle->hIn);
+      handle->hIn = nullptr;
+    }
+    if (handle->hOut != nullptr) {
+      CloseHandle(handle->hOut);
+      handle->hOut = nullptr;
+    }
+    if (useConptyDll && handle->hShell != nullptr) {
       TerminateProcess(handle->hShell, 1);
     }
   }

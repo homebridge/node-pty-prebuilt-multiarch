@@ -6,8 +6,19 @@ on:
     branches: [latest, beta-*.*.*, beta, alpha-*.*.*, alpha]
     types: [review_requested, ready_for_review]
   workflow_dispatch:
+    inputs:
+      tag:
+        description: 'npm dist-tag to validate (leave as auto to detect from branch)'
+        required: true
+        type: choice
+        options:
+          - auto
+          - latest
+          - beta
+          - alpha
+        default: auto
   workflow_run:
-    workflows: ["Stage 1 - Run prebuild's and Create GitHub and NPM release"]
+    workflows: ["Stage 1 - Prebuilds & Publish"]
     types:
       - completed
     branches: [main, beta-*.*.*, beta, alpha-*.*.*, alpha]
@@ -25,30 +36,50 @@ jobs:
     if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     outputs:
       tag: ${{ steps.tag.outputs.tag }}
+      package_name: ${{ steps.pkg.outputs.name }}
     steps:
-    - name: Tag
-      id: tag
-      run: |
-        # github.ref_name is not the release branch on every event: on
-        # pull_request it is the merge ref (e.g. 91/merge) and on workflow_run
-        # it is the default branch, so resolve the real branch first
-        if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-          BRANCH="${{ github.base_ref }}"
-        elif [[ "${{ github.event_name }}" == "workflow_run" ]]; then
-          BRANCH="${{ github.event.workflow_run.head_branch }}"
-        else
-          BRANCH="${{ github.ref_name }}"
-        fi
-        if [[ "$BRANCH" == beta-* || "$BRANCH" == "beta" ]]; then
-          TAG="beta"
-        elif [[ "$BRANCH" == alpha-* || "$BRANCH" == "alpha" ]]; then
-          TAG="alpha"
-        else
-          TAG="latest"
-        fi
-        echo "Using TAG: $TAG"
-        echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-        echo "::notice::Using TAG: $TAG"
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Get package name from package.json
+        id: pkg
+        run: |
+          NAME=$(node -p "require('./package.json').name")
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+          echo "::notice::Using package name: $NAME"
+
+      - name: Tag
+        id: tag
+        run: |
+          # If manually dispatched with an explicit tag, use it directly
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ inputs.tag }}" != "auto" ]]; then
+            TAG="${{ inputs.tag }}"
+            echo "Using manually selected TAG: $TAG"
+            echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+            echo "::notice::Using manually selected TAG: $TAG"
+            exit 0
+          fi
+
+          # github.ref_name is not the release branch on every event: on
+          # pull_request it is the merge ref (e.g. 91/merge) and on workflow_run
+          # it is the default branch, so resolve the real branch first
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            BRANCH="${{ github.base_ref }}"
+          elif [[ "${{ github.event_name }}" == "workflow_run" ]]; then
+            BRANCH="${{ github.event.workflow_run.head_branch }}"
+          else
+            BRANCH="${{ github.ref_name }}"
+          fi
+          if [[ "$BRANCH" == beta-* || "$BRANCH" == "beta" ]]; then
+            TAG="beta"
+          elif [[ "$BRANCH" == alpha-* || "$BRANCH" == "alpha" ]]; then
+            TAG="alpha"
+          else
+            TAG="latest"
+          fi
+          echo "Using TAG: $TAG"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "::notice::Using TAG: $TAG"
 
   validate_service_starts:
     name: Validate
@@ -99,17 +130,19 @@ jobs:
       - if: runner.os == 'macOS'
         run: sw_vers
 
-      - run: npm install @homebridge/node-pty-prebuilt-multiarch@${{ needs.determine_tag.outputs.tag }}
+      - name: Install published package without build fallback
+        run: npm install --ignore-scripts ${{ needs.determine_tag.outputs.package_name }}@${{ needs.determine_tag.outputs.tag }}
 
       - name: Display structure of downloaded files
         run: ls -R
 
-      - run: |
-          cd ./node_modules/@homebridge/node-pty-prebuilt-multiarch
+      - name: Validate packaged native prebuild
+        run: |
+          cd ./node_modules/${{ needs.determine_tag.outputs.package_name }}
           npm run validate
 
       - run: |
-          cd ./node_modules/@homebridge/node-pty-prebuilt-multiarch
+          cd ./node_modules/${{ needs.determine_tag.outputs.package_name }}
           npm run postinstall
 
       - run: |

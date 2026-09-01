@@ -1,6 +1,5 @@
 //@ts-check
 
-const { execSync } = require('child_process');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -13,17 +12,14 @@ const BUILD_FILES = [
   path.join(RELEASE_DIR, 'conpty_console_list.pdb'),
   path.join(RELEASE_DIR, 'pty.node'),
   path.join(RELEASE_DIR, 'pty.pdb'),
-  path.join(RELEASE_DIR, 'spawn-helper'),
-  path.join(RELEASE_DIR, 'winpty-agent.exe'),
-  path.join(RELEASE_DIR, 'winpty-agent.pdb'),
-  path.join(RELEASE_DIR, 'winpty.dll'),
-  path.join(RELEASE_DIR, 'winpty.pdb')
+  path.join(RELEASE_DIR, 'spawn-helper')
 ];
 const CONPTY_DIR = path.join(__dirname, '../third_party/conpty');
 const CONPTY_SUPPORTED_ARCH = ['x64', 'arm64'];
 
 console.log('\x1b[32m> Cleaning release folder...\x1b[0m');
 
+/** @param {string} folder  */
 function cleanFolderRecursive(folder) {
   var files = [];
   if (fs.existsSync(folder)) {
@@ -76,8 +72,5 @@ if (os.platform() !== 'win32') {
     }
   }
 }
-
-// console.log(`\x1b[32m> Generating compile_commands.json...\x1b[0m`);
-// execSync('npx node-gyp configure -- -f compile_commands_json');
 
 process.exit(0);
