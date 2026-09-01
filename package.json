@@ -20,6 +20,7 @@
     "scripts/prebuild.js",
     "src/**/*.{cc,h}",
     "prebuilds/",
+    "!prebuilds/**/*.pdb",
     "third_party/",
     "typings/"
   ],
