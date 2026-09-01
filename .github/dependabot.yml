@@ -1,6 +1,6 @@
 # Hybrid dependency management configuration
-# - npm dependencies: Managed by NorthernMan54/Homebridge-Dependency-Bot (see .github/homebridge-dependency-bot-*.json)
-# - Docker base images: Managed by GitHub Dependabot (configured below)
+# - npm dependencies: grouped into a single update
+# - GitHub Actions: grouped into a single update
 
 version: 2
 updates:
@@ -12,15 +12,22 @@ updates:
     open-pull-requests-limit: 10
     labels:
       - "dependencies"
-    # Group related updates together (optional)
     groups:
       packages:
         patterns:
           - "*"
-    # Automatically rebase PRs when conflicts occur
     rebase-strategy: "auto"
-    # Commit message prefix
     commit-message:
       prefix: "chore"
       prefix-development: "chore"
       include: "scope"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    groups:
+      github-actions:
+        patterns: ["*"]
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 7
