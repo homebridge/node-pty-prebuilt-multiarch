@@ -24,10 +24,19 @@ updates:
 
   - package-ecosystem: "github-actions"
     directory: "/"
-    groups:
-      github-actions:
-        patterns: ["*"]
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+    groups:
+      actions:
+        patterns:
+          - "*"
+    rebase-strategy: "auto"
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore"
+      include: "scope"
     cooldown:
       default-days: 7
