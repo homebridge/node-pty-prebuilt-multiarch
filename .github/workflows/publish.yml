@@ -58,15 +58,35 @@ jobs:
       - name: Build TypeScript
         run: npm run build
 
-      - name: Increment version
-        run: node scripts/increment-version.js
+      # ---- Versioning logic adopted from prebuilds.yml (Stage 1) ----
+      # Pre-release only: derive/adjust version from the shared homebridge script,
+      # then bump the prerelease counter. Stable releases publish whatever version
+      # is already committed in package.json (no auto-bump), matching prebuilds.yml.
+
+      - name: Fetch shared version script
+        if: inputs.quality != 'stable'
+        run: wget https://raw.githubusercontent.com/homebridge/.github/latest/.github/npm-version-script.js
+        working-directory: .github
+
+      - name: Install semver (dependency for shared version script)
+        if: inputs.quality != 'stable'
+        run: npm install semver
+
+      - name: Adjust version to latest published base + tag
+        if: inputs.quality != 'stable'
+        run: node .github/npm-version-script.js ${{ github.ref }} ${{ inputs.quality }}
+
+      - name: Increment prerelease number
+        if: inputs.quality != 'stable'
+        run: npm version pre --preid=${{ inputs.quality }} --no-git-tag-version
 
       - name: Show version to be published
         run: node -p "require('./package.json').version"
+      # ---- end versioning logic ----
 
       - name: Publish to npm (test)
         if: inputs.publishPackage && inputs.quality != 'stable'
-        run: npm publish --tag ${{ inputs.quality}} --provenance --access public
+        run: npm publish --tag ${{ inputs.quality }} --provenance --access public
 
       - name: Publish to npm (stable)
         if: inputs.publishPackage && inputs.quality == 'stable'

@@ -10,8 +10,7 @@ lib/
 npm-debug.log
 fixtures/space folder/
 .vscode/settings.json
-
-prebuilds
 .vscode/ipch/
-.idea
 yarn.lock
+prebuilds/
+_codeql_detected_source_root
