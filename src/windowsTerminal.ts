@@ -16,7 +16,7 @@ const DEFAULT_NAME = 'Windows Shell';
 
 export class WindowsTerminal extends Terminal {
   private _isReady: boolean;
-  private _deferreds: any[];
+  private _deferreds: Array<{ run: () => void }>;
   private _agent: WindowsPtyAgent;
 
   constructor(file?: string, args?: ArgvOrCommandLine, opt?: IWindowsPtyForkOptions) {
@@ -48,8 +48,14 @@ export class WindowsTerminal extends Terminal {
     this._deferreds = [];
 
     // Create new termal.
-    this._agent = new WindowsPtyAgent(file, args, parsedEnv, cwd, this._cols, this._rows, false, opt.useConpty, opt.useConptyDll, opt.conptyInheritCursor);
+    this._agent = new WindowsPtyAgent(file, args, parsedEnv, cwd, this._cols, this._rows, false, opt.useConptyDll, opt.conptyInheritCursor);
     this._socket = this._agent.outSocket;
+    // The socket 'close' handler that drives 'exit' is only attached after
+    // ready_datapipe, which never fires when connect() fails.
+    this._agent.onError(() => {
+      this._close();
+      this.emit('exit', this._agent.exitCode);
+    });
 
     // Not available until `ready` event emitted.
     this._pid = this._agent.innerPid;
@@ -59,32 +65,29 @@ export class WindowsTerminal extends Terminal {
     // The forked windows terminal is not available until `ready` event is
     // emitted.
     this._socket.on('ready_datapipe', () => {
+      // Update pid now that the agent has connected
+      this._pid = this._agent.innerPid;
 
-      // These events needs to be forwarded.
-      ['connect', 'data', 'end', 'timeout', 'drain'].forEach(event => {
-        this._socket.on(event, () => {
+      // Run deferreds and set ready state once the first data event is received.
+      this._socket.once('data', () => {
+        // Wait until the first data event is fired then we can run deferreds.
+        if (!this._isReady) {
+          // Terminal is now ready and we can avoid having to defer method
+          // calls.
+          this._isReady = true;
 
-          // Wait until the first data event is fired then we can run deferreds.
-          if (!this._isReady && event === 'data') {
+          // Execute all deferred methods
+          this._deferreds.forEach(fn => {
+            // NB! In order to ensure that `this` has all its references
+            // updated any variable that need to be available in `this` before
+            // the deferred is run has to be declared above this forEach
+            // statement.
+            fn.run();
+          });
 
-            // Terminal is now ready and we can avoid having to defer method
-            // calls.
-            this._isReady = true;
-
-            // Execute all deferred methods
-            this._deferreds.forEach(fn => {
-              // NB! In order to ensure that `this` has all its references
-              // updated any variable that need to be available in `this` before
-              // the deferred is run has to be declared above this forEach
-              // statement.
-              fn.run();
-            });
-
-            // Reset
-            this._deferreds = [];
-
-          }
-        });
+          // Reset
+          this._deferreds = [];
+        }
       });
 
       // Shutdown if `error` event is emitted.
@@ -123,11 +126,11 @@ export class WindowsTerminal extends Terminal {
     this._forwardEvents();
   }
 
-  protected _write(data: string): void {
+  protected _write(data: string | Buffer): void {
     this._defer(this._doWrite, data);
   }
 
-  private _doWrite(data: string): void {
+  private _doWrite(data: string | Buffer): void {
     this._agent.inSocket.write(data);
   }
 
@@ -143,7 +146,7 @@ export class WindowsTerminal extends Terminal {
    * TTY
    */
 
-  public resize(cols: number, rows: number): void {
+  public resize(cols: number, rows: number, pixelSize?: { width: number, height: number }): void {
     if (cols <= 0 || rows <= 0 || isNaN(cols) || isNaN(rows) || cols === Infinity || rows === Infinity) {
       throw new Error('resizing must be done using positive cols and rows');
     }

@@ -74,9 +74,9 @@ export abstract class Terminal implements ITerminal {
     this._checkType('encoding', opt.encoding ? opt.encoding : undefined, 'string');
   }
 
-  protected abstract _write(data: string): void;
+  protected abstract _write(data: string | Buffer): void;
 
-  public write(data: string): void {
+  public write(data: string | Buffer): void {
     if (this.handleFlowControl) {
       // PAUSE/RESUME messages are not forwarded to the pty
       if (data === this._flowControlPause) {
@@ -137,12 +137,12 @@ export abstract class Terminal implements ITerminal {
   }
 
   /** See net.Socket.setEncoding */
-  public setEncoding(encoding: string | null | BufferEncoding | undefined): void {
+  public setEncoding(encoding: string | null): void {
     if ((this._socket as any)._decoder) {
       delete (this._socket as any)._decoder;
     }
     if (encoding) {
-      this._socket.setEncoding(encoding as BufferEncoding);
+      this._socket.setEncoding(encoding);
     }
   }
 
@@ -178,7 +178,7 @@ export abstract class Terminal implements ITerminal {
     this._socket.once(eventName, listener);
   }
 
-  public abstract resize(cols: number, rows: number): void;
+  public abstract resize(cols: number, rows: number, pixelSize?: { width: number, height: number }): void;
   public abstract clear(): void;
   public abstract destroy(): void;
   public abstract kill(signal?: string): void;

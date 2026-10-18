@@ -4,10 +4,48 @@
  */
 
 import * as assert from 'assert';
-import { argsToCommandLine } from './windowsPtyAgent';
+import { Socket } from 'net';
+import { EventEmitter2, IEvent } from './eventEmitter2';
+import { argsToCommandLine, IWindowsPtyAgentOptions, WindowsPtyAgent } from './windowsPtyAgent';
+import { IConoutConnection } from './windowsConoutConnection';
 
 function check(file: string, args: string | string[], expected: string): void {
   assert.equal(argsToCommandLine(file, args), expected);
+}
+
+class TestConoutConnection implements IConoutConnection {
+  private readonly _onReady = new EventEmitter2<void>();
+  public get onReady(): IEvent<void> { return this._onReady.event; }
+
+  private readonly _onError = new EventEmitter2<Error>();
+  public get onError(): IEvent<Error> { return this._onError.event; }
+
+  public connectSocketCallCount = 0;
+  public isDisposed = false;
+
+  public connectSocket(socket: Socket): void {
+    void socket;
+    this.connectSocketCallCount++;
+  }
+
+  public dispose(): void {
+    this.isDisposed = true;
+  }
+
+  public fireReady(): void {
+    this._onReady.fire();
+  }
+
+  public fireError(error: Error): void {
+    this._onError.fire(error);
+  }
+}
+
+function createTestAgentOptions(connection: IConoutConnection, connectionTimeout: number): IWindowsPtyAgentOptions {
+  return {
+    connectionTimeout,
+    conoutConnectionFactory: () => connection
+  };
 }
 
 if (process.platform === 'win32') {
@@ -88,6 +126,200 @@ if (process.platform === 'win32') {
       });
       it('space within quotes', () => {
         check('cmd.exe', ['/k', '"C:\\Users\\alros\\Desktop\\test script.bat"'], 'cmd.exe /k \\"C:\\Users\\alros\\Desktop\\test script.bat\\"');
+      });
+    });
+  });
+
+  describe('WindowsPtyAgent', () => {
+    describe('connection timing (issue #763)', () => {
+      it('should fail without connecting when the worker times out', async function () {
+        this.timeout(10000);
+        const connection = new TestConoutConnection();
+        const term = new WindowsPtyAgent(
+          'cmd.exe',
+          '/c echo test',
+          Object.keys(process.env).map(k => `${k}=${process.env[k]}`),
+          process.cwd(),
+          80,
+          30,
+          false,
+          false,
+          false,
+          createTestAgentOptions(connection, 10)
+        );
+
+        let eventLoopResponsive = false;
+        setImmediate(() => eventLoopResponsive = true);
+        const error = await new Promise<Error>(resolve => term.onError(resolve));
+
+        assert.strictEqual(error.message, 'Timed out waiting for ConPTY output worker');
+        assert.strictEqual(eventLoopResponsive, true, 'event loop should remain responsive');
+        assert.strictEqual(connection.connectSocketCallCount, 0);
+        assert.strictEqual(connection.isDisposed, true);
+        assert.strictEqual(term.innerPid, 0);
+
+        connection.fireReady();
+        assert.strictEqual(connection.connectSocketCallCount, 0, 'late readiness must be ignored');
+      });
+
+      it('should fail when the worker errors before becoming ready', async () => {
+        const connection = new TestConoutConnection();
+        const term = new WindowsPtyAgent(
+          'cmd.exe',
+          '/c echo test',
+          Object.keys(process.env).map(k => `${k}=${process.env[k]}`),
+          process.cwd(),
+          80,
+          30,
+          false,
+          false,
+          false,
+          createTestAgentOptions(connection, 1000)
+        );
+
+        const expectedError = new Error('worker failed');
+        const errorPromise = new Promise<Error>(resolve => term.onError(resolve));
+        connection.fireError(expectedError);
+        const error = await errorPromise;
+
+        assert.strictEqual(error, expectedError);
+        assert.strictEqual(connection.connectSocketCallCount, 0);
+        assert.strictEqual(connection.isDisposed, true);
+        assert.strictEqual(term.innerPid, 0);
+      });
+
+      it('should ignore worker events after kill before readiness', () => {
+        const connection = new TestConoutConnection();
+        const term = new WindowsPtyAgent(
+          'cmd.exe',
+          '/c echo test',
+          Object.keys(process.env).map(k => `${k}=${process.env[k]}`),
+          process.cwd(),
+          80,
+          30,
+          false,
+          false,
+          false,
+          createTestAgentOptions(connection, 1000)
+        );
+        let errorCount = 0;
+        term.onError(() => errorCount++);
+
+        term.kill();
+        connection.fireReady();
+        connection.fireError(new Error('late error'));
+
+        assert.strictEqual(connection.connectSocketCallCount, 0);
+        assert.strictEqual(errorCount, 0);
+      });
+
+      it('should defer conptyNative.connect() until worker is ready', function (done) {
+        this.timeout(10000);
+
+        const term = new WindowsPtyAgent(
+          'cmd.exe',
+          '/c echo test',
+          Object.keys(process.env).map(k => `${k}=${process.env[k]}`),
+          process.cwd(),
+          80,
+          30,
+          false,
+          false,
+          false
+        );
+
+        // The innerPid should be 0 initially since connect() is deferred
+        // until the worker signals ready. This verifies the fix for #763.
+        const initialPid = term.innerPid;
+
+        // Wait for the connection to complete via ready_datapipe event
+        term.outSocket.on('ready_datapipe', () => {
+          // After worker is ready and connect() is called, innerPid should be set
+          // Use a small delay to ensure _completePtyConnection has run
+          setTimeout(() => {
+            assert.notStrictEqual(term.innerPid, 0, 'innerPid should be set after worker is ready');
+            assert.strictEqual(initialPid, 0, 'innerPid should have been 0 before worker was ready');
+            term.kill();
+            done();
+          }, 100);
+        });
+      });
+
+      it('should successfully spawn a process after deferred connection', function (done) {
+        this.timeout(10000);
+
+        const term = new WindowsPtyAgent(
+          'cmd.exe',
+          '/c echo hello',
+          Object.keys(process.env).map(k => `${k}=${process.env[k]}`),
+          process.cwd(),
+          80,
+          30,
+          false,
+          false,
+          false
+        );
+
+        let output = '';
+        term.outSocket.on('data', (data: string) => {
+          output += data;
+        });
+
+        // Wait for process to complete and verify output
+        setTimeout(() => {
+          assert.ok(output.includes('hello'), `Expected output to contain "hello", got: ${output}`);
+          term.kill();
+          done();
+        }, 2000);
+      });
+
+      it('should allow async work between construction and connection (non-blocking)', function (done) {
+        this.timeout(10000);
+
+        // Track the sequence of events to verify non-blocking behavior
+        const events: string[] = [];
+
+        const term = new WindowsPtyAgent(
+          'cmd.exe',
+          '/c echo test',
+          Object.keys(process.env).map(k => `${k}=${process.env[k]}`),
+          process.cwd(),
+          80,
+          30,
+          false,
+          false,
+          false
+        );
+
+        events.push('constructor_returned');
+        assert.strictEqual(term.innerPid, 0, 'innerPid should be 0 immediately after construction');
+
+        // Schedule async work - this MUST run before ready_datapipe if constructor is non-blocking
+        setImmediate(() => {
+          events.push('setImmediate_ran');
+          // innerPid might still be 0 or might be set by now, depending on timing
+          // The key is that setImmediate ran, proving the event loop wasn't blocked
+        });
+
+        term.outSocket.on('ready_datapipe', () => {
+          events.push('ready_datapipe');
+
+          setTimeout(() => {
+            events.push('final_check');
+
+            // Verify the sequence: constructor returned, then async work could run
+            assert.ok(events.includes('constructor_returned'), 'constructor should have returned');
+            assert.ok(events.includes('setImmediate_ran'), 'setImmediate should have run (event loop not blocked)');
+            assert.ok(events.indexOf('constructor_returned') < events.indexOf('setImmediate_ran'),
+              'constructor should return before setImmediate runs');
+
+            // Most importantly: innerPid should now be set
+            assert.notStrictEqual(term.innerPid, 0, 'innerPid should be set after connection');
+
+            term.kill();
+            done();
+          }, 100);
+        });
       });
     });
   });

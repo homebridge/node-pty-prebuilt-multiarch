@@ -39,6 +39,22 @@ extends:
       - name: node-pty
 
         buildSteps:
+          - task: DownloadPipelineArtifact@2
+            displayName: 'Download prebuilds'
+            inputs:
+              buildType: 'specific'
+              project: 'Monaco'
+              definition: '647'
+              buildVersionToDownload: 'latestFromBranch'
+              branchName: '$(Build.SourceBranch)'
+              artifactName: 'prebuilds-$(Build.SourceVersion)'
+              targetPath: 'prebuilds'
+          - template: pipelines/npm-feed-auth.yml@self
+          - pwsh: |
+              Get-ChildItem -Path . -Recurse -Directory -Name "_manifest" | Remove-Item -Recurse -Force
+            displayName: 'Delete _manifest folders'
+          - bash: chmod +x prebuilds/darwin-*/spawn-helper
+            displayName: 'Ensure spawn-helper is executable'
           - script: npm ci
             displayName: 'Install dependencies and build'
           # The following script leaves the version unchanged for
@@ -47,6 +63,19 @@ extends:
             displayName: 'Increment version'
 
         testSteps:
+          - task: DownloadPipelineArtifact@2
+            displayName: 'Download prebuilds'
+            inputs:
+              buildType: 'specific'
+              project: 'Monaco'
+              definition: '647'
+              buildVersionToDownload: 'latestFromBranch'
+              branchName: '$(Build.SourceBranch)'
+              artifactName: 'prebuilds-$(Build.SourceVersion)'
+              targetPath: 'prebuilds'
+          - template: pipelines/npm-feed-auth.yml@self
+          - bash: chmod +x prebuilds/darwin-*/spawn-helper
+            displayName: 'Ensure spawn-helper is executable'
           - script: npm ci
             displayName: 'Install dependencies and build'
           - script: npm test
@@ -62,6 +91,9 @@ extends:
           tag: beta
           publishRequiresApproval: false
 
-        apiScanExcludes: 'package/third_party/conpty/**/win10-arm64/*.*'
+        apiScanExcludes: |
+          package/third_party/conpty/**/win10-arm64/*.*
+          package/prebuilds/win32-arm64/conpty/*.*
+          package/prebuilds/win32-arm64/*.*
         apiScanSoftwareName: 'vscode-node-pty'
         apiScanSoftwareVersion: '1'

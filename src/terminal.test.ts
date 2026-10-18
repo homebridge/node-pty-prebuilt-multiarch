@@ -4,15 +4,15 @@
  */
 
 import * as assert from 'assert';
-import { WindowsTerminal } from './windowsTerminal';
-import { UnixTerminal } from './unixTerminal';
 import { Terminal } from './terminal';
 import { Socket } from 'net';
 
-const terminalConstructor = (process.platform === 'win32') ? WindowsTerminal : UnixTerminal;
+const terminalConstructor = (process.platform === 'win32')
+  ? require('./windowsTerminal').WindowsTerminal
+  : require('./unixTerminal').UnixTerminal;
 const SHELL = (process.platform === 'win32') ? 'cmd.exe' : '/bin/bash';
 
-let terminalCtor: WindowsTerminal | UnixTerminal;
+let terminalCtor: any; // Will be WindowsTerminal | UnixTerminal depending on conditional report
 if (process.platform === 'win32') {
   terminalCtor = require('./windowsTerminal');
 } else {
@@ -23,7 +23,7 @@ class TestTerminal extends Terminal {
   public checkType<T>(name: string, value: T, type: string, allowArray: boolean = false): void {
     this._checkType(name, value, type, allowArray);
   }
-  protected _write(data: string): void {
+  protected _write(data: string | Buffer): void {
     throw new Error('Method not implemented.');
   }
   public resize(cols: number, rows: number): void {

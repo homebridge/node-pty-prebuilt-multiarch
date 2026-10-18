@@ -5,15 +5,15 @@
  */
 
 import * as fs from 'fs';
-import * as os from 'os';
 import * as path from 'path';
 import { fork } from 'child_process';
 import { Socket } from 'net';
 import { ArgvOrCommandLine } from './types';
-import { ConoutConnection } from './windowsConoutConnection';
+import { ConoutConnection, IConoutConnection } from './windowsConoutConnection';
+import { EventEmitter2, IEvent } from './eventEmitter2';
+import { loadNativeModule } from './utils';
 
 let conptyNative: IConptyNative;
-let winptyNative: IWinptyNative;
 
 /**
  * The amount of time to wait for additional data after the conpty shell process has exited before
@@ -21,29 +21,44 @@ let winptyNative: IWinptyNative;
  * has started.
  */
 const FLUSH_DATA_INTERVAL = 1000;
+const CONNECTION_TIMEOUT = 5000;
+
+export interface IWindowsPtyAgentOptions {
+  readonly connectionTimeout: number;
+  readonly conoutConnectionFactory: (conoutPipeName: string, useConptyDll: boolean) => IConoutConnection;
+}
+
+const defaultWindowsPtyAgentOptions: IWindowsPtyAgentOptions = {
+  connectionTimeout: CONNECTION_TIMEOUT,
+  conoutConnectionFactory: (conoutPipeName, useConptyDll) => new ConoutConnection(conoutPipeName, useConptyDll)
+};
 
 /**
- * This agent sits between the WindowsTerminal class and provides a common interface for both conpty
- * and winpty.
+ * This agent sits between the WindowsTerminal class and provides an interface for conpty.
  */
 export class WindowsPtyAgent {
   private _inSocket: Socket;
   private _outSocket: Socket;
-  private _pid: number = 0;
   private _innerPid: number = 0;
   private _closeTimeout: NodeJS.Timer | undefined;
+  private _connectionTimeout: NodeJS.Timeout | undefined;
   private _exitCode: number | undefined;
-  private _conoutSocketWorker: ConoutConnection;
+  private _conoutSocketWorker: IConoutConnection;
+
+  private _onError = new EventEmitter2<Error>();
+  public get onError(): IEvent<Error> { return this._onError.event; }
 
   private _fd: any;
   private _pty: number;
-  private _ptyNative: IConptyNative | IWinptyNative;
+  private _ptyNative: IConptyNative;
 
   public get inSocket(): Socket { return this._inSocket; }
   public get outSocket(): Socket { return this._outSocket; }
   public get fd(): any { return this._fd; }
   public get innerPid(): number { return this._innerPid; }
   public get pty(): number { return this._pty; }
+
+  private _pendingPtyInfo: { pty: number, commandLine: string, cwd: string, env: string[] } | undefined;
 
   constructor(
     file: string,
@@ -53,43 +68,14 @@ export class WindowsPtyAgent {
     cols: number,
     rows: number,
     debug: boolean,
-    private _useConpty: boolean | undefined,
     private _useConptyDll: boolean = false,
-    conptyInheritCursor: boolean = false
+    conptyInheritCursor: boolean = false,
+    options: IWindowsPtyAgentOptions = defaultWindowsPtyAgentOptions
   ) {
-    if (this._useConpty === undefined || this._useConpty === true) {
-      this._useConpty = this._getWindowsBuildNumber() >= 18309;
+    if (!conptyNative) {
+      conptyNative = loadNativeModule('conpty').module;
     }
-    if (this._useConpty) {
-      if (!conptyNative) {
-        try {
-          conptyNative = require('../build/Release/conpty.node');
-        } catch (outerError) {
-          try {
-            conptyNative = require('../build/Debug/conpty.node');
-          } catch (innerError) {
-            console.error('innerError', innerError);
-            // Re-throw the exception from the Release require if the Debug require fails as well
-            throw outerError;
-          }
-        }
-      }
-    } else {
-      if (!winptyNative) {
-        try {
-          winptyNative = require('../build/Release/pty.node');
-        } catch (outerError) {
-          try {
-            winptyNative = require('../build/Debug/pty.node');
-          } catch (innerError) {
-            console.error('innerError', innerError);
-            // Re-throw the exception from the Release require if the Debug require fails as well
-            throw outerError;
-          }
-        }
-      }
-    }
-    this._ptyNative = this._useConpty ? conptyNative : winptyNative;
+    this._ptyNative = conptyNative;
 
     // Sanitize input variable.
     cwd = path.resolve(cwd);
@@ -98,14 +84,7 @@ export class WindowsPtyAgent {
     const commandLine = argsToCommandLine(file, args);
 
     // Open pty session.
-    let term: IConptyProcess | IWinptyProcess;
-    if (this._useConpty) {
-      term = (this._ptyNative as IConptyNative).startProcess(file, cols, rows, debug, this._generatePipeName(), conptyInheritCursor, this._useConptyDll);
-    } else {
-      term = (this._ptyNative as IWinptyNative).startProcess(file, commandLine, env, cwd, cols, rows, debug);
-      this._pid = (term as IWinptyProcess).pid;
-      this._innerPid = (term as IWinptyProcess).innerPid;
-    }
+    const term: IConptyProcess = conptyNative.startProcess(file, cols, rows, debug, this._generatePipeName(), conptyInheritCursor, this._useConptyDll);
 
     // Not available on windows.
     this._fd = term.fd;
@@ -118,10 +97,32 @@ export class WindowsPtyAgent {
     this._outSocket = new Socket();
     this._outSocket.setEncoding('utf8');
     // The conout socket must be ready out on another thread to avoid deadlocks
-    this._conoutSocketWorker = new ConoutConnection(term.conout, this._useConptyDll);
+    // We must wait for the worker to connect before calling conptyNative.connect()
+    // to avoid blocking the Node.js event loop in ConnectNamedPipe.
+    // See https://github.com/microsoft/node-pty/issues/763
+    this._conoutSocketWorker = options.conoutConnectionFactory(term.conout, this._useConptyDll);
+
+    // Store pending connection info - we'll complete the connection when worker is ready
+    this._pendingPtyInfo = { pty: this._pty, commandLine, cwd, env };
+
+    // Never call connect() before the worker is ready, as ConnectNamedPipe
+    // would block the Node.js event loop while waiting for the output client.
+    this._connectionTimeout = setTimeout(() => {
+      this._failPtyConnection(new Error('Timed out waiting for ConPTY output worker'));
+    }, options.connectionTimeout);
+
     this._conoutSocketWorker.onReady(() => {
+      if (!this._pendingPtyInfo) {
+        return;
+      }
+      this._clearConnectionTimeout();
       this._conoutSocketWorker.connectSocket(this._outSocket);
+      // Now that the worker has connected to the output pipe, we can safely call
+      // conptyNative.connect() which calls ConnectNamedPipe - it won't block because
+      // the client (worker) is already connected
+      this._completePtyConnection();
     });
+    this._conoutSocketWorker.onError(error => this._failPtyConnection(error));
     this._outSocket.on('connect', () => {
       this._outSocket.emit('ready_datapipe');
     });
@@ -133,80 +134,103 @@ export class WindowsPtyAgent {
       writable: true
     });
     this._inSocket.setEncoding('utf8');
+  }
 
-    if (this._useConpty) {
-      const connect = (this._ptyNative as IConptyNative).connect(this._pty, commandLine, cwd, env, this._useConptyDll, c => this._$onProcessExit(c));
+  private _completePtyConnection(): void {
+    if (!this._pendingPtyInfo) {
+      return;
+    }
+    this._clearConnectionTimeout();
+    const { pty, commandLine, cwd, env } = this._pendingPtyInfo;
+    this._pendingPtyInfo = undefined;
+
+    try {
+      const connect = conptyNative.connect(pty, commandLine, cwd, env, this._useConptyDll, c => this._$onProcessExit(c));
       this._innerPid = connect.pid;
+    } catch (err) {
+      // connect() runs from the conout worker's onReady callback, so a throw
+      // here would otherwise surface as an
+      // uncaughtException with no way for the consumer to observe it.
+      const code = /error code: (\d+)/.exec((err as Error).message)?.[1];
+      this._exitCode = code ? parseInt(code, 10) : -1;
+      try { this._ptyNative.kill(this._pty, this._useConptyDll); } catch { /* already gone */ }
+      this._conoutSocketWorker.dispose();
+      this._inSocket.destroy();
+      this._outSocket.destroy();
+      this._onError.fire(err as Error);
+    }
+  }
+
+  private _failPtyConnection(error: Error): void {
+    if (!this._pendingPtyInfo) {
+      return;
+    }
+    this._clearConnectionTimeout();
+    this._pendingPtyInfo = undefined;
+    this._exitCode = -1;
+    try { this._ptyNative.kill(this._pty, this._useConptyDll); } catch { /* already gone */ }
+    this._conoutSocketWorker.dispose();
+    this._inSocket.destroy();
+    this._outSocket.destroy();
+    this._onError.fire(error);
+  }
+
+  private _clearConnectionTimeout(): void {
+    if (this._connectionTimeout) {
+      clearTimeout(this._connectionTimeout);
+      this._connectionTimeout = undefined;
     }
   }
 
   public resize(cols: number, rows: number): void {
-    if (this._useConpty) {
-      if (this._exitCode !== undefined) {
-        throw new Error('Cannot resize a pty that has already exited');
-      }
-      (this._ptyNative as IConptyNative).resize(this._pty, cols, rows, this._useConptyDll);
-      return;
+    if (this._exitCode !== undefined) {
+      throw new Error('Cannot resize a pty that has already exited');
     }
-    (this._ptyNative as IWinptyNative).resize(this._pid, cols, rows);
+    this._ptyNative.resize(this._pty, cols, rows, this._useConptyDll);
   }
 
   public clear(): void {
-    if (this._useConpty) {
-      (this._ptyNative as IConptyNative).clear(this._pty, this._useConptyDll);
-    }
+    this._ptyNative.clear(this._pty, this._useConptyDll);
   }
 
   public kill(): void {
+    // Prevent deferred connection from completing after kill
+    this._clearConnectionTimeout();
+    this._pendingPtyInfo = undefined;
+
     // Tell the agent to kill the pty, this releases handles to the process
-    if (this._useConpty) {
-      if (!this._useConptyDll) {
-        this._inSocket.readable = false;
-        this._outSocket.readable = false;
-        this._getConsoleProcessList().then(consoleProcessList => {
-          consoleProcessList.forEach((pid: number) => {
-            try {
-              process.kill(pid);
-            } catch (e) {
-              // Ignore if process cannot be found (kill ESRCH error)
-            }
-          });
+    if (!this._useConptyDll) {
+      this._inSocket.readable = false;
+      this._outSocket.readable = false;
+      this._getConsoleProcessList().then(consoleProcessList => {
+        consoleProcessList.forEach((pid: number) => {
+          try {
+            process.kill(pid);
+          } catch (e) {
+            // Ignore if process cannot be found (kill ESRCH error)
+          }
         });
-        (this._ptyNative as IConptyNative).kill(this._pty, this._useConptyDll);
-        this._conoutSocketWorker.dispose();
-      } else {
-        // Close the input write handle to signal the end of session.
-        this._inSocket.destroy();
-        (this._ptyNative as IConptyNative).kill(this._pty, this._useConptyDll);
-        this._outSocket.on('data', () => {
-          this._conoutSocketWorker.dispose();
-        });
-      }
+      });
+      this._ptyNative.kill(this._pty, this._useConptyDll);
+      this._conoutSocketWorker.dispose();
     } else {
-      // Because pty.kill closes the handle, it will kill most processes by itself.
-      // Process IDs can be reused as soon as all handles to them are
-      // dropped, so we want to immediately kill the entire console process list.
-      // If we do not force kill all processes here, node servers in particular
-      // seem to become detached and remain running (see
-      // Microsoft/vscode#26807).
-      const processList: number[] = (this._ptyNative as IWinptyNative).getProcessList(this._pid);
-      (this._ptyNative as IWinptyNative).kill(this._pid, this._innerPid);
-      processList.forEach(pid => {
-        try {
-          process.kill(pid);
-        } catch (e) {
-          // Ignore if process cannot be found (kill ESRCH error)
-        }
+      // Close the input write handle to signal the end of session.
+      this._inSocket.destroy();
+      this._ptyNative.kill(this._pty, this._useConptyDll);
+      this._outSocket.on('data', () => {
+        this._conoutSocketWorker.dispose();
       });
     }
   }
 
   private _getConsoleProcessList(): Promise<number[]> {
+    if (this._innerPid <= 0) {
+      return Promise.resolve([]);
+    }
     return new Promise<number[]>(resolve => {
       const agent = fork(path.join(__dirname, 'conpty_console_list_agent'), [ this._innerPid.toString() ]);
       agent.on('message', message => {
         clearTimeout(timeout);
-        // @ts-ignore
         resolve(message.consoleProcessList);
       });
       const timeout = setTimeout(() => {
@@ -218,20 +242,7 @@ export class WindowsPtyAgent {
   }
 
   public get exitCode(): number | undefined {
-    if (this._useConpty) {
-      return this._exitCode;
-    }
-    const winptyExitCode = (this._ptyNative as IWinptyNative).getExitCode(this._innerPid);
-    return winptyExitCode === -1 ? undefined : winptyExitCode;
-  }
-
-  private _getWindowsBuildNumber(): number {
-    const osVersion = (/(\d+)\.(\d+)\.(\d+)/g).exec(os.release());
-    let buildNumber: number = 0;
-    if (osVersion && osVersion.length === 4) {
-      buildNumber = parseInt(osVersion[3]);
-    }
-    return buildNumber;
+    return this._exitCode;
   }
 
   private _generatePipeName(): string {
@@ -254,7 +265,6 @@ export class WindowsPtyAgent {
       return;
     }
     if (this._closeTimeout) {
-      // @ts-ignore
       clearTimeout(this._closeTimeout);
     }
     this._closeTimeout = setTimeout(() => this._cleanUpProcess(), FLUSH_DATA_INTERVAL);
