@@ -172,6 +172,16 @@ jobs:
             -e npm_config_arch=ia32 \
             i386/debian:bullseye-slim sh -c '
               set -e
+              # Bullseye has left deb.debian.org (security pool files now 404), so
+              # install from archive.debian.org. Staying on bullseye keeps the ia32
+              # prebuild on glibc 2.31.
+              rm -f /etc/apt/sources.list.d/*
+              printf "%s\n" \
+                "deb http://archive.debian.org/debian bullseye main" \
+                "deb http://archive.debian.org/debian bullseye-updates main" \
+                "deb http://archive.debian.org/debian-security bullseye-security main" \
+                > /etc/apt/sources.list
+              echo "Acquire::Check-Valid-Until \"false\";" > /etc/apt/apt.conf.d/99archive
               apt-get update
               apt-get install -y --no-install-recommends ca-certificates curl python3 make g++
               curl -fsSLO https://unofficial-builds.nodejs.org/download/release/v18.4.0/node-v18.4.0-linux-x86.tar.gz
@@ -179,7 +189,9 @@ jobs:
               tar -xzf node-v18.4.0-linux-x86.tar.gz -C /usr/local --strip-components=1 --no-same-owner
               rm node-v18.4.0-linux-x86.tar.gz
               npm ci --ignore-scripts --verbose
-              ./node_modules/.bin/node-gyp rebuild --verbose
+              # node-gyp 13 (the devDependency) needs Node >=22.22; 11.x is the
+              # last line that runs on this Node 18 x86 build host.
+              npx --yes node-gyp@11.5.0 rebuild --verbose
               node scripts/post-install.js
             '
 
