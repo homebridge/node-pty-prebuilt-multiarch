@@ -1,11 +1,42 @@
+# Hybrid dependency management configuration
+# - npm dependencies: grouped into a single update
+# - GitHub Actions: grouped into a single update
+
 version: 2
 updates:
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: daily
+      time: "10:00"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+    groups:
+      packages:
+        patterns:
+          - "*"
+    rebase-strategy: "auto"
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore"
+      include: "scope"
+
   - package-ecosystem: "github-actions"
     directory: "/"
-    groups:
-      github-actions:
-        patterns: ["*"]
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+    groups:
+      actions:
+        patterns:
+          - "*"
+    rebase-strategy: "auto"
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore"
+      include: "scope"
     cooldown:
       default-days: 7
