@@ -79,10 +79,10 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Use Node.js 22.x
+      - name: Use Node.js 24.22.1
         uses: actions/setup-node@v7
         with:
-          node-version: '22.x'
+          node-version: '24.22.1'
 
       # NOTE: sysroot pinning covers the native x64/arm64 and cross-compiled
       # linux-arm targets. linux-ia32 is built separately in a native i386
