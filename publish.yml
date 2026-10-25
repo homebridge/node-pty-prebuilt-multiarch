@@ -37,6 +37,14 @@ extends:
   parameters:
     npmPackages:
       - name: node-pty
+        nodeVersion: '24.22.1'
+        publishNpmVersion: '11.6.3'
+
+        testPlatforms:
+          - name: Linux
+            nodeVersions:
+              - '24.22.1'
+            useSysroot: true
 
         buildSteps:
           - task: DownloadPipelineArtifact@2
