@@ -190,8 +190,10 @@ jobs:
               rm node-v18.4.0-linux-x86.tar.gz
               npm ci --ignore-scripts --verbose
               # node-gyp 13 (the devDependency) needs Node >=22.22; 11.x is the
-              # last line that runs on this Node 18 x86 build host.
-              npx --yes node-gyp@11.5.0 rebuild --verbose
+              # last line that runs on this Node 18 x86 build host. Install it
+              # outside the project: npm 8's npx would reuse the local 13.x.
+              npm install --no-save --no-audit --no-fund --prefix /tmp/node-gyp-11 node-gyp@11.5.0
+              /tmp/node-gyp-11/node_modules/.bin/node-gyp rebuild --verbose
               node scripts/post-install.js
             '
 
