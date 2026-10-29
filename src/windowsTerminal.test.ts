@@ -3,11 +3,12 @@
  * Copyright (c) 2018, Microsoft Corporation (MIT License).
  */
 
-import * as assert from 'assert';
 import * as fs from 'fs';
-import * as path from 'path';
-import psList from 'ps-list';
+import * as assert from 'assert';
 import { WindowsTerminal } from './windowsTerminal';
+import { IWindowsPtyForkOptions } from './interfaces';
+import * as path from 'path';
+import * as psList from 'ps-list';
 
 interface IProcessState {
   // Whether the PID must exist or must not exist
@@ -92,43 +93,88 @@ function pollForProcessTreeSize(pid: number, size: number, intervalMs: number = 
 }
 
 if (process.platform === 'win32') {
-  [[false, false], [true, false], [true, true]].forEach(([useConpty, useConptyDll]) => {
-    describe(`WindowsTerminal (useConpty = ${useConpty}, useConptyDll = ${useConptyDll})`, () => {
+  [false, true].forEach((useConptyDll) => {
+    describe(`WindowsTerminal (useConptyDll = ${useConptyDll})`, () => {
       describe('kill', () => {
         it('should not crash parent process', function (done) {
           this.timeout(20000);
-          const term = new WindowsTerminal('cmd.exe', [], { useConpty, useConptyDll });
+          const term = new WindowsTerminal('cmd.exe', [], { useConptyDll });
           term.on('exit', () => done());
           term.kill();
         });
         it('should kill the process tree', function (done: Mocha.Done): void {
           this.timeout(20000);
-          const term = new WindowsTerminal('cmd.exe', [], { useConpty, useConptyDll });
-          // Start sub-processes
-          term.write('powershell.exe\r');
-          term.write('node.exe\r');
-          console.log('start poll for tree size');
-          pollForProcessTreeSize(term.pid, 3, 500, 5000).then(list => {
-            assert.strictEqual(list[0].name.toLowerCase(), 'cmd.exe');
-            assert.strictEqual(list[1].name.toLowerCase(), 'powershell.exe');
-            assert.strictEqual(list[2].name.toLowerCase(), 'node.exe');
-            term.kill();
-            const desiredState: IProcessState = {};
-            desiredState[list[0].pid] = false;
-            desiredState[list[1].pid] = false;
-            desiredState[list[2].pid] = false;
-            term.on('exit', () => {
-              pollForProcessState(desiredState, 1000, 5000).then(() => {
-                done();
+          const term = new WindowsTerminal('cmd.exe', [], { useConptyDll });
+          const socket = (term as any)._socket;
+          let started = false;
+          const startPolling = (): void => {
+            if (started) {
+              return;
+            }
+            if (term.pid === 0) {
+              setTimeout(startPolling, 50);
+              return;
+            }
+            started = true;
+            // Start sub-processes
+            term.write('powershell.exe\r');
+            term.write('node.exe\r');
+            console.log('start poll for tree size');
+            pollForProcessTreeSize(term.pid, 3, 500, 5000).then(list => {
+              assert.strictEqual(list[0].name.toLowerCase(), 'cmd.exe');
+              assert.strictEqual(list[1].name.toLowerCase(), 'powershell.exe');
+              assert.strictEqual(list[2].name.toLowerCase(), 'node.exe');
+              term.kill();
+              const desiredState: IProcessState = {};
+              desiredState[list[0].pid] = false;
+              desiredState[list[1].pid] = false;
+              desiredState[list[2].pid] = false;
+              term.on('exit', () => {
+                pollForProcessState(desiredState, 1000, 5000).then(() => {
+                  done();
+                }).catch(done);
               });
-            });
+            }).catch(done);
+          };
+
+          if (term.pid > 0) {
+            startPolling();
+          } else {
+            socket.once('ready_datapipe', () => setTimeout(startPolling, 50));
+          }
+        });
+      });
+
+      describe('pid', () => {
+        it('should be 0 before ready and set after ready_datapipe (issue #763)', function (done) {
+          this.timeout(10000);
+          const term = new WindowsTerminal('cmd.exe', '/c echo test', { useConptyDll });
+
+          // pid may be 0 immediately after construction due to deferred connection
+          const initialPid = term.pid;
+
+          // Access internal socket to listen for ready_datapipe
+          const socket = (term as any)._socket;
+          socket.on('ready_datapipe', () => {
+            // After ready_datapipe, pid should be set to a valid non-zero value
+            setTimeout(() => {
+              assert.notStrictEqual(term.pid, 0, 'pid should be set after ready_datapipe');
+              assert.strictEqual(typeof term.pid, 'number', 'pid should be a number');
+              // If initial was 0, it should now be different (proves the fix works)
+              if (initialPid === 0) {
+                assert.notStrictEqual(term.pid, initialPid, 'pid should be updated from initial value');
+              }
+              term.on('exit', () => done());
+              term.kill();
+            }, 100);
           });
         });
       });
 
       describe('resize', () => {
-        it('should throw a non-native exception when resizing an invalid value', (done) => {
-          const term = new WindowsTerminal('cmd.exe', [], { useConpty, useConptyDll });
+        it('should throw a non-native exception when resizing an invalid value', function(done) {
+          this.timeout(20000);
+          const term = new WindowsTerminal('cmd.exe', [], { useConptyDll });
           assert.throws(() => term.resize(-1, -1));
           assert.throws(() => term.resize(0, 0));
           assert.doesNotThrow(() => term.resize(1, 1));
@@ -137,8 +183,9 @@ if (process.platform === 'win32') {
           });
           term.kill();
         });
-        it('should throw a non-native exception when resizing a killed terminal', (done) => {
-          const term = new WindowsTerminal('cmd.exe', [], { useConpty, useConptyDll });
+        it('should throw a non-native exception when resizing a killed terminal', function(done) {
+          this.timeout(20000);
+          const term = new WindowsTerminal('cmd.exe', [], { useConptyDll });
           (<any>term)._defer(() => {
             term.once('exit', () => {
               assert.throws(() => term.resize(1, 1));
@@ -165,7 +212,7 @@ if (process.platform === 'win32') {
             // Skip test if git bash isn't installed
             return;
           }
-          const term = new WindowsTerminal(cmdCopiedPath, '/c echo "hello world"', { useConpty, useConptyDll });
+          const term = new WindowsTerminal(cmdCopiedPath, '/c echo "hello world"', { useConptyDll });
           let result = '';
           term.on('data', (data) => {
             result += data;
@@ -180,7 +227,7 @@ if (process.platform === 'win32') {
       describe('env', () => {
         it('should set environment variables of the shell', function (done) {
           this.timeout(10000);
-          const term = new WindowsTerminal('cmd.exe', '/C echo %FOO%', { useConpty, useConptyDll, env: { FOO: 'BAR' } });
+          const term = new WindowsTerminal('cmd.exe', '/C echo %FOO%', { useConptyDll, env: { FOO: 'BAR' }});
           let result = '';
           term.on('data', (data) => {
             result += data;
@@ -192,10 +239,24 @@ if (process.platform === 'win32') {
         });
       });
 
+      describe('connect failure', () => {
+        it('should emit exit instead of an uncaught exception when CreateProcessW fails', function (done) {
+          this.timeout(10000);
+          // Must exist (startProcess validates that) but not be a valid executable.
+          const notAnExe = path.join(__dirname, '..', 'package.json');
+          const term = new WindowsTerminal(notAnExe, [], { useConptyDll });
+          term.on('exit', (code) => {
+            assert.notStrictEqual(code, 0);
+            assert.strictEqual(term.pid, 0);
+            done();
+          });
+        });
+      });
+
       describe('On close', () => {
         it('should return process zero exit codes', function (done) {
           this.timeout(10000);
-          const term = new WindowsTerminal('cmd.exe', '/C exit', { useConpty, useConptyDll });
+          const term = new WindowsTerminal('cmd.exe', '/C exit', { useConptyDll });
           term.on('exit', (code) => {
             assert.strictEqual(code, 0);
             done();
@@ -204,7 +265,7 @@ if (process.platform === 'win32') {
 
         it('should return process non-zero exit codes', function (done) {
           this.timeout(10000);
-          const term = new WindowsTerminal('cmd.exe', '/C exit 2', { useConpty, useConptyDll });
+          const term = new WindowsTerminal('cmd.exe', '/C exit 2', { useConptyDll });
           term.on('exit', (code) => {
             assert.strictEqual(code, 2);
             done();
@@ -215,11 +276,186 @@ if (process.platform === 'win32') {
       describe('Write', () => {
         it('should accept input', function (done) {
           this.timeout(10000);
-          const term = new WindowsTerminal('cmd.exe', '', { useConpty, useConptyDll });
+          const term = new WindowsTerminal('cmd.exe', '', { useConptyDll });
           term.write('exit\r');
           term.on('exit', () => {
             done();
           });
+        });
+      });
+
+      describe('parent window', () => {
+        const user32 = `Add-Type -Namespace NodePtyTest -Name W -MemberDefinition '[DllImport("kernel32.dll")] public static extern IntPtr GetConsoleWindow(); [DllImport("user32.dll")] public static extern IntPtr GetAncestor(IntPtr h, uint f); public static ulong U(IntPtr h) { return unchecked((ulong)h.ToInt64()); }'`;
+
+        function scriptArgs(...lines: string[]): string {
+          return `-NoProfile -NonInteractive -EncodedCommand ${Buffer.from([user32, ...lines].join('; '), 'utf16le').toString('base64')}`;
+        }
+
+        // Prints the console window and GetAncestor(GetConsoleWindow(), GA_ROOTOWNER), which is the
+        // parent MSAL/WAM uses for sign-in dialogs. Handles are pointers, so print them unsigned.
+        function rootOwnerArgs(delayMs: number, keepAliveSeconds: number = 0): string {
+          return scriptArgs(
+            `Start-Sleep -Milliseconds ${delayMs}`,
+            `$c = [NodePtyTest.W]::GetConsoleWindow()`,
+            `Write-Host ('console=' + [NodePtyTest.W]::U($c) + ' rootOwner=' + [NodePtyTest.W]::U([NodePtyTest.W]::GetAncestor($c, 3)) + ' end')`,
+            `Start-Sleep -Seconds ${keepAliveSeconds}`
+          );
+        }
+
+        const started: Array<{ exited: Promise<void>, kill: () => void }> = [];
+
+        function startPty(file: string, args: string | string[], options: IWindowsPtyForkOptions = {}): WindowsTerminal {
+          const term = new WindowsTerminal(file, args, { useConptyDll, ...options });
+          let hasExited = false;
+          const exited = new Promise<void>(resolve => term.once('exit', () => {
+            hasExited = true;
+            resolve();
+          }));
+          started.push({
+            exited,
+            kill: () => {
+              if (!hasExited) {
+                term.kill();
+              }
+            }
+          });
+          return term;
+        }
+
+        // Kill and wait for every pty, even after a failed test: ptys left running can keep mocha
+        // from exiting.
+        afterEach(async function (): Promise<void> {
+          this.timeout(30000);
+          const ptys = started.splice(0);
+          ptys.forEach(pty => pty.kill());
+          await Promise.all(ptys.map(pty => pty.exited));
+        });
+
+        function readOutput(term: WindowsTerminal, pattern: RegExp): Promise<RegExpExecArray> {
+          return new Promise(resolve => {
+            let output = '';
+            term.on('data', (data) => {
+              output += data;
+              const match = pattern.exec(output);
+              if (match) {
+                resolve(match);
+              }
+            });
+          });
+        }
+
+        async function readWindows(term: WindowsTerminal): Promise<{ console: bigint, rootOwner: bigint }> {
+          const match = await readOutput(term, /console=(\d+) rootOwner=(\d+) end/);
+          return { console: BigInt(match[1]), rootOwner: BigInt(match[2]) };
+        }
+
+        // Another pty's hidden top-level console window stands in for the host app's window.
+        async function startHostWindow(): Promise<bigint> {
+          return (await readWindows(startPty('powershell.exe', rootOwnerArgs(0, 60)))).console;
+        }
+
+        // An HWND the way setParentWindow takes it, like Electron's getNativeWindowHandle(): its bytes
+        // in native byte order. The tests run in 64-bit processes.
+        function toHandle(hwnd: bigint): Buffer {
+          const handle = Buffer.alloc(8);
+          handle.writeBigUInt64LE(hwnd);
+          return handle;
+        }
+
+        it('should make the window the owner of the console window when set right after spawn', async function (): Promise<void> {
+          this.timeout(60000);
+          const hostWindow = await startHostWindow();
+          const term = startPty('powershell.exe', rootOwnerArgs(0));
+          // Not deferred, and the shell is only launched later, so this is sent before the shell starts.
+          assert.strictEqual(term.setParentWindow(toHandle(hostWindow)), useConptyDll);
+          const windows = await readWindows(term);
+          assert.strictEqual(windows.rootOwner, useConptyDll ? hostWindow : windows.console);
+        });
+
+        it('should change the owner when setParentWindow is called while the shell runs', async function (): Promise<void> {
+          this.timeout(60000);
+          const hostWindow = await startHostWindow();
+          const term = startPty('powershell.exe', rootOwnerArgs(3000));
+          let sent: boolean | undefined;
+          // The first data event means the shell is running and conpty has been released.
+          term.once('data', () => sent = term.setParentWindow(toHandle(hostWindow)));
+          const windows = await readWindows(term);
+          assert.strictEqual(sent, useConptyDll);
+          assert.strictEqual(windows.rootOwner, useConptyDll ? hostWindow : windows.console);
+        });
+
+        it('should not send setParentWindow once the pseudoconsole is closed', async function (): Promise<void> {
+          this.timeout(20000);
+          const term = startPty('cmd.exe', []);
+          const exited = new Promise<void>(resolve => term.once('exit', () => resolve()));
+          await new Promise<void>(resolve => term.once('data', () => resolve()));
+          term.kill();
+          assert.strictEqual(term.setParentWindow(Buffer.alloc(8)), false);
+          await exited;
+          assert.strictEqual(term.setParentWindow(Buffer.alloc(8)), false);
+        });
+
+        it('should reject handles that are not buffers the size of an HWND', () => {
+          const invalid: unknown[] = [Buffer.alloc(4), Buffer.alloc(9), Buffer.alloc(0), 1, BigInt(1), '0x1234', undefined];
+          const term = startPty('cmd.exe', []);
+          for (const handle of invalid) {
+            assert.throws(() => term.setParentWindow(handle as Buffer), /hwnd must be a Buffer the size of an HWND/);
+          }
+        });
+      });
+      describe('Regression for #921', () => {
+        it('should not crash with concurrent kills while resizing/clearing/reparenting', function (done) {
+          this.timeout(60000);
+          const N = 30;
+          const terms: WindowsTerminal[] = [];
+          let ready = 0;
+          let exited = 0;
+          let spamInterval: NodeJS.Timeout | undefined;
+          const noWindow = Buffer.alloc(8);
+          const cleanup = (err?: Error): void => {
+            if (spamInterval) {
+              clearInterval(spamInterval);
+              spamInterval = undefined;
+            }
+            done(err);
+          };
+          const startRace = (): void => {
+            spamInterval = setInterval(() => {
+              for (const t of terms) {
+                try {
+                  t.resize(80 + Math.floor(Math.random() * 40), 24 + Math.floor(Math.random() * 20));
+                } catch (e) { /* already exited */ }
+                try {
+                  t.clear();
+                } catch (e) { /* already exited */ }
+                try {
+                  t.setParentWindow(noWindow);
+                } catch (e) { /* already exited */ }
+              }
+            }, 1);
+            for (const t of terms) {
+              try { t.kill(); } catch (e) { /* */ }
+            }
+          };
+          for (let i = 0; i < N; i++) {
+            const t = new WindowsTerminal('cmd.exe', [], { useConptyDll });
+            terms.push(t);
+            let readied = false;
+            t.on('data', () => {
+              if (readied) return;
+              readied = true;
+              ready++;
+              if (ready === N) {
+                startRace();
+              }
+            });
+            t.on('exit', () => {
+              exited++;
+              if (exited === N) {
+                cleanup();
+              }
+            });
+          }
         });
       });
     });
